@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "FontFox",
+  "version": "0.1.0",
+  "identifier": "dev.fontfox.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "FontFox / 字狐",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 1120,
+        "minHeight": 760,
+        "resizable": true,
+        "center": true,
+        "backgroundColor": "#F7F7F8",
+        "additionalBrowserArgs": "--remote-debugging-port=9223 --disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection",
+        "decorations": false,
+        "shadow": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' asset: http://asset.localhost data:; img-src 'self' asset: http://asset.localhost data:; script-src 'self'",
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$LOCALDATA\\Microsoft\\Windows\\Fonts\\**"
+        ]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "resources": { "../LICENSE": "./", "../NOTICE": "./", "../langBuild/*.ini": "lang/" },
+    "shortDescription": "FontFox / 字狐 — 字体管理器",
+    "longDescription": "FontFox / 字狐 是一个轻量、精准、可彻底卸载的 Windows 本地字体管理器。",
+    "copyright": "Copyright (c) 2026 Raku Inkyetta 羽梦千景",
+    "license": "Apache-2.0",
+    "windows": {
+      "nsis": {
+        "displayLanguageSelector": false,
+        "languages": ["SimpChinese", "English"],
+        "installMode": "perMachine",
+        "installerHooks": "installer-hooks.nsh"
+      }
+    }
+  }
+}

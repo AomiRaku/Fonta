@@ -1,0 +1,25 @@
+# 构建产物
+/dist/
+/src-tauri/target/
+/src-tauri/gen/
+
+# 依赖
+/node_modules/
+/.venv/
+
+# 临时与工具缓存
+/_tmp/
+/_scratch/
+/todo/
+/tools/.fontlist-cache/
+*.log
+*.tmp
+
+# 编辑器
+/.vscode/
+/.idea/
+
+# 系统
+Thumbs.db
+desktop.ini
+.DS_Store

@@ -1,0 +1,12 @@
+# 统一换行：源码与文档 LF；Windows 脚本保留 CRLF
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制文件
+*.png binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary

@@ -1,0 +1,4268 @@
+[
+ {
+  "family": "Aharoni Bold",
+  "file": "Ahronbd.ttf",
+  "names": [
+   "Aharoni Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Aldhabi",
+  "file": "Aldhabi.ttf",
+  "names": [
+   "Aldhabi"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Andalus",
+  "file": "Andlso.ttf",
+  "names": [
+   "Andalus"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Angsana New",
+  "file": "Angsana.ttc",
+  "names": [
+   "Angsana New",
+   "Angsana New Italic",
+   "Angsana New Bold",
+   "Angsana New Bold Italic",
+   "AngsanaUPC",
+   "AngsanaUPC Italic",
+   "AngsanaUPC Bold",
+   "AngsanaUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Aparajita",
+  "file": "Aparaj.ttf",
+  "names": [
+   "Aparajita"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Aparajita",
+  "file": "Aparajb.ttf",
+  "names": [
+   "Aparajita Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Aparajita",
+  "file": "Aparajbi.ttf",
+  "names": [
+   "Aparajita Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Aparajita",
+  "file": "Aparaji.ttf",
+  "names": [
+   "Aparajita Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arabic Typesetting",
+  "file": "Arabtype.ttf",
+  "names": [
+   "Arabic Typesetting"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial",
+  "file": "Arial.ttf",
+  "names": [
+   "Arial"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial",
+  "file": "Arialbd.ttf",
+  "names": [
+   "Arial Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial",
+  "file": "Arialbi.ttf",
+  "names": [
+   "Arial Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial",
+  "file": "Ariali.ttf",
+  "names": [
+   "Arial Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Black",
+  "file": "Ariblk.ttf",
+  "names": [
+   "Arial Black"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNova-Bold.ttf",
+  "names": [
+   "Arial Nova Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNova-BoldItalic.ttf",
+  "names": [
+   "Arial Nova Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNova-Italic.ttf",
+  "names": [
+   "Arial Nova Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNova-Light.ttf",
+  "names": [
+   "Arial Nova Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNova-LightItalic.ttf",
+  "names": [
+   "Arial Nova Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNova.ttf",
+  "names": [
+   "Arial Nova"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNovaCond-Bold.ttf",
+  "names": [
+   "Arial Nova Cond Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNovaCond-BoldItalic.ttf",
+  "names": [
+   "Arial Nova Cond Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNovaCond-Italic.ttf",
+  "names": [
+   "Arial Nova Cond Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNovaCond-Light.ttf",
+  "names": [
+   "Arial Nova Cond Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNovaCond-LightItalic.ttf",
+  "names": [
+   "Arial Nova Cond Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Arial Nova",
+  "file": "ArialNovaCond.ttf",
+  "names": [
+   "Arial Nova Cond"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Bahnschrift",
+  "file": "Bahnschrift.ttf",
+  "names": [
+   "Bahnschrift *",
+   "Bahnschrift"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "BIZ UDGothic",
+  "file": "BIZ-UDGothicB.ttc",
+  "names": [
+   "BIZ UDGothic Bold *",
+   "BIZ UDPGothic Bold *",
+   "BIZ UDGothic Bold",
+   "BIZ UDPGothic Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "BIZ UDGothic",
+  "file": "BIZ-UDGothicR.ttc",
+  "names": [
+   "BIZ UDGothic *",
+   "BIZ UDPGothic *",
+   "BIZ UDGothic",
+   "BIZ UDPGothic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "BIZ UDMincho Medium",
+  "file": "BIZ-UDMinchoM.ttc",
+  "names": [
+   "BIZ UDMincho Medium *",
+   "BIZ UDPMincho Medium *",
+   "BIZ UDMincho Medium",
+   "BIZ UDPMincho Medium"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Browallia New",
+  "file": "Browalia.ttc",
+  "names": [
+   "Browallia New",
+   "Browallia New Italic",
+   "Browallia New Bold",
+   "Browallia New Bold Italic",
+   "BrowalliaUPC",
+   "BrowalliaUPC Italic",
+   "BrowalliaUPC Bold",
+   "BrowalliaUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Calibri",
+  "file": "Calibri.ttf",
+  "names": [
+   "Calibri"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Calibri",
+  "file": "Calibrib.ttf",
+  "names": [
+   "Calibri Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Calibri",
+  "file": "Calibrii.ttf",
+  "names": [
+   "Calibri Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Calibri",
+  "file": "Calibril.ttf",
+  "names": [
+   "Calibri Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Calibri",
+  "file": "Calibrili.ttf",
+  "names": [
+   "Calibri Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Calibri",
+  "file": "Calibriz.ttf",
+  "names": [
+   "Calibri Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Cambria",
+  "file": "Cambriab.ttf",
+  "names": [
+   "Cambria Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Cambria",
+  "file": "Cambriai.ttf",
+  "names": [
+   "Cambria Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Cambria",
+  "file": "Cambriaz.ttf",
+  "names": [
+   "Cambria Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Cambria Math",
+  "file": "Cambria.ttc",
+  "names": [
+   "Cambria",
+   "Cambria Math"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Candara",
+  "file": "Candara.ttf",
+  "names": [
+   "Candara"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Candara",
+  "file": "Candarab.ttf",
+  "names": [
+   "Candara Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Candara",
+  "file": "Candarai.ttf",
+  "names": [
+   "Candara Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Candara",
+  "file": "Candaral.ttf",
+  "names": [
+   "Candara Light *",
+   "Candara Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Candara",
+  "file": "Candarali.ttf",
+  "names": [
+   "Candara Light Italic *",
+   "Candara Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Candara",
+  "file": "Candaraz.ttf",
+  "names": [
+   "Candara Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Cascadia Code",
+  "file": "CascadiaCode Italic.ttf",
+  "names": [
+   "Cascadia Code ExtraLight Italic *",
+   "Cascadia Code SemiLight *",
+   "Cascadia Code Regular *",
+   "Cascadia Code SemiBold *",
+   "Cascadia Code Bold *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Cascadia Code",
+  "file": "CascadiaCode.ttf",
+  "names": [
+   "Cascadia Code ExtraLight *",
+   "Cascadia Code Light *",
+   "Cascadia Code Light Italic *",
+   "Cascadia Code SemiLight Italic *",
+   "Cascadia Code Italic *",
+   "Cascadia Code SemiBold Italic *",
+   "Cascadia Code Bold Italic *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Cascadia Mono",
+  "file": "CascadiaMono Italic.ttf",
+  "names": [
+   "Cascadia Mono ExtraLight Italic *",
+   "Cascadia Mono SemiLight *",
+   "Cascadia Mono Regular *",
+   "Cascadia Mono SemiBold *",
+   "Cascadia Mono Bold *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Cascadia Mono",
+  "file": "CascadiaMono.ttf",
+  "names": [
+   "Cascadia Mono ExtraLight *",
+   "Cascadia Mono Light *",
+   "Cascadia Mono Light Italic *",
+   "Cascadia Mono SemiLight Italic *",
+   "Cascadia Mono Italic *",
+   "Cascadia Mono SemiBold Italic *",
+   "Cascadia Mono Bold Italic *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Comic Sans MS",
+  "file": "Comic.ttf",
+  "names": [
+   "Comic Sans MS"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Comic Sans MS",
+  "file": "Comicbd.ttf",
+  "names": [
+   "Comic Sans MS Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Comic Sans MS",
+  "file": "Comici.ttf",
+  "names": [
+   "Comic Sans MS Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Comic Sans MS",
+  "file": "Comicz.ttf",
+  "names": [
+   "Comic Sans MS Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Consolas",
+  "file": "Consola.ttf",
+  "names": [
+   "Consolas"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Consolas",
+  "file": "Consolab.ttf",
+  "names": [
+   "Consolas Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Consolas",
+  "file": "Consolai.ttf",
+  "names": [
+   "Consolas Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Consolas",
+  "file": "Consolaz.ttf",
+  "names": [
+   "Consolas Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Constantia",
+  "file": "Constan.ttf",
+  "names": [
+   "Constantia"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Constantia",
+  "file": "Constanb.ttf",
+  "names": [
+   "Constantia Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Constantia",
+  "file": "Constani.ttf",
+  "names": [
+   "Constantia Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Constantia",
+  "file": "Constanz.ttf",
+  "names": [
+   "Constantia Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Corbel",
+  "file": "Corbel.ttf",
+  "names": [
+   "Corbel"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Corbel",
+  "file": "Corbelb.ttf",
+  "names": [
+   "Corbel Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Corbel",
+  "file": "Corbeli.ttf",
+  "names": [
+   "Corbel Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Corbel",
+  "file": "Corbell.ttf",
+  "names": [
+   "Corbel Light *",
+   "Corbel Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Corbel",
+  "file": "Corbelli.ttf",
+  "names": [
+   "Corbel Light Italic *",
+   "Corbel Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Corbel",
+  "file": "Corbelz.ttf",
+  "names": [
+   "Corbel Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Cordia New",
+  "file": "Cordia.ttc",
+  "names": [
+   "Cordia New",
+   "Cordia New Italic",
+   "Cordia New Bold",
+   "Cordia New Bold Italic",
+   "CordiaUPC",
+   "CordiaUPC Italic",
+   "CordiaUPC Bold",
+   "CordiaUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Courier New",
+  "file": "Cour.ttf",
+  "names": [
+   "Courier New"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Courier New",
+  "file": "Courbd.ttf",
+  "names": [
+   "Courier New Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Courier New",
+  "file": "Courbi.ttf",
+  "names": [
+   "Courier New Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Courier New",
+  "file": "Couri.ttf",
+  "names": [
+   "Courier New Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DaunPenh",
+  "file": "Daunpenh.ttf",
+  "names": [
+   "DaunPenh"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "David",
+  "file": "David.ttf",
+  "names": [
+   "David"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "David",
+  "file": "Davidbd.ttf",
+  "names": [
+   "David Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DengXian",
+  "file": "Deng.ttf",
+  "names": [
+   "DengXian *",
+   "DengXian"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DengXian",
+  "file": "Dengb.ttf",
+  "names": [
+   "DengXian Bold *",
+   "DengXian Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DengXian",
+  "file": "Dengl.ttf",
+  "names": [
+   "DengXian Light *",
+   "DengXian Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DFKai-SB",
+  "file": "Kaiu.ttf",
+  "names": [
+   "DFKai-SB"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DilleniaUPC",
+  "file": "Upcdb.ttf",
+  "names": [
+   "DilleniaUPC Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DilleniaUPC",
+  "file": "Upcdbi.ttf",
+  "names": [
+   "DilleniaUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DilleniaUPC",
+  "file": "Upcdi.ttf",
+  "names": [
+   "DilleniaUPC Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DilleniaUPC",
+  "file": "Upcdl.ttf",
+  "names": [
+   "DilleniaUPC"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "DokChampa",
+  "file": "Dokchamp.ttf",
+  "names": [
+   "DokChampa"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Dotum",
+  "file": "Gulim.ttc",
+  "names": [
+   "Dotum",
+   "DotumChe",
+   "Gulim",
+   "GulimChe"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Ebrima",
+  "file": "Ebrima.ttf",
+  "names": [
+   "Ebrima"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Ebrima",
+  "file": "Ebrimabd.ttf",
+  "names": [
+   "Ebrima Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Estrangelo Edessa",
+  "file": "Estre.ttf",
+  "names": [
+   "Estrangelo Edessa"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "EucrosiaUPC",
+  "file": "Upceb.ttf",
+  "names": [
+   "EucrosiaUPC Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "EucrosiaUPC",
+  "file": "Upcebi.ttf",
+  "names": [
+   "EucrosiaUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "EucrosiaUPC",
+  "file": "Upcei.ttf",
+  "names": [
+   "EucrosiaUPC Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "EucrosiaUPC",
+  "file": "Upcel.ttf",
+  "names": [
+   "EucrosiaUPC"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Euphemia",
+  "file": "Euphemia.ttf",
+  "names": [
+   "Euphemia"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "FangSong",
+  "file": "Simfang.ttf",
+  "names": [
+   "FangSong"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Franklin Gothic Medium",
+  "file": "Framd.ttf",
+  "names": [
+   "Franklin Gothic Medium"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Franklin Gothic Medium",
+  "file": "Framdit.ttf",
+  "names": [
+   "Franklin Gothic Medium Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "FrankRuehl",
+  "file": "Frank.ttf",
+  "names": [
+   "FrankRuehl"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "FreesiaUPC",
+  "file": "Upcfb.ttf",
+  "names": [
+   "FreesiaUPC Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "FreesiaUPC",
+  "file": "Upcfbi.ttf",
+  "names": [
+   "FreesiaUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "FreesiaUPC",
+  "file": "Upcfi.ttf",
+  "names": [
+   "FreesiaUPC Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "FreesiaUPC",
+  "file": "Upcfl.ttf",
+  "names": [
+   "FreesiaUPC"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gabriola",
+  "file": "Gabriola.ttf",
+  "names": [
+   "Gabriola"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gadugi",
+  "file": "Gadugi.ttf",
+  "names": [
+   "Gadugi"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gadugi",
+  "file": "Gadugib.ttf",
+  "names": [
+   "Gadugi Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gautami",
+  "file": "Gautami.ttf",
+  "names": [
+   "Gautami"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gautami",
+  "file": "Gautamib.ttf",
+  "names": [
+   "Gautami Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia",
+  "file": "Georgia.ttf",
+  "names": [
+   "Georgia"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia",
+  "file": "Georgiab.ttf",
+  "names": [
+   "Georgia Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia",
+  "file": "Georgiai.ttf",
+  "names": [
+   "Georgia Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia",
+  "file": "Georgiaz.ttf",
+  "names": [
+   "Georgia Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-Black.ttf",
+  "names": [
+   "Georgia Pro Black"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-BlackItalic.ttf",
+  "names": [
+   "Georgia Pro Black Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-Bold.ttf",
+  "names": [
+   "Georgia Pro Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-BoldItalic.ttf",
+  "names": [
+   "Georgia Pro Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondBlack.ttf",
+  "names": [
+   "Georgia Pro Cond Black"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondBlackItalic.ttf",
+  "names": [
+   "Georgia Pro Cond Black Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondBold.ttf",
+  "names": [
+   "Georgia Pro Cond Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondBoldItalic.ttf",
+  "names": [
+   "Georgia Pro Cond Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondItalic.ttf",
+  "names": [
+   "Georgia Pro Cond Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondLight.ttf",
+  "names": [
+   "Georgia Pro Cond Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondLightItalic.ttf",
+  "names": [
+   "Georgia Pro Cond Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondRegular.ttf",
+  "names": [
+   "Georgia Pro Cond"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondSemiBold.ttf",
+  "names": [
+   "Georgia Pro Cond Semibold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-CondSemiBoldItalic.ttf",
+  "names": [
+   "Georgia Pro Cond Semibold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-Italic.ttf",
+  "names": [
+   "Georgia Pro Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-Light.ttf",
+  "names": [
+   "Georgia Pro Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-LightItalic.ttf",
+  "names": [
+   "Georgia Pro Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-Regular.ttf",
+  "names": [
+   "Georgia Pro"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-SemiBold.ttf",
+  "names": [
+   "Georgia Pro Semibold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Georgia Pro",
+  "file": "GeorgiaPro-SemiBoldItalic.ttf",
+  "names": [
+   "Georgia Pro Semibold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansBoItNova.ttf",
+  "names": [
+   "Gill Sans Nova Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansBoNova.ttf",
+  "names": [
+   "Gill Sans Nova Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondBoItNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondBoNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondExtraItNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond XBd Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondExtraNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond XBd"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondItNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondLightItNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond Lt Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondLightNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond Lt"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansCondUltraBoNova.ttf",
+  "names": [
+   "Gill Sans Nova Cond Ultra Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansItNova.ttf",
+  "names": [
+   "Gill Sans Nova Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansLightItNova.ttf",
+  "names": [
+   "Gill Sans Nova Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansLightNova.ttf",
+  "names": [
+   "Gill Sans Nova Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansNova.ttf",
+  "names": [
+   "Gill Sans Nova"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gill Sans Nova",
+  "file": "GillSansUltraBoNova.ttf",
+  "names": [
+   "Gill Sans Nova Ultra Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gisha",
+  "file": "Gisha.ttf",
+  "names": [
+   "Gisha"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gisha",
+  "file": "Gishabd.ttf",
+  "names": [
+   "Gisha Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Gungsuh",
+  "file": "Batang.ttc",
+  "names": [
+   "Batang",
+   "BatangChe",
+   "Gungsuh",
+   "GungsuhChe"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "HoloLens MDL2 Assets",
+  "file": "Holomdl2.ttf",
+  "names": [
+   "HoloLens MDL2 Assets *",
+   "HoloLens MDL2 Assets"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Impact",
+  "file": "Impact.ttf",
+  "names": [
+   "Impact"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Ink Free",
+  "file": "Inkfree.ttf",
+  "names": [
+   "Ink Free *",
+   "Ink Free"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "IrisUPC",
+  "file": "Upcib.ttf",
+  "names": [
+   "IrisUPC Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "IrisUPC",
+  "file": "Upcibi.ttf",
+  "names": [
+   "IrisUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "IrisUPC",
+  "file": "Upcii.ttf",
+  "names": [
+   "IrisUPC Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "IrisUPC",
+  "file": "Upcil.ttf",
+  "names": [
+   "IrisUPC"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Iskoola Pota",
+  "file": "Iskpota.ttf",
+  "names": [
+   "Iskoola Pota"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Iskoola Pota",
+  "file": "Iskpotab.ttf",
+  "names": [
+   "Iskoola Pota Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "JasmineUPC",
+  "file": "Upcjb.ttf",
+  "names": [
+   "JasmineUPC Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "JasmineUPC",
+  "file": "Upcjbi.ttf",
+  "names": [
+   "JasmineUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "JasmineUPC",
+  "file": "Upcji.ttf",
+  "names": [
+   "JasmineUPC Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "JasmineUPC",
+  "file": "Upcjl.ttf",
+  "names": [
+   "JasmineUPC"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Javanese Text",
+  "file": "Javatext.ttf",
+  "names": [
+   "Javanese Text"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "KaiTi",
+  "file": "Simkai.ttf",
+  "names": [
+   "KaiTi"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kalinga",
+  "file": "Kalinga.ttf",
+  "names": [
+   "Kalinga"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kalinga",
+  "file": "Kalingab.ttf",
+  "names": [
+   "Kalinga Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kartika",
+  "file": "Kartika.ttf",
+  "names": [
+   "Kartika"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kartika",
+  "file": "Kartikab.ttf",
+  "names": [
+   "Kartika Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Khmer UI",
+  "file": "KhmerUI.ttf",
+  "names": [
+   "Khmer UI"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Khmer UI",
+  "file": "KhmerUIB.ttf",
+  "names": [
+   "Khmer UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "KodchiangUPC",
+  "file": "Upckb.ttf",
+  "names": [
+   "KodchiangUPC Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "KodchiangUPC",
+  "file": "Upckbi.ttf",
+  "names": [
+   "KodchiangUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "KodchiangUPC",
+  "file": "Upcki.ttf",
+  "names": [
+   "KodchiangUPC Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "KodchiangUPC",
+  "file": "Upckl.ttf",
+  "names": [
+   "KodchiangUPC"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kokila",
+  "file": "Kokila.ttf",
+  "names": [
+   "Kokila"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kokila",
+  "file": "Kokilab.ttf",
+  "names": [
+   "Kokila Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kokila",
+  "file": "Kokilabi.ttf",
+  "names": [
+   "Kokila Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Kokila",
+  "file": "Kokilai.ttf",
+  "names": [
+   "Kokila Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Lao UI",
+  "file": "Laoui.ttf",
+  "names": [
+   "Lao UI"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Lao UI",
+  "file": "Laouib.ttf",
+  "names": [
+   "Lao UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Latha",
+  "file": "Latha.ttf",
+  "names": [
+   "Latha"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Latha",
+  "file": "Lathab.ttf",
+  "names": [
+   "Latha Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Leelawadee",
+  "file": "Leelawad.ttf",
+  "names": [
+   "Leelawadee"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Leelawadee",
+  "file": "Leelawdb.ttf",
+  "names": [
+   "Leelawadee Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Leelawadee UI",
+  "file": "Leelauib.ttf",
+  "names": [
+   "Leelawadee UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Leelawadee UI",
+  "file": "Leelawui.ttf",
+  "names": [
+   "Leelawadee UI"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Leelawadee UI",
+  "file": "Leeluisl.ttf",
+  "names": [
+   "Leelawadee UI Semilight"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Levenim MT",
+  "file": "Lvnm.ttf",
+  "names": [
+   "Levenim MT"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Levenim MT",
+  "file": "Lvnmbd.ttf",
+  "names": [
+   "Levenim MT Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "LilyUPC",
+  "file": "Upclb.ttf",
+  "names": [
+   "LilyUPC Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "LilyUPC",
+  "file": "Upclbi.ttf",
+  "names": [
+   "LilyUPC Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "LilyUPC",
+  "file": "Upcli.ttf",
+  "names": [
+   "LilyUPC Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "LilyUPC",
+  "file": "Upcll.ttf",
+  "names": [
+   "LilyUPC"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Lucida Console",
+  "file": "Lucon.ttf",
+  "names": [
+   "Lucida Console"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Lucida Sans Unicode",
+  "file": "L_10646.ttf",
+  "names": [
+   "Lucida Sans Unicode"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Malgun Gothic",
+  "file": "Malgun.ttf",
+  "names": [
+   "Malgun Gothic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Malgun Gothic",
+  "file": "Malgunbd.ttf",
+  "names": [
+   "Malgun Gothic Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Malgun Gothic",
+  "file": "Malgunsl.ttf",
+  "names": [
+   "Malgun Gothic Semilight *",
+   "Malgun Gothic Semilight"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Mangal",
+  "file": "Mangal.ttf",
+  "names": [
+   "Mangal"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Mangal",
+  "file": "MangalB.ttf",
+  "names": [
+   "Mangal Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Marlett",
+  "file": "Marlett.ttf",
+  "names": [
+   "Marlett"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Meiryo",
+  "file": "Meiryo.ttc",
+  "names": [
+   "Meiryo",
+   "Meiryo Italic",
+   "Meiryo UI",
+   "Meiryo UI Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Meiryo",
+  "file": "Meiryob.ttc",
+  "names": [
+   "Meiryo Bold",
+   "Meiryo Bold Italic",
+   "Meiryo UI Bold",
+   "Meiryo UI Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft Himalaya",
+  "file": "Himalaya.ttf",
+  "names": [
+   "Microsoft Himalaya"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft JhengHei",
+  "file": "Msjh.ttc",
+  "names": [
+   "Microsoft JhengHei",
+   "Microsoft JhengHei UI"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft JhengHei",
+  "file": "MSJHBD.ttc",
+  "names": [
+   "Microsoft JhengHei Bold",
+   "Microsoft JhengHei UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft JhengHei",
+  "file": "Msjhl.ttc",
+  "names": [
+   "Microsoft JhengHei Light",
+   "Microsoft JhengHei UI Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft New Tai Lue",
+  "file": "Ntailu.ttf",
+  "names": [
+   "Microsoft New Tai Lue"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft New Tai Lue",
+  "file": "Ntailub.ttf",
+  "names": [
+   "Microsoft New Tai Lue Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft PhagsPa",
+  "file": "Phagspa.ttf",
+  "names": [
+   "Microsoft PhagsPa"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft PhagsPa",
+  "file": "PhagsPaB.ttf",
+  "names": [
+   "Microsoft PhagsPa Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft Sans Serif",
+  "file": "Micross.ttf",
+  "names": [
+   "Microsoft Sans Serif"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft Tai Le",
+  "file": "Taile.ttf",
+  "names": [
+   "Microsoft Tai Le"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft Tai Le",
+  "file": "TaiLeb.ttf",
+  "names": [
+   "Microsoft Tai Le Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft Uighur",
+  "file": "MSUighub.ttf",
+  "names": [
+   "Microsoft Uighur Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft Uighur",
+  "file": "Msuighur.ttf",
+  "names": [
+   "Microsoft Uighur"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft YaHei",
+  "file": "Msyh.ttc",
+  "names": [
+   "Microsoft YaHei",
+   "Microsoft YaHei UI"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft YaHei",
+  "file": "Msyhbd.ttc",
+  "names": [
+   "Microsoft YaHei Bold",
+   "Microsoft YaHei UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft YaHei",
+  "file": "Msyhl.ttc",
+  "names": [
+   "Microsoft YaHei Light",
+   "Microsoft YaHei UI Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Microsoft Yi Baiti",
+  "file": "Msyi.ttf",
+  "names": [
+   "Microsoft Yi Baiti"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "MingLiU",
+  "file": "Mingliu.ttc",
+  "names": [
+   "MingLiU",
+   "MingLiU_HKSCS",
+   "PMingLiU"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "MingLiU-ExtB",
+  "file": "Mingliub.ttc",
+  "names": [
+   "MingLiU-ExtB",
+   "PMingLiU-ExtB",
+   "MingLiU_HKSCS-ExtB"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Miriam",
+  "file": "Mriam.ttf",
+  "names": [
+   "Miriam"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Miriam",
+  "file": "Mriamc.ttf",
+  "names": [
+   "Miriam Fixed"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Mongolian Baiti",
+  "file": "Monbaiti.ttf",
+  "names": [
+   "Mongolian Baiti"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "MoolBoran",
+  "file": "Moolbor.ttf",
+  "names": [
+   "MoolBoran"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "MS Gothic",
+  "file": "Msgothic.ttc",
+  "names": [
+   "MS Gothic",
+   "MS PGothic",
+   "MS UI Gothic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "MS Mincho",
+  "file": "Msmincho.ttc",
+  "names": [
+   "MS Mincho",
+   "MS PMincho"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "MV Boli",
+  "file": "Mvboli.ttf",
+  "names": [
+   "MV Boli"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Myanmar Text",
+  "file": "Mmrtext.ttf",
+  "names": [
+   "Myanmar Text"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Myanmar Text",
+  "file": "Mmrtextb.ttf",
+  "names": [
+   "Myanmar Text Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Narkisim",
+  "file": "Nrkis.ttf",
+  "names": [
+   "Narkisim"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-55Rg.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-56It.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro Italic"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-65Md.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro Medium"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-66MdIt.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro Medium Italic"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-75Bd.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro Bold"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-76BdIt.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro Bold Italic"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-It.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro UltraThin Italic *",
+   "Neue Haas Grotesk Text Pro Thin Italic *",
+   "Neue Haas Grotesk Text Pro ExtraLight Italic *",
+   "Neue Haas Grotesk Text Pro Light Italic *",
+   "Neue Haas Grotesk Text Pro Regular Italic *",
+   "Neue Haas Grotesk Text Pro Medium Italic *",
+   "Neue Haas Grotesk Text Pro Bold Italic *",
+   "Neue Haas Grotesk Text Pro Black Italic *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Neue Haas Grotesk Text Pro",
+  "file": "NHaasGroteskTXPro-Rg.ttf",
+  "names": [
+   "Neue Haas Grotesk Text Pro UltraThin *",
+   "Neue Haas Grotesk Text Pro Thin *",
+   "Neue Haas Grotesk Text Pro ExtraLight *",
+   "Neue Haas Grotesk Text Pro Light *",
+   "Neue Haas Grotesk Text Pro Regular *",
+   "Neue Haas Grotesk Text Pro Medium *",
+   "Neue Haas Grotesk Text Pro Bold *",
+   "Neue Haas Grotesk Text Pro Black *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Nirmala UI",
+  "file": "Nirmala.ttf",
+  "names": [
+   "Nirmala UI"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Nirmala UI",
+  "file": "Nirmalab.ttf",
+  "names": [
+   "Nirmala UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Nirmala UI",
+  "file": "Nirmalas.ttf",
+  "names": [
+   "Nirmala UI Semilight"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Nyala",
+  "file": "Nyala.ttf",
+  "names": [
+   "Nyala"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Palatino Linotype",
+  "file": "Pala.ttf",
+  "names": [
+   "Palatino Linotype"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Palatino Linotype",
+  "file": "Palab.ttf",
+  "names": [
+   "Palatino Linotype Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Palatino Linotype",
+  "file": "Palabi.ttf",
+  "names": [
+   "Palatino Linotype Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Palatino Linotype",
+  "file": "Palai.ttf",
+  "names": [
+   "Palatino Linotype Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Plantagenet Cherokee",
+  "file": "Plantc.ttf",
+  "names": [
+   "Plantagenet Cherokee"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Raavi",
+  "file": "Raavi.ttf",
+  "names": [
+   "Raavi"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Raavi",
+  "file": "Raavib.ttf",
+  "names": [
+   "Raavi Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova-Bold.ttf",
+  "names": [
+   "Rockwell Nova Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova-BoldItalic.ttf",
+  "names": [
+   "Rockwell Nova Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova-ExtraBold.ttf",
+  "names": [
+   "Rockwell Nova Extra Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova-ExtraBoldItalic.ttf",
+  "names": [
+   "Rockwell Nova Extra Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova-Italic.ttf",
+  "names": [
+   "Rockwell Nova Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova-Light.ttf",
+  "names": [
+   "Rockwell Nova Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova-LightItalic.ttf",
+  "names": [
+   "Rockwell Nova Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNova.ttf",
+  "names": [
+   "Rockwell Nova"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNovaCond-Bold.ttf",
+  "names": [
+   "Rockwell Nova Cond Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNovaCond-BoldItalic.ttf",
+  "names": [
+   "Rockwell Nova Cond Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNovaCond-Italic.ttf",
+  "names": [
+   "Rockwell Nova Cond Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNovaCond-Light.ttf",
+  "names": [
+   "Rockwell Nova Cond Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNovaCond-LightItalic.ttf",
+  "names": [
+   "Rockwell Nova Cond Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rockwell Nova",
+  "file": "RockwellNovaCond.ttf",
+  "names": [
+   "Rockwell Nova Cond"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Rod",
+  "file": "Rod.ttf",
+  "names": [
+   "Rod"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Sakkal Majalla",
+  "file": "Majalla.ttf",
+  "names": [
+   "Sakkal Majalla"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Sakkal Majalla",
+  "file": "Majallab.ttf",
+  "names": [
+   "Sakkal Majalla Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Sanskrit Text",
+  "file": "Sanskr.ttf",
+  "names": [
+   "Sanskrit Text *",
+   "Sanskrit Text"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe Fluent Icons",
+  "file": "SegoeIcons.ttf",
+  "names": [
+   "Segoe Fluent Icons *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe MDL2 Assets",
+  "file": "Segmdl2.ttf",
+  "names": [
+   "Segoe MDL2 Assets *",
+   "Segoe MDL2 Assets"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe Print",
+  "file": "Segoepr.ttf",
+  "names": [
+   "Segoe Print"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe Print",
+  "file": "Segoeprb.ttf",
+  "names": [
+   "Segoe Print Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe Script",
+  "file": "Segoesc.ttf",
+  "names": [
+   "Segoe Script"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe Script",
+  "file": "Segoescb.ttf",
+  "names": [
+   "Segoe Script Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Segoeui.ttf",
+  "names": [
+   "Segoe UI"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Segoeuib.ttf",
+  "names": [
+   "Segoe UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Segoeuii.ttf",
+  "names": [
+   "Segoe UI Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Segoeuil.ttf",
+  "names": [
+   "Segoe UI Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Segoeuisl.ttf",
+  "names": [
+   "Segoe UI Semilight"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Segoeuiz.ttf",
+  "names": [
+   "Segoe UI Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Seguibl.ttf",
+  "names": [
+   "Segoe UI Black"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Seguibli.ttf",
+  "names": [
+   "Segoe UI Black Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Seguili.ttf",
+  "names": [
+   "Segoe UI Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Seguisb.ttf",
+  "names": [
+   "Segoe UI Semibold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Seguisbi.ttf",
+  "names": [
+   "Segoe UI Semibold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI",
+  "file": "Seguisli.ttf",
+  "names": [
+   "Segoe UI Semilight Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI Emoji",
+  "file": "Seguiemj.ttf",
+  "names": [
+   "Segoe UI Emoji"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI Historic",
+  "file": "Seguihis.ttf",
+  "names": [
+   "Segoe UI Historic *",
+   "Segoe UI Historic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI Symbol",
+  "file": "Seguisym.ttf",
+  "names": [
+   "Segoe UI Symbol"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Segoe UI Variable",
+  "file": "SegUIVar.ttf",
+  "names": [
+   "Segoe UI Variable Display Light *",
+   "Segoe UI Variable Display Semilight *",
+   "Segoe UI Variable Display Regular *",
+   "Segoe UI Variable Display Semibold *",
+   "Segoe UI Variable Display Bold *",
+   "Segoe UI Variable Small Light *",
+   "Segoe UI Variable Small Semilight *",
+   "Segoe UI Variable Small Regular *",
+   "Segoe UI Variable Small Semibold *",
+   "Segoe UI Variable Small Bold *",
+   "Segoe UI Variable Text Light *",
+   "Segoe UI Variable Text Semilight *",
+   "Segoe UI Variable Text Regular *",
+   "Segoe UI Variable Text Semibold *",
+   "Segoe UI Variable Text Bold *"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Shonar Bangla",
+  "file": "Shonar.ttf",
+  "names": [
+   "Shonar Bangla"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Shonar Bangla",
+  "file": "Shonarb.ttf",
+  "names": [
+   "Shonar Bangla Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Shruti",
+  "file": "Shruti.ttf",
+  "names": [
+   "Shruti"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Shruti",
+  "file": "Shrutib.ttf",
+  "names": [
+   "Shruti Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "SimHei",
+  "file": "Simhei.ttf",
+  "names": [
+   "SimHei"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Simplified Arabic",
+  "file": "Simpbdo.ttf",
+  "names": [
+   "Simplified Arabic Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Simplified Arabic",
+  "file": "Simpfxo.ttf",
+  "names": [
+   "Simplified Arabic Fixed"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Simplified Arabic",
+  "file": "Simpo.ttf",
+  "names": [
+   "Simplified Arabic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "SimSun",
+  "file": "Simsun.ttc",
+  "names": [
+   "SimSun",
+   "NSimSun"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "SimSun",
+  "file": "Simsunb.ttf",
+  "names": [
+   "SimSun-ExtB"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Sitka",
+  "file": "Sitka.ttc",
+  "names": [
+   "Sitka Small",
+   "Sitka Text",
+   "Sitka Subheading",
+   "Sitka Heading",
+   "Sitka Display",
+   "Sitka Banner"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Sitka",
+  "file": "SitkaB.ttc",
+  "names": [
+   "Sitka Small Bold",
+   "Sitka Text Bold",
+   "Sitka Subheading Bold",
+   "Sitka Heading Bold",
+   "Sitka Display Bold",
+   "Sitka Banner Bold"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Sitka",
+  "file": "SitkaI.ttc",
+  "names": [
+   "Sitka Small Italic",
+   "Sitka Text Italic",
+   "Sitka Subheading Italic",
+   "Sitka Heading Italic",
+   "Sitka Display Italic",
+   "Sitka Banner Italic"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Sitka",
+  "file": "SitkaVF-Italic.ttf",
+  "names": [
+   "Sitka Banner Italic",
+   "Sitka Banner Semibold Italic *",
+   "Sitka Banner Bold Italic",
+   "Sitka Display Italic",
+   "Sitka Display Semibold Italic *",
+   "Sitka Display Bold Italic",
+   "Sitka Small Italic",
+   "Sitka Small Semibold Italic *",
+   "Sitka Small Bold Italic",
+   "Sitka Heading Italic",
+   "Sitka Heading Semibold Italic *",
+   "Sitka Heading Bold Italic",
+   "Sitka Subheading Italic",
+   "Sitka Subheading Semibold Italic *",
+   "Sitka Subheading Bold Italic",
+   "Sitka Text Italic",
+   "Sitka Text Semibold Italic *",
+   "Sitka Text Bold Italic"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Sitka",
+  "file": "SitkaVF.ttf",
+  "names": [
+   "Sitka Banner",
+   "Sitka Banner Semibold *",
+   "Sitka Banner Bold",
+   "Sitka Display",
+   "Sitka Display Semibold *",
+   "Sitka Display Bold",
+   "Sitka Small",
+   "Sitka Small Semibold *",
+   "Sitka Small Bold",
+   "Sitka Heading",
+   "Sitka Heading Semibold *",
+   "Sitka Heading Bold",
+   "Sitka Subheading",
+   "Sitka Subheading Semibold *",
+   "Sitka Subheading Bold",
+   "Sitka Text",
+   "Sitka Text Semibold *",
+   "Sitka Text Bold"
+  ],
+  "os": [
+   "win11"
+  ]
+ },
+ {
+  "family": "Sitka",
+  "file": "SitkaZ.ttc",
+  "names": [
+   "Sitka Small Bold Italic",
+   "Sitka Text Bold Italic",
+   "Sitka Subheading Bold Italic",
+   "Sitka Heading Bold Italic",
+   "Sitka Display Bold Italic",
+   "Sitka Banner Bold Italic"
+  ],
+  "os": [
+   "win10"
+  ]
+ },
+ {
+  "family": "Sylfaen",
+  "file": "Sylfaen.ttf",
+  "names": [
+   "Sylfaen"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Symbol",
+  "file": "Symbol.ttf",
+  "names": [
+   "Symbol"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Tahoma",
+  "file": "Tahoma.ttf",
+  "names": [
+   "Tahoma"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Tahoma",
+  "file": "Tahomabd.ttf",
+  "names": [
+   "Tahoma Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Times New Roman",
+  "file": "Times.ttf",
+  "names": [
+   "Times New Roman"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Times New Roman",
+  "file": "Timesbd.ttf",
+  "names": [
+   "Times New Roman Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Times New Roman",
+  "file": "Timesbi.ttf",
+  "names": [
+   "Times New Roman Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Times New Roman",
+  "file": "Timesi.ttf",
+  "names": [
+   "Times New Roman Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Traditional Arabic",
+  "file": "Tradbdo.ttf",
+  "names": [
+   "Traditional Arabic Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Traditional Arabic",
+  "file": "Trado.ttf",
+  "names": [
+   "Traditional Arabic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Trebuchet MS",
+  "file": "Trebuc.ttf",
+  "names": [
+   "Trebuchet MS"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Trebuchet MS",
+  "file": "Trebucbd.ttf",
+  "names": [
+   "Trebuchet MS Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Trebuchet MS",
+  "file": "Trebucbi.ttf",
+  "names": [
+   "Trebuchet MS Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Trebuchet MS",
+  "file": "Trebucit.ttf",
+  "names": [
+   "Trebuchet MS Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Tunga",
+  "file": "Tunga.ttf",
+  "names": [
+   "Tunga"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Tunga",
+  "file": "Tungab.ttf",
+  "names": [
+   "Tunga Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "UD Digi Kyokasho",
+  "file": "UDDigiKyokashoN-B.ttc",
+  "names": [
+   "UD Digi Kyokasho N-B *",
+   "UD Digi Kyokasho NK-B *",
+   "UD Digi Kyokasho NP-B *",
+   "UD Digi Kyokasho N-B",
+   "UD Digi Kyokasho NK-B",
+   "UD Digi Kyokasho NP-B"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "UD Digi Kyokasho",
+  "file": "UDDigiKyokashoN-R.ttc",
+  "names": [
+   "UD Digi Kyokasho NK-R *",
+   "UD Digi Kyokasho NP-R *",
+   "UD Digi Kyokasho N-R *",
+   "UD Digi Kyokasho NK-R",
+   "UD Digi Kyokasho NP-R",
+   "UD Digi Kyokasho N-R"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Urdu Typesetting",
+  "file": "UrdType.ttf",
+  "names": [
+   "Urdu Typesetting"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Urdu Typesetting",
+  "file": "UrdTypeb.ttf",
+  "names": [
+   "Urdu Typesetting Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Utsaah",
+  "file": "Utsaah.ttf",
+  "names": [
+   "Utsaah"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Utsaah",
+  "file": "Utsaahb.ttf",
+  "names": [
+   "Utsaah Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Utsaah",
+  "file": "Utsaahbi.ttf",
+  "names": [
+   "Utsaah Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Utsaah",
+  "file": "Utsaahi.ttf",
+  "names": [
+   "Utsaah Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Vani",
+  "file": "Vani.ttf",
+  "names": [
+   "Vani"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Vani",
+  "file": "Vanib.ttf",
+  "names": [
+   "Vani Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana",
+  "file": "Verdana.ttf",
+  "names": [
+   "Verdana"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana",
+  "file": "Verdanab.ttf",
+  "names": [
+   "Verdana Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana",
+  "file": "Verdanai.ttf",
+  "names": [
+   "Verdana Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana",
+  "file": "Verdanaz.ttf",
+  "names": [
+   "Verdana Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-Black.ttf",
+  "names": [
+   "Verdana Pro Black"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-BlackItalic.ttf",
+  "names": [
+   "Verdana Pro Black Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-Bold.ttf",
+  "names": [
+   "Verdana Pro Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-BoldItalic.ttf",
+  "names": [
+   "Verdana Pro Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondBlack.ttf",
+  "names": [
+   "Verdana Pro Cond Black"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondBlackItalic.ttf",
+  "names": [
+   "Verdana Pro Cond Black Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondBold.ttf",
+  "names": [
+   "Verdana Pro Cond Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondBoldItalic.ttf",
+  "names": [
+   "Verdana Pro Cond Bold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondItalic.ttf",
+  "names": [
+   "Verdana Pro Cond Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondLight.ttf",
+  "names": [
+   "Verdana Pro Cond Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondLightItalic.ttf",
+  "names": [
+   "Verdana Pro Cond Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondRegular.ttf",
+  "names": [
+   "Verdana Pro Cond"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondSemiBold.ttf",
+  "names": [
+   "Verdana Pro Cond SemiBold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-CondSemiBoldItalic.ttf",
+  "names": [
+   "Verdana Pro Cond SemiBold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-Italic.ttf",
+  "names": [
+   "Verdana Pro Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-Light.ttf",
+  "names": [
+   "Verdana Pro Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-LightItalic.ttf",
+  "names": [
+   "Verdana Pro Light Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-Regular.ttf",
+  "names": [
+   "Verdana Pro"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-SemiBold.ttf",
+  "names": [
+   "Verdana Pro SemiBold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Verdana Pro",
+  "file": "VerdanaPro-SemiBoldItalic.ttf",
+  "names": [
+   "Verdana Pro SemiBold Italic"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Vijaya",
+  "file": "Vijaya.ttf",
+  "names": [
+   "Vijaya"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Vijaya",
+  "file": "Vijayab.ttf",
+  "names": [
+   "Vijaya Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Vrinda",
+  "file": "Vrinda.ttf",
+  "names": [
+   "Vrinda"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Vrinda",
+  "file": "Vrindab.ttf",
+  "names": [
+   "Vrinda Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Webdings",
+  "file": "Webdings.ttf",
+  "names": [
+   "Webdings"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Wingdings",
+  "file": "Wingding.ttf",
+  "names": [
+   "Wingdings"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Yu Gothic",
+  "file": "YuGothB.ttc",
+  "names": [
+   "Yu Gothic Bold",
+   "Yu Gothic UI Semibold *",
+   "Yu Gothic UI Bold *",
+   "Yu Gothic UI Semibold",
+   "Yu Gothic UI Bold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Yu Gothic",
+  "file": "YuGothL.ttc",
+  "names": [
+   "Yu Gothic Light",
+   "Yu Gothic UI Light *",
+   "Yu Gothic UI Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Yu Gothic",
+  "file": "Yugothm.ttc",
+  "names": [
+   "Yu Gothic Medium *",
+   "Yu Gothic UI Regular *",
+   "Yu Gothic Medium",
+   "Yu Gothic UI Regular"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Yu Gothic",
+  "file": "YuGothR.ttc",
+  "names": [
+   "Yu Gothic Regular",
+   "Yu Gothic UI Semilight *",
+   "Yu Gothic UI Semilight"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Yu Mincho",
+  "file": "Yumin.ttf",
+  "names": [
+   "Yu Mincho Regular"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Yu Mincho",
+  "file": "Yumindb.ttf",
+  "names": [
+   "Yu Mincho Demibold"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ },
+ {
+  "family": "Yu Mincho",
+  "file": "Yuminl.ttf",
+  "names": [
+   "Yu Mincho Light"
+  ],
+  "os": [
+   "win10",
+   "win11"
+  ]
+ }
+]

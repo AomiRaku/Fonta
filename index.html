@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light" data-theme-mode="system" data-view="compact">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' asset: http://asset.localhost data:; img-src 'self' asset: http://asset.localhost data:; script-src 'self'"
+    />
+    <title>FontFox / 字狐</title>
+    <style>
+      /* 启动遮罩：样式表加载前就要生效，所以写成内联 */
+      #splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #f7f7f8;
+      }
+      @media (prefers-color-scheme: dark) {
+        #splash {
+          background: #08090a;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="splash" aria-hidden="true"></div>
+    <div id="app" class="app">
+      <aside class="sidebar" aria-label="字体库" data-i18n-aria="sidebar.label">
+        <div class="sidebar__brand" data-tauri-drag-region>
+          <div class="brand" data-tauri-drag-region>
+            <span class="brand__mark" aria-hidden="true" data-tauri-drag-region></span>
+            <span class="brand__name" data-i18n="app.brandName" data-tauri-drag-region>FontFox</span>
+            <span class="brand__cn" data-i18n="app.brand" data-tauri-drag-region>字狐</span>
+          </div>
+        </div>
+
+        <div class="sidebar__top">
+          <button id="nav-all" class="sidebar__item is-active" type="button">
+            <span class="icon-slot" data-icon="data-type-string"></span>
+            <span data-i18n="sidebar.allFonts">全部字体</span>
+            <span id="count-all" class="sidebar__count"></span>
+          </button>
+          <button id="nav-favorites" class="sidebar__item" type="button">
+            <span class="icon-slot" data-icon="heart-filled"></span>
+            <span data-i18n="sidebar.favorites">收藏字体</span>
+            <span id="count-favorites" class="sidebar__count"></span>
+          </button>
+          <button id="nav-hidden" class="sidebar__item" type="button">
+            <span class="icon-slot" data-icon="eye-cancelled-filled"></span>
+            <span data-i18n="sidebar.hidden">已停用</span>
+            <span id="count-hidden" class="sidebar__count"></span>
+          </button>
+          <button id="nav-missing" class="sidebar__item" type="button" hidden>
+            <span class="icon-slot" data-icon="error-filled"></span>
+            <span data-i18n="sidebar.missing">缺失字体</span>
+            <span id="count-missing" class="sidebar__count"></span>
+          </button>
+        </div>
+
+        <div class="sidebar__section">
+          <span class="sidebar__section-head sidebar__section-head--static" data-i18n="sidebar.collections">字体单</span>
+          <button id="collection-add" class="icon-btn sidebar__add" type="button" title="新建字体单" aria-label="新建字体单" data-i18n-title="sidebar.addCollection" data-i18n-aria="sidebar.addCollection">
+            <span class="icon-slot" data-icon="add"></span>
+          </button>
+        </div>
+
+        <div id="collections" class="sidebar__collections"></div>
+        <div id="collections-empty" class="sidebar__hint" data-i18n="sidebar.emptyCollections" hidden>还未创建字体单</div>
+
+        <div class="sidebar__bottom">
+          <button id="sidebar-more" class="sidebar__item" type="button" aria-haspopup="menu">
+            <span class="icon-slot" data-icon="app-menu"></span>
+            <span data-i18n="sidebar.more">更多</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="main">
+        <header class="titlebar" data-tauri-drag-region>
+          <div class="titlebar__spacer" data-tauri-drag-region></div>
+
+          <div class="window-actions">
+            <button id="theme" class="icon-btn" type="button" data-i18n-title="window.toggleTheme" data-i18n-aria="window.toggleTheme" title="切换深浅色" aria-label="切换深浅色">
+              <span class="icon-slot icon-sun" data-icon="sun"></span>
+              <span class="icon-slot icon-moon" data-icon="moon"></span>
+              <span class="icon-slot icon-auto" data-icon="screen"></span>
+            </button>
+  
+            <span class="window-actions__sep" aria-hidden="true"></span>
+  
+            <button id="win-min" class="icon-btn icon-btn--window" type="button" data-i18n-title="window.minimize" data-i18n-aria="window.minimize" title="最小化" aria-label="最小化">
+              <span class="icon-slot" data-icon="minus"></span>
+            </button>
+            <button id="win-max" class="icon-btn icon-btn--window" type="button" data-i18n-title="window.maximize" data-i18n-aria="window.maximize" title="最大化" aria-label="最大化">
+              <span class="icon-slot icon-max" data-icon="maximize"></span>
+              <span class="icon-slot icon-restore" data-icon="restore"></span>
+            </button>
+            <button id="win-close" class="icon-btn icon-btn--window icon-btn--close" type="button" data-i18n-title="window.close" data-i18n-aria="window.close" title="关闭" aria-label="关闭">
+              <span class="icon-slot" data-icon="close"></span>
+            </button>
+          </div>
+        </header>
+
+        <div class="toolbar">
+          <div class="search">
+            <span class="icon-slot search__icon" data-icon="search"></span>
+            <input
+              id="search"
+              class="search__input"
+              type="search"
+              placeholder="搜索名称 / 文件名" data-i18n-placeholder="toolbar.search"
+              spellcheck="false"
+              autocomplete="off"
+              aria-label="搜索字体" data-i18n-aria="toolbar.searchLabel"
+            />
+            <button id="search-clear" class="field__clear" type="button" hidden aria-label="清空搜索" data-i18n-aria="toolbar.clearSearch">
+              <span class="icon-slot" data-icon="close"></span>
+            </button>
+          </div>
+
+          <button id="filter" class="icon-btn" type="button" title="筛选" aria-label="筛选" data-i18n-title="toolbar.filter" data-i18n-aria="toolbar.filter" aria-expanded="false">
+            <span class="icon-slot icon-slot--filter" data-icon="filter"></span>
+            <span id="filter-label" class="filter-label" hidden></span>
+          </button>
+
+
+
+          <div class="toolbar__spacer"></div>
+
+          <button id="group" class="icon-btn" type="button" aria-pressed="false" aria-haspopup="menu"
+            title="分组依据" aria-label="分组依据"
+            data-i18n-title="toolbar.group" data-i18n-aria="toolbar.group">
+            <span class="icon-slot" data-icon="list-graphics-text"></span>
+          </button>
+
+          <div id="view-cluster" class="cluster cluster--view" role="group" data-active="compact" aria-label="视图模式" data-i18n-aria="toolbar.viewGroup">
+            <span id="seg-thumb" class="seg-thumb" aria-hidden="true"></span>
+            <button class="seg" data-view="compact" type="button" data-i18n-title="toolbar.compact" data-i18n-aria="toolbar.compact" title="紧凑" aria-label="紧凑">
+              <span class="icon-slot" data-icon="table-rows"></span>
+            </button>
+            <button class="seg" data-view="preview" type="button" data-i18n-title="toolbar.preview" data-i18n-aria="toolbar.preview" title="预览" aria-label="预览">
+              <span class="icon-slot" data-icon="text-alignment-justified"></span>
+            </button>
+          </div>
+
+          <div class="cluster cluster--preview">
+            <input
+              id="preview-text"
+              class="input input--preview"
+              type="text"
+              placeholder="输入文字预览" data-i18n-placeholder="toolbar.previewInput"
+              spellcheck="false"
+              aria-label="预览文本" data-i18n-aria="toolbar.previewLabel"
+            />
+            <button id="preview-clear" class="field__clear" type="button" hidden aria-label="清空预览文字" data-i18n-aria="toolbar.clearPreview">
+              <span class="icon-slot" data-icon="close"></span>
+            </button>
+
+          </div>
+
+          <button id="detail-toggle" class="icon-btn" type="button" aria-pressed="true"
+            title="收起详细信息" aria-label="收起详细信息"
+            data-i18n-title="toolbar.hideDetail" data-i18n-aria="toolbar.hideDetail">
+            <span class="icon-slot" data-icon="navigation-right-hide"></span>
+          </button>
+
+
+        </div>
+
+        <main class="workspace">
+          <section class="pane pane--list" aria-label="字体列表" data-i18n-aria="list.label">
+            <div class="list-head" data-mode="compact">
+              <button class="col col--name col--sort" type="button" data-sort="name" data-i18n-aria="list.sortByName" aria-label="按字体名称排序">
+                <span data-i18n="list.colName">字体名称</span><span class="col__mark" aria-hidden="true"></span>
+              </button>
+  
+              <button class="col col--lang col--sort" type="button" data-sort="language" data-i18n-aria="list.sortByLanguage" aria-label="按语言排序">
+                <span data-i18n="list.colLanguage">语言</span><span class="col__mark" aria-hidden="true"></span>
+              </button>
+              <button class="col col--size col--sort" type="button" data-sort="size" data-i18n-aria="list.sortBySize" aria-label="按大小排序">
+                <span data-i18n="list.colSize">大小</span><span class="col__mark" aria-hidden="true"></span>
+              </button>
+              <button class="col col--switch col--sort" type="button" data-sort="enabled" data-i18n-aria="list.sortByEnabled" aria-label="按启用状态排序">
+                <span data-i18n="list.colEnabled">状态</span><span class="col__mark" aria-hidden="true"></span>
+              </button>
+            </div>
+            <div class="list-head" data-mode="preview">
+              <button class="col col--name col--sort" type="button" data-sort="name" data-i18n-aria="list.sortByName" aria-label="按字体名称排序">
+                <span data-i18n="list.colName">字体名称</span><span class="col__mark" aria-hidden="true"></span>
+              </button>
+              <span class="col col--preview" data-i18n="list.colPreview">预览</span>
+              <button class="col col--switch col--sort" type="button" data-sort="enabled" data-i18n-aria="list.sortByEnabled" aria-label="按启用状态排序">
+                <span data-i18n="list.colEnabled">状态</span><span class="col__mark" aria-hidden="true"></span>
+              </button>
+            </div>
+
+            <div id="group-pin" class="group-pin" hidden></div>
+
+            <div id="viewport" class="viewport" tabindex="0">
+              <div id="spacer" class="spacer">
+                <div id="rows" class="rows"></div>
+              </div>
+              <div id="empty" class="empty" hidden>
+                <div id="empty-title" class="empty__title" data-i18n="list.emptyNoMatch">没有匹配的字体</div>
+                <div id="empty-hint" class="empty__hint" data-i18n="list.emptyEsc">按 Esc 清空搜索条件</div>
+              </div>
+            </div>
+
+
+          </section>
+
+          <aside id="detail" class="pane pane--detail" aria-label="字体详情" data-i18n-aria="list.detailLabel">
+            <div class="detail__empty">
+              <div class="detail__empty-title" data-i18n="list.detailEmpty">未选择字体</div>
+              <div class="detail__empty-hint" data-i18n="list.detailEmptyHint">在左侧点选任意字体查看详情</div>
+            </div>
+          </aside>
+        </main>
+
+
+      </div>
+    </div>
+
+    <div id="toast-stack" class="toast-stack" role="status" aria-live="polite"></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

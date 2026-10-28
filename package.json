@@ -1,0 +1,30 @@
+{
+  "name": "fontfox",
+  "private": true,
+  "version": "0.1.0",
+  "description": "FontFox / 字狐 — Windows 字体管理器",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "predev": "node tools/copy-lang.mjs debug",
+    "dev": "vite",
+    "prebuild": "node tools/copy-lang.mjs both",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build",
+    "tauri:build:exe": "tauri build --no-bundle"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.9.0",
+    "@tauri-apps/plugin-clipboard-manager": "^2.5.0"
+  },
+  "devDependencies": {
+    "@siemens/ix-icons": "^3.7.0",
+    "@tauri-apps/cli": "^2.9.1",
+    "@types/node": "^26.6.5",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12"
+  }
+}

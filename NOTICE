@@ -1,0 +1,78 @@
+FontFox / 字狐
+Copyright (c) 2026 Raku Inkyetta 羽梦千景
+
+This product is licensed under the Apache License, Version 2.0 (the "License").
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
+
+--------------------------------------------------------------------------------
+第三方组件 / Third-party components
+--------------------------------------------------------------------------------
+
+FontFox 以源码依赖的方式使用以下组件。各组件版权归其各自作者所有，
+完整许可证文本随依赖源码分发（可通过 `cargo metadata` 与 `node_modules` 查看）。
+
+Rust 依赖
+  tauri                         Apache-2.0 OR MIT    https://tauri.app
+  tauri-plugin-clipboard-manager Apache-2.0 OR MIT   https://tauri.app
+  ttf-parser                    Apache-2.0 OR MIT    https://github.com/harfbuzz/ttf-parser
+  winreg                        MIT                  https://github.com/gentoo90/winreg-rs
+  rayon                         Apache-2.0 OR MIT    https://github.com/rayon-rs/rayon
+  serde                         Apache-2.0 OR MIT    https://github.com/serde-rs/serde
+  serde_json                    Apache-2.0 OR MIT    https://github.com/serde-rs/json
+  windows-sys                   Apache-2.0 OR MIT    https://github.com/microsoft/windows-rs
+
+前端依赖
+  @tauri-apps/api               Apache-2.0 OR MIT    https://tauri.app
+  @tauri-apps/plugin-clipboard-manager
+                                Apache-2.0 OR MIT    https://tauri.app
+
+构建工具
+  vite                          MIT                  https://vite.dev
+  typescript                    Apache-2.0           https://www.typescriptlang.org
+
+图标资源
+  @siemens/ix-icons             MIT                  https://github.com/siemens/ix-icons
+  Copyright (c) 2022 Siemens AG
+
+  界面中的图标（窗口控制、主题切换、搜索、筛选、分组、复制、关闭、锁标记等）
+  取自该图标库，在构建时以 SVG 源码内联进应用包，随本产品一同分发。
+  分组标题的加号 / 减号由本项目管理，不来自该图标库。
+
+  MIT License
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+内置数据
+  Windows 10 / 11 官方字体清单快照取自 Microsoft Learn
+  （https://learn.microsoft.com/en-us/typography/fonts/），仅用于判定受保护的
+  系统字体，不包含任何字体文件。
+
+--------------------------------------------------------------------------------
+字体文件
+--------------------------------------------------------------------------------
+
+FontFox 不内置任何字体文件。界面文本使用系统 UI 字体栈；字体列表中的预览字形
+直接加载本机已安装的字体文件，不随产品分发。
