@@ -360,11 +360,11 @@ export function renderDetail(
   }
   fontRows.push(kv(t("detail.fullName"), entry.fullName || entry.displayName));
   // 语言按字形覆盖判定，可能有很多种，全部列出
-  // 符号 / 图标字体通常判不出语言，显示「其他」而不是整行缺失
+  // 符号 / 图标字体通常判不出语言，与列表一致显示「未知」
   fontRows.push(
     kv(
       t("detail.language"),
-      entry.languages?.length ? entry.languages.join("、") : t("language.other"),
+      entry.languages?.length ? entry.languages.join("、") : t("language.unknown"),
     ),
   );
   if (entry.version) fontRows.push(kv(t("detail.version"), entry.version));
