@@ -26,11 +26,13 @@ export interface PreviewRequest {
   fontSize: number;
   /** `#rrggbb` */
   color: string;
+  /** 折行宽度（CSS px）；0 / 缺省表示不折行 */
+  maxWidth?: number;
 }
 
 function keyOf(request: PreviewRequest): string {
   const dpr = window.devicePixelRatio || 1;
-  return `${request.entry.path}|${request.fontSize}|${request.color}|${dpr}|${request.text}`;
+  return `${request.entry.path}|${request.fontSize}|${request.color}|${dpr}|${request.maxWidth ?? 0}|${request.text}`;
 }
 
 /** 把 `rgb(r, g, b)` / `#rrggbb` 统一成 `#rrggbb`。 */
@@ -92,6 +94,7 @@ export class PreviewPool {
       size: request.fontSize,
       color: request.color,
       dpr,
+      maxWidth: request.maxWidth && request.maxWidth > 0 ? request.maxWidth : null,
     })
       .then((url) => {
         const waiting = this.waiters.get(key) ?? [];

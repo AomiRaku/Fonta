@@ -30,9 +30,6 @@ export interface RowContext {
   handlers: RowHandlers;
 }
 
-/** 预览字体缺字时回退到界面无衬线字体，避免中文被替换成宋体等衬线字形。 */
-export const PREVIEW_FALLBACK_STACK =
-  'system-ui, "Segoe UI", "Microsoft YaHei", sans-serif';
 
 export const ROW_H = 38;
 export const PREVIEW_ROW_H = 76;

@@ -110,20 +110,26 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): HTMLElem
   text.textContent = content;
   box.appendChild(text);
   const color = toHexColor(getComputedStyle(document.body).color);
-  ctx.pool.request(
-    { entry, text: content, fontSize: DETAIL_SAMPLE_SIZE, color },
-    (url) => {
-      if (!url) {
-        text.style.color = "var(--muted)";
-        return;
-      }
-      const image = document.createElement("img");
-      image.className = "detail__preview-img";
-      image.alt = "";
-      image.src = url;
-      text.replaceWith(image);
-    },
-  );
+  // 等面板挂进 DOM 拿到可用宽度，再按该宽度折行渲染
+  requestAnimationFrame(() => {
+    const style = getComputedStyle(box);
+    const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    const available = Math.max(120, box.clientWidth - (Number.isFinite(padding) ? padding : 0));
+    ctx.pool.request(
+      { entry, text: content, fontSize: DETAIL_SAMPLE_SIZE, color, maxWidth: available },
+      (url) => {
+        if (!url) {
+          text.style.color = "var(--muted)";
+          return;
+        }
+        const image = document.createElement("img");
+        image.className = "detail__preview-img";
+        image.alt = "";
+        image.src = url;
+        text.replaceWith(image);
+      },
+    );
+  });
   return box;
 }
 

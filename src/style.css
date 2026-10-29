@@ -923,6 +923,12 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   height: auto;
 }
 
+/* 图片被列宽裁切时用渐变淡出，而不是硬截断 */
+.row__preview:has(> .row__preview-img) {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent);
+}
+
 .row__preview--fallback {
   color: var(--muted);
 }
