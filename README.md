@@ -82,8 +82,8 @@ tools/              图标生成、官方清单抓取、语言包复制脚本
 
 ## 开发者
 
-- 详细开发文档，请参阅 [FontFox 开发文档](docs/architecture.md) 。
-- 架构相关，请参阅 [FontFox 架构说明](docs/development.md) 。
+- 详细开发文档，请参阅 [FontFox 开发文档](docs/development.md) 。
+- 架构相关，请参阅 [FontFox 架构说明](docs/architecture.md) 。
 - UI规范相关，请参阅 [FontFox UI 规范](docs/ui-spec.md) 。
 
 
