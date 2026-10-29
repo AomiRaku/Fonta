@@ -11,7 +11,10 @@
 //! 而不是用系统字体冒充该字体的字形。`max_width > 0` 时按词 / 字符折行。
 
 use std::collections::{HashMap, VecDeque};
-use std::sync::{Mutex, OnceLock};
+use std::fs::File;
+use std::sync::{Arc, Mutex, OnceLock};
+
+use memmap2::Mmap;
 
 use ab_glyph::{Font, FontRef, Glyph, GlyphId, PxScale, ScaleFont, VariableFont, point};
 use base64::Engine;
@@ -33,26 +36,173 @@ pub fn render(
     dpr: f32,
     max_width: f32,
     weight: f32,
+    fresh: bool,
 ) -> Result<String, String> {
+    // 符号 / 图标字体可能完全不包含预览文字里的字符：改用字体自己的字符集取样
+    let text = resolve_text(path, text);
     let key = format!("{path}|{text}|{size}|{dpr}|{color}|{max_width}|{weight}");
-    if let Some(hit) = cache_lookup(&key) {
-        return Ok(hit);
+    if !fresh {
+        if let Some(hit) = cache_lookup(&key) {
+            return Ok(hit);
+        }
     }
 
-    let bytes = std::fs::read(path).map_err(|error| format!("读取字体失败：{error}"))?;
-    let mut font =
-        FontRef::try_from_slice(&bytes).map_err(|error| format!("解析字体失败：{error}"))?;
+    let mapped = font_map(path)?;
+    let glyphs = glyph_map(path)?;
+    let mut font = FontRef::try_from_slice(&mapped[..])
+        .map_err(|error| format!("解析字体失败：{error}"))?;
     if weight > 0.0 {
         // 可变字体：按调用方给的字重实例化（Regular 或可变范围的中点）
         font.set_variation(b"wght", weight);
     }
-    let data_url = rasterize(&font, text, size, color, dpr, max_width)?;
-    cache_store(key, data_url.clone());
+    let data_url = rasterize(&font, &glyphs, &text, size, color, dpr, max_width)?;
+    if !fresh {
+        cache_store(key, data_url.clone());
+    }
     Ok(data_url)
+}
+
+/// 预览文本在该字体里一个字形都没有时，从字体自己的 cmap 取样一行字。
+/// 这样符号 / 图标字体不会预览成空白，而是显示它真正拥有的字符。
+fn resolve_text(path: &str, raw: &str) -> String {
+    static RESOLVED: OnceLock<Mutex<VecDeque<(String, String)>>> = OnceLock::new();
+    let key = format!("{path}|{raw}");
+    if let Ok(mut cache) = RESOLVED.get_or_init(|| Mutex::new(VecDeque::new())).lock() {
+        if let Some(position) = cache.iter().position(|(item, _)| *item == key) {
+            if let Some(value) = cache.remove(position) {
+                let text = value.1.clone();
+                cache.push_back(value);
+                return text;
+            }
+        }
+    }
+
+    let mut resolved = raw.to_string();
+    if let Ok(glyphs) = glyph_map(path) {
+        // 空格几乎在所有字体里都有，判定覆盖时要忽略空白字符
+        let has_any = raw
+            .chars()
+            .filter(|ch| !ch.is_whitespace())
+            .any(|ch| glyphs.contains_key(&(ch as u32)));
+        if !has_any {
+            if let Some(sample) = cmap_sample(&glyphs) {
+                resolved = sample;
+            }
+        }
+    }
+
+    if let Ok(mut cache) = RESOLVED.get_or_init(|| Mutex::new(VecDeque::new())).lock() {
+        cache.push_back((key, resolved.clone()));
+        while cache.len() > 256 {
+            cache.pop_front();
+        }
+    }
+    resolved
+}
+
+/// 取最多 24 个「字体里真的有字形」的字符。
+///
+/// 候选来自字体 cmap 的**全部子表**（含 Windows symbol 编码）：
+/// 例如 Wingdings 只把 ASCII 码位映射到图标，ttf-parser 的 unicode 查询会全部落空。
+/// 优先取 ASCII，其次按码位顺序。
+fn cmap_sample(glyphs: &HashMap<u32, u16>) -> Option<String> {
+    let mut candidates: Vec<u32> = (0x21..=0x7E).filter(|code| glyphs.contains_key(code)).collect();
+    let mut rest: Vec<u32> = glyphs.keys().copied().collect();
+    rest.sort_unstable();
+    candidates.extend(rest);
+    candidates.dedup();
+
+    let mut picked: Vec<char> = Vec::new();
+    for code in candidates {
+        if (0xD800..=0xDFFF).contains(&code) {
+            continue;
+        }
+        let Some(ch) = char::from_u32(code) else {
+            continue;
+        };
+        if ch.is_control() || ch.is_whitespace() {
+            continue;
+        }
+        if !picked.contains(&ch) {
+            picked.push(ch);
+        }
+        if picked.len() >= 24 {
+            break;
+        }
+    }
+    if picked.is_empty() {
+        None
+    } else {
+        Some(picked.into_iter().collect())
+    }
+}
+
+/// 字体文件的 cmap 映射（码位 -> 字形 id），包含 symbol 子表。
+fn glyph_map(path: &str) -> Result<Arc<HashMap<u32, u16>>, String> {
+    static MAPS: OnceLock<Mutex<VecDeque<(String, Arc<HashMap<u32, u16>>)>>> = OnceLock::new();
+    let cache = MAPS.get_or_init(|| Mutex::new(VecDeque::new()));
+    if let Ok(mut list) = cache.lock() {
+        if let Some(position) = list.iter().position(|(key, _)| key == path) {
+            let entry = list.remove(position).expect("index valid");
+            let value = entry.1.clone();
+            list.push_back(entry);
+            return Ok(value);
+        }
+    }
+
+    let mapped = font_map(path)?;
+    let face = ttf_parser::Face::parse(&mapped[..], 0)
+        .map_err(|error| format!("解析字体失败：{error}"))?;
+    let mut map: HashMap<u32, u16> = HashMap::new();
+    if let Some(cmap) = face.tables().cmap {
+        for table in cmap.subtables {
+            table.codepoints(|code| {
+                if let Some(id) = table.glyph_index(code) {
+                    if id.0 != 0 {
+                        map.entry(code).or_insert(id.0);
+                    }
+                }
+            });
+        }
+    }
+    let map = Arc::new(map);
+    if let Ok(mut list) = cache.lock() {
+        list.push_back((path.to_string(), map.clone()));
+        while list.len() > 8 {
+            list.pop_front();
+        }
+    }
+    Ok(map)
+}
+/// 字体文件的 mmap 缓存：大字体（10MB+）反复读盘是实时预览的主要开销。
+/// 文件页由系统管理，可回收，不计入应用堆内存。
+fn font_map(path: &str) -> Result<Arc<Mmap>, String> {
+    static MAPS: OnceLock<Mutex<Vec<(String, Arc<Mmap>)>>> = OnceLock::new();
+    let cache = MAPS.get_or_init(|| Mutex::new(Vec::new()));
+    if let Ok(mut list) = cache.lock() {
+        if let Some(position) = list.iter().position(|(key, _)| key == path) {
+            let entry = list.remove(position);
+            let map = entry.1.clone();
+            list.push(entry);
+            return Ok(map);
+        }
+    }
+
+    let file = File::open(path).map_err(|error| format!("打开字体失败：{error}"))?;
+    let map = unsafe { Mmap::map(&file) }.map_err(|error| format!("映射字体失败：{error}"))?;
+    let map = Arc::new(map);
+    if let Ok(mut list) = cache.lock() {
+        list.push((path.to_string(), map.clone()));
+        if list.len() > 8 {
+            list.remove(0);
+        }
+    }
+    Ok(map)
 }
 
 fn rasterize(
     font: &FontRef<'_>,
+    glyphs: &HashMap<u32, u16>,
     text: &str,
     size: f32,
     color: &str,
@@ -69,7 +219,7 @@ fn rasterize(
     let descent = scaled.descent().ceil();
     let line_height = (ascent - descent).max(scale);
 
-    let lines = layout(font, px_scale, text, limit);
+    let lines = layout(font, glyphs, px_scale, text, limit);
     let mut widest = 0.0f32;
     for line in &lines {
         let mut end = 0.0f32;
@@ -131,9 +281,20 @@ fn rasterize(
     Ok(format!("data:image/png;base64,{encoded}"))
 }
 
+/// 先查 cmap 映射（覆盖 symbol 编码），再退回 ab_glyph 的 unicode 查询。
+fn glyph_for(glyphs: &HashMap<u32, u16>, font: &FontRef<'_>, ch: char) -> GlyphId {
+    let mapped = glyphs.get(&(ch as u32)).copied().unwrap_or(0);
+    if mapped != 0 {
+        GlyphId(mapped)
+    } else {
+        font.glyph_id(ch)
+    }
+}
+
 /// 逐行排版：`limit <= 0` 表示不折行。
 fn layout(
     font: &FontRef<'_>,
+    glyphs: &HashMap<u32, u16>,
     px_scale: PxScale,
     text: &str,
     limit: f32,
@@ -146,8 +307,9 @@ fn layout(
         let is_space = token.chars().all(char::is_whitespace);
         let token_width: f32 = token
             .chars()
-            .filter(|ch| font.glyph_id(*ch).0 != 0)
-            .map(|ch| scaled.h_advance(font.glyph_id(ch)))
+            .map(|ch| glyph_for(glyphs, font, ch))
+            .filter(|id| id.0 != 0)
+            .map(|id| scaled.h_advance(id))
             .sum();
         let current_empty = lines.last().map(|line| line.is_empty()).unwrap_or(true);
 
@@ -168,7 +330,7 @@ fn layout(
                 if pen <= 0.0 {
                     continue;
                 }
-                let id = font.glyph_id(ch);
+                let id = glyph_for(glyphs, font, ch);
                 if id.0 == 0 {
                     continue;
                 }
@@ -179,7 +341,7 @@ fn layout(
                 pen += advance;
                 continue;
             }
-            let id = font.glyph_id(ch);
+            let id = glyph_for(glyphs, font, ch);
             // 字体没有这个字符：直接跳过，不用别的字体冒充
             if id.0 == 0 {
                 continue;

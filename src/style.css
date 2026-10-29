@@ -1480,6 +1480,34 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
   line-height: 1.4;
 }
 
+/* 可变字体：字重滑块（详情面板操作按钮下方） */
+.detail__weight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 2px;
+}
+
+.detail__weight-label {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.detail__weight-input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+
+.detail__weight-value {
+  min-width: 3ch;
+  text-align: right;
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
 .detail__actions {
   display: flex;
   flex-wrap: wrap;

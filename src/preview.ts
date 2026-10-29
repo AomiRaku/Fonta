@@ -73,6 +73,17 @@ export class PreviewPool {
   private readonly order: string[] = [];
   private readonly waiters = new Map<string, Array<(url: string | null) => void>>();
   private readonly retryAt = new Map<string, number>();
+  /** 实时预览槽：只保留一张，切字体时清掉（不写缓存） */
+  private liveSeq = 0;
+  private liveUrl: string | null = null;
+  private liveKey = "";
+
+  /** 释放实时预览图（切换字体 / 关闭详情时调用）。 */
+  clearLive(): void {
+    this.liveSeq += 1;
+    this.liveUrl = null;
+    this.liveKey = "";
+  }
 
   /** 主题 / 缩放变化后清空缓存（颜色或像素密度变了，旧图作废）。 */
   resetBitmaps(): void {
@@ -86,7 +97,15 @@ export class PreviewPool {
    * 请求一张样字图。命中缓存时同步回调，否则异步回调；
    * 失败回调 `null`，5 秒内不重试，之后再次渲染会重新请求。
    */
-  request(request: PreviewRequest, done: (url: string | null) => void): void {
+  request(
+    request: PreviewRequest,
+    done: (url: string | null) => void,
+    options: { live?: boolean } = {},
+  ): void {
+    if (options.live) {
+      this.requestLive(request, done);
+      return;
+    }
     const key = keyOf(request);
     const cached = this.cache.get(key);
     if (cached) {
@@ -107,16 +126,7 @@ export class PreviewPool {
     }
     this.waiters.set(key, [done]);
 
-    const dpr = window.devicePixelRatio || 1;
-    void invoke<string>("render_preview", {
-      path: request.entry.path,
-      text: request.text,
-      size: request.fontSize,
-      color: request.color,
-      dpr,
-      maxWidth: request.maxWidth && request.maxWidth > 0 ? request.maxWidth : null,
-      weight: request.weight && request.weight > 0 ? request.weight : null,
-    })
+    void this.render(request, false)
       .then((url) => {
         const waiting = this.waiters.get(key) ?? [];
         this.waiters.delete(key);
@@ -130,6 +140,41 @@ export class PreviewPool {
         this.retryAt.set(key, Date.now() + 5000);
         for (const callback of waiting) callback(null);
       });
+  }
+
+  /** 拖动字重滑块时的单槽预览：不读缓存、不写缓存，只保留最后一张。 */
+  private requestLive(request: PreviewRequest, done: (url: string | null) => void): void {
+    const key = keyOf(request);
+    if (this.liveKey === key && this.liveUrl) {
+      done(this.liveUrl);
+      return;
+    }
+    const seq = ++this.liveSeq;
+    void this.render(request, true)
+      .then((url) => {
+        if (seq !== this.liveSeq) return;
+        this.liveUrl = url;
+        this.liveKey = key;
+        done(url);
+      })
+      .catch(() => {
+        if (seq !== this.liveSeq) return;
+        done(null);
+      });
+  }
+
+  private render(request: PreviewRequest, fresh: boolean): Promise<string> {
+    const dpr = window.devicePixelRatio || 1;
+    return invoke<string>("render_preview", {
+      path: request.entry.path,
+      text: request.text,
+      size: request.fontSize,
+      color: request.color,
+      dpr,
+      maxWidth: request.maxWidth && request.maxWidth > 0 ? request.maxWidth : null,
+      weight: request.weight && request.weight > 0 ? request.weight : null,
+      fresh,
+    });
   }
 
   private store(key: string, url: string): void {

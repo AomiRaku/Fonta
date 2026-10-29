@@ -86,17 +86,29 @@ function statusLine(entry: FontEntry): string {
   return bits.join(" · ");
 }
 
-function sample(entry: FontEntry, ctx: DetailContext, stacked = false): HTMLElement {
-  const box = stacked ? el("div", "detail__sample detail__sample--stack") : el("div", "detail__sample");
+/** 样字框：`apply` 用于字重滑块实时重绘。 */
+interface SampleView {
+  box: HTMLElement;
+  apply(weight: number, live: boolean): void;
+}
+
+function sample(entry: FontEntry, ctx: DetailContext, stacked = false): SampleView {
+  // 切换字体时先释放上一张实时预览图
+  ctx.pool.clearLive();
+
+  const box = stacked
+    ? el("div", "detail__sample detail__sample--stack")
+    : el("div", "detail__sample");
   const text = el("div", "detail__sample-text");
   text.style.fontSize = `${PREVIEW_FONT_SIZE}px`;
   const content = ctx.settings.previewText || defaultPreviewText();
+  const noop = { box, apply: () => undefined };
 
   if (!entry.exists) {
     text.textContent = t("detail.previewMissing");
     text.style.color = "var(--muted)";
     box.appendChild(text);
-    return box;
+    return noop;
   }
 
   if (entry.format === "Raster") {
@@ -104,17 +116,17 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): HTMLElem
     text.style.fontSize = "var(--fs-sm)";
     text.style.color = "var(--muted)";
     box.appendChild(text);
-    return box;
+    return noop;
   }
 
   text.textContent = content;
   box.appendChild(text);
   const color = toHexColor(getComputedStyle(document.body).color);
-  // 等面板挂进 DOM 拿到可用宽度，再按该宽度折行渲染
-  requestAnimationFrame(() => {
-    const style = getComputedStyle(box);
-    const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
-    const available = Math.max(120, box.clientWidth - (Number.isFinite(padding) ? padding : 0));
+  let current: HTMLElement = text;
+  let available = 0;
+
+  const paint = (weight: number, live: boolean): void => {
+    if (available <= 0) return;
     ctx.pool.request(
       {
         entry,
@@ -122,22 +134,67 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): HTMLElem
         fontSize: DETAIL_SAMPLE_SIZE,
         color,
         maxWidth: available,
-        weight: previewWeight(entry),
+        weight,
       },
       (url) => {
         if (!url) {
-          text.style.color = "var(--muted)";
+          current.style.color = "var(--muted)";
           return;
         }
         const image = document.createElement("img");
         image.className = "detail__preview-img";
         image.alt = "";
         image.src = url;
-        text.replaceWith(image);
+        current.replaceWith(image);
+        current = image;
       },
+      { live },
     );
+  };
+
+  // 等面板挂进 DOM 拿到可用宽度，再按该宽度折行渲染
+  requestAnimationFrame(() => {
+    const style = getComputedStyle(box);
+    const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+    available = Math.max(120, box.clientWidth - (Number.isFinite(padding) ? padding : 0));
+    paint(previewWeight(entry), false);
   });
-  return box;
+
+  return { box, apply: paint };
+}
+
+/** 可变字体的字重滑块：拖动实时预览，松手后把最终字重写入缓存。 */
+function weightControl(entry: FontEntry, apply: (weight: number, live: boolean) => void): HTMLElement {
+  const row = el("div", "detail__weight");
+  row.appendChild(el("span", "detail__weight-label", t("detail.weight")));
+
+  const input = document.createElement("input");
+  input.type = "range";
+  input.className = "detail__weight-input";
+  input.min = String(entry.weightMin);
+  input.max = String(entry.weightMax);
+  input.step = "1";
+  const start = previewWeight(entry);
+  input.value = String(start);
+  input.setAttribute("aria-label", t("detail.weight"));
+
+  const value = el("span", "detail__weight-value", String(start));
+  let frame = 0;
+  input.addEventListener("input", () => {
+    const weight = Number(input.value);
+    value.textContent = String(weight);
+    if (frame) return;
+    frame = requestAnimationFrame(() => {
+      frame = 0;
+      apply(Number(input.value), true);
+    });
+  });
+  input.addEventListener("change", () => {
+    apply(Number(input.value), false);
+  });
+
+  row.append(input, value);
+  return row;
 }
 
 function emptyState(): HTMLElement {
@@ -248,7 +305,8 @@ export function renderDetail(
   head.appendChild(sub);
   container.appendChild(head);
 
-  container.appendChild(sample(entry, ctx));
+  const sampleView = sample(entry, ctx);
+  container.appendChild(sampleView.box);
 
   const actions = el("div", "detail__actions");
   const trailing = el("div", "detail__actions-end");
@@ -292,6 +350,9 @@ export function renderDetail(
   }
   actions.appendChild(trailing);
   container.appendChild(actions);
+  if (entry.variable && entry.weightMax > entry.weightMin) {
+    container.appendChild(weightControl(entry, sampleView.apply));
+  }
   // 字体信息在前，文件信息在后
   const fontRows: HTMLElement[] = [];
   if (entry.families.length > 1) {
@@ -299,9 +360,13 @@ export function renderDetail(
   }
   fontRows.push(kv(t("detail.fullName"), entry.fullName || entry.displayName));
   // 语言按字形覆盖判定，可能有很多种，全部列出
-  if (entry.languages?.length) {
-    fontRows.push(kv(t("detail.language"), entry.languages.join("、")));
-  }
+  // 符号 / 图标字体通常判不出语言，显示「其他」而不是整行缺失
+  fontRows.push(
+    kv(
+      t("detail.language"),
+      entry.languages?.length ? entry.languages.join("、") : t("language.other"),
+    ),
+  );
   if (entry.version) fontRows.push(kv(t("detail.version"), entry.version));
   if (entry.copyright) fontRows.push(kv(t("detail.copyright"), entry.copyright));
   container.appendChild(section(t("detail.sectionFont"), fontRows));
@@ -357,7 +422,8 @@ export function renderFamilyDetail(
   container.appendChild(head);
 
   // 预览用首个字重，背景加「堆叠」示意——表示这是一个字族而不是单个文件
-  container.appendChild(sample(entries[0], ctx, true));
+  const sampleView = sample(entries[0], ctx, true);
+  container.appendChild(sampleView.box);
 
   const actions = el("div", "detail__actions");
   const trailing = el("div", "detail__actions-end");
@@ -388,6 +454,9 @@ export function renderFamilyDetail(
   }
   actions.appendChild(trailing);
   container.appendChild(actions);
+  if (entries[0].variable && entries[0].weightMax > entries[0].weightMin) {
+    container.appendChild(weightControl(entries[0], sampleView.apply));
+  }
 
   const info: HTMLElement[] = [kv(t("detail.family"), family)];
   const version = entries.find((entry) => entry.version)?.version;

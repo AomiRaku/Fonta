@@ -611,11 +611,13 @@ pub async fn render_preview(
     dpr: f32,
     max_width: Option<f32>,
     weight: Option<f32>,
+    fresh: Option<bool>,
 ) -> Result<String, String> {
     let max_width = max_width.unwrap_or(0.0);
     let weight = weight.unwrap_or(0.0);
+    let fresh = fresh.unwrap_or(false);
     tauri::async_runtime::spawn_blocking(move || {
-        crate::preview::render(&path, &text, size, &color, dpr, max_width, weight)
+        crate::preview::render(&path, &text, size, &color, dpr, max_width, weight, fresh)
     })
     .await
     .map_err(|error| error.to_string())?
