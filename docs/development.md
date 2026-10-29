@@ -49,6 +49,9 @@ Windows 字体管理器：枚举本机全部字体，可就地隐藏 / 显示、
 双击根目录的 `dev.cmd` 会检查 Node / Rust / 依赖 / 端口占用并启动 `tauri dev`，
 前端与 Rust 代码都会热重载。首次编译 Rust 约 1 分钟，之后数秒。关闭控制台窗口即停止全部进程。
 
+Vite 固定使用 **1420** 端口。若上一次 `tauri dev` 的进程没退干净，启动会报
+`Port 1420 is already in use` 并退出：先结束残留的 `node`（`npm run dev` / `vite`）再重新运行即可。
+
 命令行方式：
 
 ```powershell
