@@ -78,6 +78,10 @@ pub struct FontEntry {
     pub languages: Vec<String>,
     /// 可变字体（含 fvar 表）。
     pub variable: bool,
+    /// 可变字体 `wght` 轴下限（非可变字体为 0）。
+    pub weight_min: u16,
+    /// 可变字体 `wght` 轴上限（非可变字体为 0）。
+    pub weight_max: u16,
     /// 等宽字体。
     pub monospace: bool,
     /// 含连字特性（GSUB 的 liga / clig）。

@@ -13,7 +13,7 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Mutex, OnceLock};
 
-use ab_glyph::{Font, FontRef, Glyph, GlyphId, PxScale, ScaleFont, point};
+use ab_glyph::{Font, FontRef, Glyph, GlyphId, PxScale, ScaleFont, VariableFont, point};
 use base64::Engine;
 
 /// 缓存条数上限
@@ -32,14 +32,20 @@ pub fn render(
     color: &str,
     dpr: f32,
     max_width: f32,
+    weight: f32,
 ) -> Result<String, String> {
-    let key = format!("{path}|{text}|{size}|{dpr}|{color}|{max_width}");
+    let key = format!("{path}|{text}|{size}|{dpr}|{color}|{max_width}|{weight}");
     if let Some(hit) = cache_lookup(&key) {
         return Ok(hit);
     }
 
     let bytes = std::fs::read(path).map_err(|error| format!("读取字体失败：{error}"))?;
-    let font = FontRef::try_from_slice(&bytes).map_err(|error| format!("解析字体失败：{error}"))?;
+    let mut font =
+        FontRef::try_from_slice(&bytes).map_err(|error| format!("解析字体失败：{error}"))?;
+    if weight > 0.0 {
+        // 可变字体：按调用方给的字重实例化（Regular 或可变范围的中点）
+        font.set_variation(b"wght", weight);
+    }
     let data_url = rasterize(&font, text, size, color, dpr, max_width)?;
     cache_store(key, data_url.clone());
     Ok(data_url)

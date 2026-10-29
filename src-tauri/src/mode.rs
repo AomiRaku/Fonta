@@ -208,6 +208,8 @@ pub fn merged_entries(fonts: &mut Vec<FontEntry>) {
             language: String::new(),
             languages: Vec::new(),
             variable: false,
+            weight_min: 0,
+            weight_max: 0,
             monospace: false,
             ligatures: false,
             scope: Scope::User,

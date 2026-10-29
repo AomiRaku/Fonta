@@ -180,6 +180,8 @@ pub fn scan() -> FontListPayload {
                     .map(|m| m.languages.clone())
                     .unwrap_or_default(),
                 variable: meta.as_ref().map(|m| m.variable).unwrap_or(false),
+                weight_min: meta.as_ref().map(|m| m.weight_min).unwrap_or(0),
+                weight_max: meta.as_ref().map(|m| m.weight_max).unwrap_or(0),
                 monospace: meta.as_ref().map(|m| m.monospace).unwrap_or(false),
                 ligatures: meta.as_ref().map(|m| m.ligatures).unwrap_or(false),
                 scope: raw.scope,

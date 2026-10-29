@@ -14,6 +14,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 
+import { t } from "./i18n";
 import type { FontEntry } from "./types";
 
 /** data URL 缓存条数上限 */
@@ -28,11 +29,30 @@ export interface PreviewRequest {
   color: string;
   /** 折行宽度（CSS px）；0 / 缺省表示不折行 */
   maxWidth?: number;
+  /** 可变字体的 `wght` 值；0 / 缺省表示不实例化 */
+  weight?: number;
+}
+
+/**
+ * 可变字体预览用的字重：有 Regular（400）就用 400，
+ * 否则取可变范围的中点；非可变字体返回 0（不实例化）。
+ */
+export function previewWeight(entry: FontEntry): number {
+  if (!entry.variable) return 0;
+  const min = entry.weightMin || 100;
+  const max = entry.weightMax || 900;
+  if (min <= 400 && 400 <= max) return 400;
+  return Math.round((min + max) / 2);
+}
+
+/** 列表与详情里显示的样式文案：可变字体统一显示「可变字体」。 */
+export function styleLabel(entry: FontEntry): string {
+  return entry.variable ? t("list.styleVariable") : entry.style;
 }
 
 function keyOf(request: PreviewRequest): string {
   const dpr = window.devicePixelRatio || 1;
-  return `${request.entry.path}|${request.fontSize}|${request.color}|${dpr}|${request.maxWidth ?? 0}|${request.text}`;
+  return `${request.entry.path}|${request.fontSize}|${request.color}|${dpr}|${request.maxWidth ?? 0}|${request.weight ?? 0}|${request.text}`;
 }
 
 /** 把 `rgb(r, g, b)` / `#rrggbb` 统一成 `#rrggbb`。 */
@@ -95,6 +115,7 @@ export class PreviewPool {
       color: request.color,
       dpr,
       maxWidth: request.maxWidth && request.maxWidth > 0 ? request.maxWidth : null,
+      weight: request.weight && request.weight > 0 ? request.weight : null,
     })
       .then((url) => {
         const waiting = this.waiters.get(key) ?? [];

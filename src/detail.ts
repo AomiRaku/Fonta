@@ -13,7 +13,7 @@ import {
 } from "./types";
 import type { PreviewPool } from "./preview";
 import { el, formatBytes } from "./rows";
-import { toHexColor } from "./preview";
+import { previewWeight, styleLabel, toHexColor } from "./preview";
 
 /** 详情面板大样字的字号（CSS px） */
 const DETAIL_SAMPLE_SIZE = 28;
@@ -116,7 +116,14 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): HTMLElem
     const padding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
     const available = Math.max(120, box.clientWidth - (Number.isFinite(padding) ? padding : 0));
     ctx.pool.request(
-      { entry, text: content, fontSize: DETAIL_SAMPLE_SIZE, color, maxWidth: available },
+      {
+        entry,
+        text: content,
+        fontSize: DETAIL_SAMPLE_SIZE,
+        color,
+        maxWidth: available,
+        weight: previewWeight(entry),
+      },
       (url) => {
         if (!url) {
           text.style.color = "var(--muted)";
@@ -160,7 +167,8 @@ function multiPane(
   for (const entry of preview) {
     const item = el("div", "detail__multi-item");
     item.appendChild(el("span", "detail__multi-name", entry.family || entry.displayName));
-    if (entry.style) item.appendChild(el("span", "detail__multi-style", entry.style));
+    const style = styleLabel(entry);
+  if (style) item.appendChild(el("span", "detail__multi-style", style));
     list.appendChild(item);
   }
   if (entries.length > preview.length) {
@@ -235,7 +243,8 @@ export function renderDetail(
   const head = el("div", "detail__head");
   head.appendChild(el("h2", "detail__title", entry.family || entry.displayName));
   const sub = el("div", "detail__sub");
-  if (entry.style) sub.appendChild(el("span", "", entry.style));
+  const style = styleLabel(entry);
+  if (style) sub.appendChild(el("span", "", style));
   head.appendChild(sub);
   container.appendChild(head);
 

@@ -12,7 +12,7 @@ import {
   type FontEntry,
   type Settings,
 } from "./types";
-import { toHexColor, type PreviewPool } from "./preview";
+import { previewWeight, styleLabel, toHexColor, type PreviewPool } from "./preview";
 import type { VirtualRow } from "./list";
 
 export interface RowHandlers {
@@ -144,7 +144,8 @@ export function buildCompactRow(
   // 名称与样式同一行：样式紧跟在家族名后面，不加粗
   const nameCell = el("div", "cell cell--name");
   nameCell.appendChild(el("span", "name", entry.family));
-  if (entry.style) nameCell.appendChild(el("span", "name__style", entry.style));
+  const style = styleLabel(entry);
+  if (style) nameCell.appendChild(el("span", "name__style", style));
   row.appendChild(nameCell);
 
   row.appendChild(el("div", "cell cell--lang", entry.language || t("language.unknown")));
@@ -178,7 +179,8 @@ export function buildPreviewRow(
 
   const title = el("div", "row__title");
   title.appendChild(el("span", "row__family", entry.family));
-  if (entry.style) title.appendChild(el("span", "row__style", entry.style));
+  const style = styleLabel(entry);
+  if (style) title.appendChild(el("span", "row__style", style));
   meta.appendChild(title);
   row.appendChild(meta);
 
@@ -299,7 +301,14 @@ export function previewSample(entry: FontEntry, ctx: RowContext): HTMLElement {
   }
 
   const color = toHexColor(getComputedStyle(document.body).color);
-  ctx.pool.request({ entry, text, fontSize: PREVIEW_FONT_SIZE, color }, (url) => {
+  const request = {
+    entry,
+    text,
+    fontSize: PREVIEW_FONT_SIZE,
+    color,
+    weight: previewWeight(entry),
+  };
+  ctx.pool.request(request, (url) => {
     // 命中缓存时回调发生在元素挂到 DOM 之前，这里不能要求 isConnected
     if (!url) {
       preview.classList.add("row__preview--fallback");

@@ -178,6 +178,8 @@ mod tests {
             language: "英语".to_string(),
             languages: vec!["英语".to_string()],
             variable: false,
+            weight_min: 0,
+            weight_max: 0,
             monospace: false,
             ligatures: true,
             scope: Scope::User,

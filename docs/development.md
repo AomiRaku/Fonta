@@ -36,7 +36,7 @@ Windows 字体管理器：枚举本机全部字体，可就地隐藏 / 显示、
 ## 技术栈
 
 - **应用外壳**：Tauri v2（Rust 1.77+，`windows-sys` / `winreg`）
-- **字体解析**：`ttf-parser`（只读 `name` 表，支持 `.ttc` 多 face 匹配）
+- **字体解析**：`ttf-parser`（只读 `name` / `fvar` 表，支持 `.ttc` 多 face 匹配；可变字体额外读出 `wght` 轴范围）
 - **前端**：Vite 7 + TypeScript（无框架，手写虚拟滚动与悬浮滚动条）
 - **图标**：`@siemens/ix-icons`（MIT）+ 少量自绘 SVG，构建时内联，不发起网络请求
 - **打包**：NSIS（每机器安装；清单为 `asInvoker`，安装过程不要求管理员）

@@ -53,6 +53,9 @@ export interface FontEntry {
   languages: string[];
   /** 可变字体（含 fvar 表）。 */
   variable: boolean;
+  /** 可变字体 `wght` 轴范围；非可变字体为 0。 */
+  weightMin: number;
+  weightMax: number;
   /** 等宽字体。 */
   monospace: boolean;
   /** 含连字特性（GSUB 的 liga / clig）。 */

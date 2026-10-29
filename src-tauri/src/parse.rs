@@ -24,6 +24,9 @@ pub struct FontMeta {
     pub languages: Vec<String>,
     /// 可变字体（含 fvar 表）。
     pub variable: bool,
+    /// 可变字体 `wght` 轴范围；不是可变字体时为 0。
+    pub weight_min: u16,
+    pub weight_max: u16,
     /// 等宽字体。
     pub monospace: bool,
     /// 含连字特性（GSUB 里的 liga / clig）。
@@ -36,6 +39,21 @@ pub struct FontMeta {
 fn system_ui_language() -> u16 {
     // 只影响“优先显示哪个语言的 name 记录”，失败时回退英文。FontFox 仅面向 Windows。
     unsafe { windows_sys::Win32::Globalization::GetUserDefaultUILanguage() as u16 }
+}
+
+/// 可变字体的 `wght` 轴范围；非可变字体返回 `(0, 0)`。
+fn weight_range(face: &Face) -> (u16, u16) {
+    let Some(fvar) = face.tables().fvar else {
+        return (0, 0);
+    };
+    for axis in fvar.axes {
+        if &axis.tag.to_bytes() == b"wght" {
+            let min = axis.min_value.round().clamp(1.0, 1000.0) as u16;
+            let max = axis.max_value.round().clamp(1.0, 1000.0) as u16;
+            return (min.min(max), max);
+        }
+    }
+    (0, 0)
 }
 
 fn pick_name(face: &Face, wanted: u16, ui_lang: u16) -> Option<String> {
@@ -293,10 +311,13 @@ pub fn read_meta(path: &Path, hint: &str) -> Option<FontMeta> {
             .cloned()
             .unwrap_or_else(|| face_language(&face).to_string());
 
+        let weight = weight_range(&face);
         let meta = FontMeta {
             language,
             languages: detected,
             variable: face.is_variable(),
+            weight_min: weight.0,
+            weight_max: weight.1,
             monospace: face.is_monospaced(),
             ligatures: has_gsub_feature(&face, &[b"liga", b"clig"]),
             version: pick_name(&face, name_id::VERSION, ui_lang).unwrap_or_default(),
