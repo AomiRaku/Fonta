@@ -2710,9 +2710,9 @@ function bindEvents(): void {
     });
   }
 
+  // 预览文字只影响本次会话，不写入配置
   dom.previewText.addEventListener("input", () => {
     state.settings.previewText = dom.previewText.value;
-    scheduleSave();
     renderAll();
   });
 

@@ -165,6 +165,7 @@ pub struct DeleteReport {
 #[serde(rename_all = "camelCase")]
 pub struct Settings {
     pub view_mode: String,
+    /// 预览文字：只存在于本次会话，不持久化（启动时为空）。
     pub preview_text: String,
     pub theme: String,
     /// 界面语言文件名（不含扩展名），例如 `schinese`。

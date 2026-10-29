@@ -87,7 +87,7 @@
 
 ## 设置与字体单
 
-- `config.ini`：`viewMode`、`theme`、`previewText`、`language`、`detailOpen`。
+- `config.ini`：`viewMode`、`theme`、`language`、`detailOpen`、`disableMode`（预览文字只在会话内，不写入配置）。
 - `library.json`：`favorites`（字体 id 列表）与 `collections`（名称、标记色、字体 id 列表）。
 - 两者都在 `%USERPROFILE%\.FontFox\`；写入用 220ms 防抖，退出前不额外 flush（写入即时落盘）。
 

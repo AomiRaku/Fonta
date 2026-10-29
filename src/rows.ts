@@ -307,9 +307,17 @@ export function previewSample(entry: FontEntry, ctx: RowContext): HTMLElement {
     fontSize: PREVIEW_FONT_SIZE,
     color,
     weight: previewWeight(entry),
+    allowFallback: !ctx.settings.previewText,
   };
-  ctx.pool.request(request, (url) => {
+  ctx.pool.request(request, (url, noGlyphs) => {
     // 命中缓存时回调发生在元素挂到 DOM 之前，这里不能要求 isConnected
+    if (noGlyphs) {
+      preview.textContent = t("preview.noChars");
+      preview.style.fontSize = "var(--fs-sm)";
+      preview.style.color = "var(--muted)";
+      preview.classList.add("row__preview--fallback");
+      return;
+    }
     if (!url) {
       preview.classList.add("row__preview--fallback");
       preview.title = t("detail.previewFailedFallback", { error: "" });

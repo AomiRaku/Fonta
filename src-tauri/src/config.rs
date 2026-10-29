@@ -79,12 +79,11 @@ pub fn load() -> Settings {
     if let Some(v) = entry(&entries, "Theme") {
         settings.theme = v.to_string();
     }
-    if let Some(v) = entry(&entries, "PreviewText") {
-        settings.preview_text = v.to_string();
-    }
     if let Some(v) = entry(&entries, "Language") {
         settings.language = v.to_string();
     }
+    // 预览文字只存在于本次会话，启动时一律为空（旧配置里的 PreviewText 会被忽略）
+    settings.preview_text = String::new();
     if let Some(v) = entry(&entries, "DetailOpen") {
         settings.detail_open = v.eq_ignore_ascii_case("true");
     }
@@ -110,13 +109,11 @@ pub fn save(settings: &Settings) -> Result<(), String> {
          ViewMode={}\r\n\
          Theme={}\r\n\
          Language={}\r\n\
-         PreviewText={}\r\n\
          DetailOpen={}\r\n\
          DisableMode={}\r\n",
         one_line(&settings.view_mode),
         one_line(&settings.theme),
         one_line(&settings.language),
-        one_line(&settings.preview_text),
         settings.detail_open,
         one_line(&settings.disable_mode),
     );

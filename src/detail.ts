@@ -102,6 +102,7 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): SampleVi
   const text = el("div", "detail__sample-text");
   text.style.fontSize = `${PREVIEW_FONT_SIZE}px`;
   const content = ctx.settings.previewText || defaultPreviewText();
+  const allowFallback = !ctx.settings.previewText;
   const noop = { box, apply: () => undefined };
 
   if (!entry.exists) {
@@ -135,8 +136,15 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): SampleVi
         color,
         maxWidth: available,
         weight,
+        allowFallback,
       },
-      (url) => {
+      (url, noGlyphs) => {
+        if (noGlyphs) {
+          current.textContent = t("preview.noChars");
+          current.style.fontSize = "var(--fs-sm)";
+          current.style.color = "var(--muted)";
+          return;
+        }
         if (!url) {
           current.style.color = "var(--muted)";
           return;

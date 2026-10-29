@@ -37,10 +37,12 @@ pub fn render(
     max_width: f32,
     weight: f32,
     fresh: bool,
+    fallback: bool,
 ) -> Result<String, String> {
-    // 符号 / 图标字体可能完全不包含预览文字里的字符：改用字体自己的字符集取样
-    let text = resolve_text(path, text);
-    let key = format!("{path}|{text}|{size}|{dpr}|{color}|{max_width}|{weight}");
+    // 默认预览文字在字体里没有字形时，回退到字体自身字符集；
+    // 用户手动输入的预览文字则直接报「没有对应字符」。
+    let text = resolve_text(path, text, fallback)?;
+    let key = format!("{path}|{text}|{size}|{dpr}|{color}|{max_width}|{weight}|{fallback}");
     if !fresh {
         if let Some(hit) = cache_lookup(&key) {
             return Ok(hit);
@@ -64,15 +66,15 @@ pub fn render(
 
 /// 预览文本在该字体里一个字形都没有时，从字体自己的 cmap 取样一行字。
 /// 这样符号 / 图标字体不会预览成空白，而是显示它真正拥有的字符。
-fn resolve_text(path: &str, raw: &str) -> String {
+fn resolve_text(path: &str, raw: &str, fallback: bool) -> Result<String, String> {
     static RESOLVED: OnceLock<Mutex<VecDeque<(String, String)>>> = OnceLock::new();
-    let key = format!("{path}|{raw}");
+    let key = format!("{path}|{raw}|{fallback}");
     if let Ok(mut cache) = RESOLVED.get_or_init(|| Mutex::new(VecDeque::new())).lock() {
         if let Some(position) = cache.iter().position(|(item, _)| *item == key) {
             if let Some(value) = cache.remove(position) {
                 let text = value.1.clone();
                 cache.push_back(value);
-                return text;
+                return Ok(text);
             }
         }
     }
@@ -85,6 +87,10 @@ fn resolve_text(path: &str, raw: &str) -> String {
             .filter(|ch| !ch.is_whitespace())
             .any(|ch| glyphs.contains_key(&(ch as u32)));
         if !has_any {
+            if !fallback {
+                // 用户手动输入的预览文字：不替换，交给前端显示提示
+                return Err("NO_GLYPHS".to_string());
+            }
             if let Some(sample) = cmap_sample(&glyphs) {
                 resolved = sample;
             }
@@ -97,7 +103,7 @@ fn resolve_text(path: &str, raw: &str) -> String {
             cache.pop_front();
         }
     }
-    resolved
+    Ok(resolved)
 }
 
 /// 取最多 24 个「字体里真的有字形」的字符。

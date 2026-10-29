@@ -31,7 +31,15 @@ export interface PreviewRequest {
   maxWidth?: number;
   /** 可变字体的 `wght` 值；0 / 缺省表示不实例化 */
   weight?: number;
+  /**
+   * 预览文字缺字时是否回退到字体自身字符集。
+   * 默认预览文字为 true；用户手动输入的预览文字为 false（改为显示提示）。
+   */
+  allowFallback?: boolean;
 }
+
+/** 缺字提示的回调标记 */
+export type PreviewDone = (url: string | null, noGlyphs?: boolean) => void;
 
 /**
  * 可变字体预览用的字重：有 Regular（400）就用 400，
@@ -52,7 +60,7 @@ export function styleLabel(entry: FontEntry): string {
 
 function keyOf(request: PreviewRequest): string {
   const dpr = window.devicePixelRatio || 1;
-  return `${request.entry.path}|${request.fontSize}|${request.color}|${dpr}|${request.maxWidth ?? 0}|${request.weight ?? 0}|${request.text}`;
+  return `${request.entry.path}|${request.fontSize}|${request.color}|${dpr}|${request.maxWidth ?? 0}|${request.weight ?? 0}|${request.allowFallback !== false}|${request.text}`;
 }
 
 /** 把 `rgb(r, g, b)` / `#rrggbb` 统一成 `#rrggbb`。 */
@@ -71,8 +79,10 @@ export function toHexColor(color: string): string {
 export class PreviewPool {
   private readonly cache = new Map<string, string>();
   private readonly order: string[] = [];
-  private readonly waiters = new Map<string, Array<(url: string | null) => void>>();
+  private readonly waiters = new Map<string, PreviewDone[]>();
   private readonly retryAt = new Map<string, number>();
+  /** 预览文字在该字体里「完全不存在对应字符」的 key：结果确定，后续直接提示 */
+  private readonly noGlyphsKeys = new Set<string>();
   /** 实时预览槽：只保留一张，切字体时清掉（不写缓存） */
   private liveSeq = 0;
   private liveUrl: string | null = null;
@@ -90,6 +100,7 @@ export class PreviewPool {
     this.cache.clear();
     this.order.length = 0;
     this.retryAt.clear();
+    this.noGlyphsKeys.clear();
   }
 
 
@@ -99,7 +110,7 @@ export class PreviewPool {
    */
   request(
     request: PreviewRequest,
-    done: (url: string | null) => void,
+    done: PreviewDone,
     options: { live?: boolean } = {},
   ): void {
     if (options.live) {
@@ -111,6 +122,10 @@ export class PreviewPool {
     if (cached) {
       this.touch(key);
       done(cached);
+      return;
+    }
+    if (this.noGlyphsKeys.has(key)) {
+      done(null, true);
       return;
     }
     const retry = this.retryAt.get(key);
@@ -134,16 +149,21 @@ export class PreviewPool {
         this.store(key, url);
         for (const callback of waiting) callback(url);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         const waiting = this.waiters.get(key) ?? [];
         this.waiters.delete(key);
-        this.retryAt.set(key, Date.now() + 5000);
-        for (const callback of waiting) callback(null);
+        const noGlyphs = String(error).includes("NO_GLYPHS");
+        if (noGlyphs) {
+          this.noGlyphsKeys.add(key);
+        } else {
+          this.retryAt.set(key, Date.now() + 5000);
+        }
+        for (const callback of waiting) callback(null, noGlyphs);
       });
   }
 
   /** 拖动字重滑块时的单槽预览：不读缓存、不写缓存，只保留最后一张。 */
-  private requestLive(request: PreviewRequest, done: (url: string | null) => void): void {
+  private requestLive(request: PreviewRequest, done: PreviewDone): void {
     const key = keyOf(request);
     if (this.liveKey === key && this.liveUrl) {
       done(this.liveUrl);
@@ -157,9 +177,9 @@ export class PreviewPool {
         this.liveKey = key;
         done(url);
       })
-      .catch(() => {
+      .catch((error: unknown) => {
         if (seq !== this.liveSeq) return;
-        done(null);
+        done(null, String(error).includes("NO_GLYPHS"));
       });
   }
 
@@ -174,6 +194,7 @@ export class PreviewPool {
       maxWidth: request.maxWidth && request.maxWidth > 0 ? request.maxWidth : null,
       weight: request.weight && request.weight > 0 ? request.weight : null,
       fresh,
+      fallback: request.allowFallback !== false,
     });
   }
 
