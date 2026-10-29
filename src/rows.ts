@@ -12,7 +12,7 @@ import {
   type FontEntry,
   type Settings,
 } from "./types";
-import type { PreviewPool } from "./preview";
+import { toHexColor, type PreviewPool } from "./preview";
 import type { VirtualRow } from "./list";
 
 export interface RowHandlers {
@@ -294,20 +294,28 @@ export function previewSample(entry: FontEntry, ctx: RowContext): HTMLElement {
     return preview;
   }
 
-  const alias = ctx.pool.ensure(entry);
   preview.textContent = text;
-  if (alias) {
-    preview.style.fontFamily = `"${alias}", ${PREVIEW_FALLBACK_STACK}`;
-    if (ctx.pool.statusOf(entry) === "failed") {
-      preview.classList.add("row__preview--fallback");
-      const reason = ctx.pool.errorOf(entry);
-      preview.title = t("detail.previewFailedFallback", { error: reason ?? "" });
-      preview.style.fontFamily = "";
-    }
-  } else {
+  if (!entry.exists || entry.format === "Raster") {
     preview.classList.add("row__preview--fallback");
     preview.title = t("detail.previewRaster");
+    return preview;
   }
+
+  const color = toHexColor(getComputedStyle(document.body).color);
+  ctx.pool.request({ entry, text, fontSize: PREVIEW_FONT_SIZE, color }, (url) => {
+    // 命中缓存时回调发生在元素挂到 DOM 之前，这里不能要求 isConnected
+    if (!url) {
+      preview.classList.add("row__preview--fallback");
+      preview.title = t("detail.previewFailedFallback", { error: "" });
+      return;
+    }
+    const image = document.createElement("img");
+    image.className = "row__preview-img";
+    image.alt = "";
+    image.src = url;
+    image.style.height = `${Math.round(PREVIEW_FONT_SIZE * 1.35)}px`;
+    preview.replaceChildren(image);
+  });
   return preview;
 }
 

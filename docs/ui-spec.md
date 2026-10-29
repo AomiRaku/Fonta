@@ -104,7 +104,7 @@ Flat 不是"没有设计"，而是**只保留结构与对比，不保留装饰**
 
 - 界面：`system-ui, -apple-system, "Segoe UI", sans-serif`
 - 等宽：`ui-monospace, "Cascadia Code", Consolas, monospace`（文件路径、注册表、大小）
-- **不打包任何字体文件**；预览字形缺字时回退到界面无衬线栈（`system-ui, "Segoe UI", "Microsoft YaHei"`），避免中文回落到宋体。
+- **不打包任何字体文件**；预览字形由 Rust 栅格化，缺字时回退到系统微软雅黑，避免中文回落到宋体。
 
 ---
 

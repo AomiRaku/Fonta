@@ -16,6 +16,7 @@ pub mod library;
 pub mod inactive;
 pub mod mode;
 pub mod model;
+mod preview;
 pub mod ownership;
 pub mod official;
 pub mod parse;
@@ -92,6 +93,8 @@ pub fn run() {
             commands::load_language,
 
             commands::set_disable_mode,
+            commands::font_extras,
+            commands::render_preview,
             commands::reconcile_disabled,
             commands::adopt_disabled_files,
             commands::drop_missing_disabled,

@@ -22,7 +22,7 @@
 | `src/filtermenu.ts` | 筛选菜单（分类 tab + 选项面板 + 清除筛选） |
 | `src/contextmenu.ts` | 右键菜单与二级菜单（「添加到字体单」） |
 | `src/scrollbar.ts` | 悬浮滚动条（不占轨道、可拖动、常驻 / 淡出两种模式） |
-| `src/preview.ts` | 预览渲染池：用 `@font-face` + asset 协议加载本机字体 |
+| `src/preview.ts` | 预览样字缓存：请求 Rust 栅格化的 PNG（data URL），供行与详情面板贴图 |
 | `src/i18n.ts` | 语言包载入、`t()` 插值、静态文案替换 |
 | `src/icons.ts` | SVG 图标注册、归一化（`currentColor`、去 id、展开 style） |
 | `src/api.ts` | IPC 封装与错误文本化 |
@@ -33,6 +33,7 @@
 | `src-tauri/src/ownership.rs` | 文件所有者判定（TrustedInstaller / SYSTEM） |
 | `src-tauri/src/inactive.rs` | `Inactive Fonts` 读写与比对（Windows 基础模式） |
 | `src-tauri/src/mode.rs` | 动态安装卸载模式：注销注册表值 + 隔离文件，维护 `disabled.json` |
+| `src-tauri/src/preview.rs` | 预览样字栅格化：读取字体、缺字回退、PNG 编码与结果缓存 |
 | `src-tauri/src/frame.rs` | 窗口外观：通过 DWM 设置 4px 圆角 |
 | `src-tauri/src/delete.rs` | 删除、待清理清单、提权子进程入口 |
 | `src-tauri/src/elevation.rs` | 提权拉起自身子进程 |
@@ -73,7 +74,7 @@
 3. `rebuild()` 按当前分组依据把结果切成桶，再按字族聚合，生成虚拟列表的行模型（分组带 / 字族行 /
    字体行），同时记录 `rowKeys` / `rowHeights` / `rowOffsets` 供滚动与吸顶使用。
 4. 滚动时虚拟列表只渲染可视区间；分组带的吸顶标题由 `computePin()` 依据行偏移计算。
-5. 预览模式下 `PreviewPool` 在行进入可视区时为每个 face 注册 `@font-face`，加载失败会回退并记录原因。
+5. 预览模式下可见行为每张样字调用一次 `render_preview`（命中缓存则同步贴图），Rust 侧渲染 PNG，WebView 不加载字体。
 
 ## 分组与吸顶
 

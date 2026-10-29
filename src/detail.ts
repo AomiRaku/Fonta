@@ -12,7 +12,11 @@ import {
   type Settings,
 } from "./types";
 import type { PreviewPool } from "./preview";
-import { PREVIEW_FALLBACK_STACK, el, formatBytes } from "./rows";
+import { el, formatBytes } from "./rows";
+import { toHexColor } from "./preview";
+
+/** 详情面板大样字的字号（CSS px） */
+const DETAIL_SAMPLE_SIZE = 28;
 
 export interface DetailHandlers {
   toggleDetails(): void;
@@ -103,18 +107,23 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): HTMLElem
     return box;
   }
 
-  const alias = ctx.pool.ensure(entry);
   text.textContent = content;
-  if (alias && ctx.pool.statusOf(entry) !== "failed") {
-    text.style.fontFamily = `"${alias}", ${PREVIEW_FALLBACK_STACK}`;
-  } else {
-    text.style.color = "var(--muted)";
-    const reason = ctx.pool.errorOf(entry);
-    if (ctx.pool.statusOf(entry) === "failed" && reason) {
-      text.title = t("detail.previewFailed", { error: reason });
-    }
-  }
   box.appendChild(text);
+  const color = toHexColor(getComputedStyle(document.body).color);
+  ctx.pool.request(
+    { entry, text: content, fontSize: DETAIL_SAMPLE_SIZE, color },
+    (url) => {
+      if (!url) {
+        text.style.color = "var(--muted)";
+        return;
+      }
+      const image = document.createElement("img");
+      image.className = "detail__preview-img";
+      image.alt = "";
+      image.src = url;
+      text.replaceWith(image);
+    },
+  );
   return box;
 }
 

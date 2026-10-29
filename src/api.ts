@@ -65,6 +65,13 @@ export const api = {
   /** 删除文件已丢失的禁用清单记录。 */
   dropMissingDisabled: (ids: string[]) => invoke<number>("drop_missing_disabled", { ids }),
 
+  /** 详情面板需要的附加字段（列表接口不再携带）。 */
+  fontExtras: (ids: string[]) =>
+    invoke<Array<{ id: string; families: string[]; version: string; copyright: string }>>(
+      "font_extras",
+      { ids },
+    ),
+
 
   /** 读取外挂语言包（`lang/<id>.ini`）。 */
   loadLanguage: (id: string) =>

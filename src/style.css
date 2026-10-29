@@ -909,6 +909,20 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   line-height: 1.15;
 }
 
+/* 行内样字按原尺寸贴图，超出部分由 .row__preview 裁切（与原来的 ellipsis 一致） */
+.row__preview-img {
+  display: block;
+  width: auto;
+}
+
+/* 详情大样字按宽度等比缩放，保证整行都看得见 */
+.detail__preview-img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+}
+
 .row__preview--fallback {
   color: var(--muted);
 }

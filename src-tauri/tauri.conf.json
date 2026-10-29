@@ -20,7 +20,7 @@
         "resizable": true,
         "center": true,
         "backgroundColor": "#F7F7F8",
-        "additionalBrowserArgs": "--remote-debugging-port=9223 --disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection",
+        "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection",
         "decorations": false,
         "shadow": true,
         "dragDropEnabled": false

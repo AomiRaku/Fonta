@@ -1302,6 +1302,29 @@ function toggleMoreMenu(): void {
 }
 /* ───────────────────────────── 详情面板 ───────────────────────────── */
 
+/** 已经请求过附加字段的字体（避免重复拉取 / 递归渲染） */
+const extrasFetched = new Set<string>();
+
+/** 详情面板的版权 / 版本 / TTC 家族名按需拉取，拉回后合并并重渲染一次。 */
+function requestExtras(entries: FontEntry[]): void {
+  const ids = entries.filter((entry) => !extrasFetched.has(entry.id)).map((entry) => entry.id);
+  if (ids.length === 0) return;
+  for (const id of ids) extrasFetched.add(id);
+  void api
+    .fontExtras(ids)
+    .then((list) => {
+      for (const extra of list) {
+        const entry = state.fonts.find((font) => font.id === extra.id);
+        if (!entry) continue;
+        entry.families = extra.families;
+        entry.version = extra.version;
+        entry.copyright = extra.copyright;
+      }
+      renderDetailPane();
+    })
+    .catch(() => undefined);
+}
+
 function renderDetailPane(): void {
 
   // 选中字族标题行时，右侧显示整个字族的信息
@@ -1309,6 +1332,7 @@ function renderDetailPane(): void {
     const family = state.selectedFamily;
     const members = state.fonts.filter((entry) => entry.family === family);
     if (members.length > 0) {
+      requestExtras(members);
       renderFamilyDetail(
         dom.detail,
         family,
@@ -1342,6 +1366,7 @@ function renderDetailPane(): void {
   }
 
   const entries = selectedEntries();
+  requestExtras(entries);
   const registryKey = state.registryKeys[entries[0]?.scope ?? ""] ?? "—";
   renderDetail(
     dom.detail,
@@ -2000,6 +2025,11 @@ function askDropMissingDisabled(
 
 
 
+/** 列表滚动：更新吸顶标题。 */
+function onListScroll(): void {
+  updateGroupPin();
+}
+
 function bindShellBehavior(): void {
   const devMode = import.meta.env.DEV;
 
@@ -2196,6 +2226,7 @@ function pickAnchorKey(): string | null {
 /** 切换紧凑 / 预览：按行高换算滚动位置，保持选中项（或屏幕中间那一行）居中。 */
 function switchViewMode(mode: Settings["viewMode"]): void {
   if (mode === state.settings.viewMode) return;
+
   const anchor = pickAnchorKey();
   state.settings.viewMode = mode;
   syncToolbar();
@@ -2732,7 +2763,7 @@ function bindEvents(): void {
     event.stopPropagation();
     toggleMoreMenu();
   });
-  dom.viewport.addEventListener("scroll", () => updateGroupPin(), { passive: true });
+  dom.viewport.addEventListener("scroll", onListScroll, { passive: true });
   window.addEventListener("resize", () => updateGroupPin());
 
   // 列表获得焦点后的键盘操作
@@ -2759,15 +2790,6 @@ function bindEvents(): void {
   });
 }
 
-/** 字体加载完成后的重绘：预览模式要重建行，紧凑模式只刷新详情面板。 */
-let renderTimer = 0;
-function scheduleRender(): void {
-  window.clearTimeout(renderTimer);
-  renderTimer = window.setTimeout(() => {
-    if (state.settings.viewMode === "preview") renderAll();
-    else renderDetailPane();
-  }, 220);
-}
 
 /** 界面就绪后让启动遮罩淡出并移除（200ms）。 */
 function hideSplash(): void {
@@ -2823,7 +2845,6 @@ async function boot(): Promise<void> {
   attachOverlayScrollbar(dom.viewport);
   attachOverlayScrollbar(dom.detail);
   attachOverlayScrollbar(dom.collections);
-  pool.setStatusListener(scheduleRender);
 
   bindWindowControls();
   bindSidebar();

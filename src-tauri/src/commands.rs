@@ -105,6 +105,13 @@ pub async fn list_fonts(app: tauri::AppHandle) -> Result<FontListPayload, String
     crate::mode::merged_entries(&mut payload.fonts);
     let state = app.state::<AppState>();
     state.replace(payload.fonts.clone());
+
+    // 列表阶段不需要版权 / 版本 / TTC 家族名，按需走 font_extras
+    for font in &mut payload.fonts {
+        font.families.clear();
+        font.version.clear();
+        font.copyright.clear();
+    }
     Ok(payload)
 }
 
@@ -564,4 +571,48 @@ pub fn adopt_disabled_files(paths: Vec<String>) -> usize {
 #[tauri::command]
 pub fn drop_missing_disabled(ids: Vec<String>) -> usize {
     crate::mode::drop_missing(&ids)
+}
+/// 详情面板需要的附加字段（列表接口不再携带）。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FontExtras {
+    pub id: String,
+    pub families: Vec<String>,
+    pub version: String,
+    pub copyright: String,
+}
+
+#[tauri::command]
+pub fn font_extras(app: tauri::AppHandle, ids: Vec<String>) -> Vec<FontExtras> {
+    let state = app.state::<AppState>();
+    let Ok(fonts) = state.fonts.lock() else {
+        return Vec::new();
+    };
+    ids.iter()
+        .filter_map(|id| {
+            fonts.iter().find(|font| &font.id == id).map(|font| FontExtras {
+                id: font.id.clone(),
+                families: font.families.clone(),
+                version: font.version.clone(),
+                copyright: font.copyright.clone(),
+            })
+        })
+        .collect()
+}
+/// 渲染一行预览样字（Rust 侧栅格化，WebView 不加载字体文件）。
+///
+/// `size` 是 CSS 像素字号，`dpr` 用来换算设备像素；返回 `data:image/png;base64,...`。
+#[tauri::command]
+pub async fn render_preview(
+    path: String,
+    text: String,
+    size: f32,
+    color: String,
+    dpr: f32,
+) -> Result<String, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        crate::preview::render(&path, &text, size, &color, dpr)
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
