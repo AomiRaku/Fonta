@@ -132,10 +132,17 @@ tools/              图标生成、官方清单抓取、语言包复制脚本
 | 用户偏好 | `%USERPROFILE%\.FontFox\config.ini` | **删除整个目录** |
 | 收藏 / 字体单 | `%USERPROFILE%\.FontFox\library.json` | 删除（随目录一起） |
 | 待清理文件清单 | `%USERPROFILE%\.FontFox\pending-delete.json` | 删除（随目录一起） |
-| 动态模式隔离字体 | `%USERPROFILE%\.FontFox\disabled\`（字体文件 + 同目录下的 `disabled.json` 清单） | 删除（随目录一起；先「全部启用」更稳妥） |
-| 字体隐藏状态 | `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Font Management\Inactive Fonts` | **保留**（属于用户对字体的功能状态，不是应用设置） |
+| 动态模式隔离字体 | `%USERPROFILE%\.FontFox\disabled\`（字体文件 + 同目录下的 `disabled.json` 清单） | **先恢复**（迁回用户字体目录并重新注册），再删除目录 |
+| 字体隐藏状态 | `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Font Management\Inactive Fonts` | **卸载前清空**（所有字体恢复启用） |
 
-FontFox 不会在卸载时清理任何字体注册项。
+## 卸载行为
+
+安装器的 `PREUNINSTALL` 钩子读取 `config.ini` 的 `DisableMode`：
+
+1. **动态安装卸载模式**（`dynamic`）：**静默执行** `fontfox.exe --restore-fonts`，把 `disabled\` 里的隔离字体迁回 `%LOCALAPPDATA%\Microsoft\Windows\Fonts` 并重新写入 `HKCU\...\Fonts`——必须恢复，不询问；
+2. **Windows 默认模式**（`windows`）：弹出询问框「是否恢复所有已停用的字体？」，选择「是」才执行同一个命令（删除 `Inactive Fonts` 值，所有隐藏的字体恢复显示）；选择「否」则保持现状。
+
+随后 `POSTUNINSTALL` 只删除 `%USERPROFILE%\.FontFox\`，不改动字体注册项。恢复过程出错会写一行结果到 `%TEMP%\fontfox-restore.log`，卸载继续。
 
 ## 已知边界
 

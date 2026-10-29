@@ -275,6 +275,24 @@ pub fn write_inactive_fonts(items: &[String]) -> Result<(), String> {
 }
 
 
+/// 删除整个 `Inactive Fonts` 值：卸载时把「已停用」的字体全部恢复。
+pub fn clear_inactive_fonts() -> Result<(), String> {
+    let hive = RegKey::predef(HKEY_CURRENT_USER);
+    let key = match hive.open_subkey_with_flags(
+        FONT_MANAGEMENT_SUBKEY,
+        KEY_READ | KEY_WRITE | KEY_WOW64_64KEY,
+    ) {
+        Ok(k) => k,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(err) => return Err(format!("打开 Font Management 键失败：{}", err)),
+    };
+    match key.delete_value(INACTIVE_FONTS_VALUE) {
+        Ok(()) => Ok(()),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(err) => Err(format!("删除 Inactive Fonts 失败：{}", err)),
+    }
+}
+
 /// 当前进程是否具备管理员权限。
 ///
 /// 用“能否以写方式打开 HKLM 字体键”来判断，避免为一次权限检查引入

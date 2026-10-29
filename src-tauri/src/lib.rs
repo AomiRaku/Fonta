@@ -102,3 +102,21 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("FontFox 启动失败");
 }
+/// 卸载前调用：把两种停用模式下的字体全部恢复。
+///
+/// - 动态模式：把 `disabled\` 里的隔离文件迁回用户字体目录并重新注册；
+/// - Windows 模式：删除 `Inactive Fonts` 值。
+///
+/// 返回恢复的隔离字体数量；失败时返回错误描述（卸载流程只记录日志，不阻塞）。
+pub fn restore_fonts_for_uninstall() -> Result<usize, String> {
+    let restored = crate::mode::restore_all();
+    let mut errors: Vec<String> = Vec::new();
+    if let Err(error) = crate::registry::clear_inactive_fonts() {
+        errors.push(error);
+    }
+    if errors.is_empty() {
+        Ok(restored)
+    } else {
+        Err(errors.join("；"))
+    }
+}
