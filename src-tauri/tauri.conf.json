@@ -53,6 +53,8 @@
     "windows": {
       "nsis": {
         "displayLanguageSelector": false,
+        "installerIcon": "icons/icon_ins.ico",
+        "uninstallerIcon": "icons/icon_unis.ico",
         "languages": ["SimpChinese", "English"],
         "installMode": "perMachine",
         "installerHooks": "installer-hooks.nsh"
