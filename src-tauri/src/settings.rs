@@ -11,6 +11,7 @@ use crate::model::Settings;
 
 const VIEW_MODES: [&str; 2] = ["compact", "preview"];
 const THEMES: [&str; 3] = ["system", "dark", "light"];
+const DISABLE_MODES: [&str; 2] = ["windows", "dynamic"];
 
 fn pick(value: &str, allowed: &[&str], fallback: &str) -> String {
     if allowed.contains(&value) {
@@ -27,6 +28,7 @@ pub fn load() -> Settings {
 
     settings.view_mode = pick(&settings.view_mode, &VIEW_MODES, &defaults.view_mode);
     settings.theme = pick(&settings.theme, &THEMES, &defaults.theme);
+    settings.disable_mode = pick(&settings.disable_mode, &DISABLE_MODES, &defaults.disable_mode);
     if settings.language.trim().is_empty() {
         settings.language = defaults.language;
     }
@@ -38,6 +40,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
     let mut normalized = settings.clone();
     normalized.view_mode = pick(&settings.view_mode, &VIEW_MODES, &defaults.view_mode);
     normalized.theme = pick(&settings.theme, &THEMES, &defaults.theme);
+    normalized.disable_mode = pick(&settings.disable_mode, &DISABLE_MODES, &defaults.disable_mode);
     if normalized.language.trim().is_empty() {
         normalized.language = defaults.language;
     }

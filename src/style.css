@@ -90,6 +90,8 @@
   /* 线 */
   --line: rgba(0, 0, 0, 0.08);
   --line-strong: rgba(0, 0, 0, 0.16);
+
+
   --scrollbar-thumb: rgba(0, 0, 0, 0.1);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
 
@@ -142,6 +144,8 @@ html[data-theme="dark"] {
 
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.14);
+
+
   --scrollbar-thumb: rgba(255, 255, 255, 0.1);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
 
@@ -167,6 +171,7 @@ html[data-theme="dark"] {
 #splash {
   transition: opacity 200ms ease-out;
 }
+
 
 #splash.is-hidden {
   opacity: 0;
@@ -224,10 +229,12 @@ button {
 
 /* 左右两栏：侧栏贯穿整个窗口高度，主列自带标题栏 */
 .app {
+  position: relative;
   display: flex;
   flex-direction: row;
   height: 100%;
 }
+
 
 .main {
   flex: 1;
@@ -584,6 +591,17 @@ button {
 .icon-btn:active {
   background: var(--control-bg-active);
   color: var(--ink);
+}
+
+/* 窗口失去焦点：标题栏的主题与窗口按钮变淡 */
+#theme,
+.icon-btn--window {
+  transition: opacity 120ms ease;
+}
+
+html[data-focused="false"] #theme,
+html[data-focused="false"] .icon-btn--window {
+  opacity: 0.45;
 }
 
 /* 菜单打开时按钮保持按下态（不管有没有筛选 / 分组） */
@@ -2710,4 +2728,60 @@ html[data-detail="closed"] .pane--detail {
   font-size: var(--fs-sm);
   color: var(--ink);
   white-space: nowrap;
+}
+/* ── 设置窗口 ─────────────────────────────────────────────────────── */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.settings-label {
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+  cursor: default;
+}
+
+.settings-hint {
+  margin: 0;
+  font-size: var(--fs-xs);
+  line-height: 18px;
+  color: var(--muted);
+}
+
+.settings-field .select {
+  font-family: inherit;
+  font-size: var(--fs-sm);
+  padding: 0 var(--sp-3);
+  color: var(--ink);
+}
+
+.btn__spin {
+  width: 12px;
+  height: 12px;
+  margin-right: var(--sp-2);
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: btn-spin 700ms linear infinite;
+}
+
+.btn.is-done {
+  color: var(--muted);
+  background: var(--control-bg);
+  cursor: default;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# 生成 Fontade 应用图标。图标是位图，不包含任何字体文件；"字" 字形用系统字体即时栅格化。
+# 生成 FontFox 应用图标。图标是位图，不包含任何字体文件；"字" 字形用系统字体即时栅格化。
 import os
 import struct
 

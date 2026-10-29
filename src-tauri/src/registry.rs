@@ -210,6 +210,23 @@ pub fn delete_font_value(scope: Scope, value_name: &str) -> Result<bool, String>
     }
 }
 
+/// 往字体键写入一个字体值（REG_SZ，数据是文件路径）。
+pub fn write_font_value(scope: Scope, value_name: &str, data: &str) -> Result<(), String> {
+    let key = open_fonts_key_writable(scope).map_err(|e| {
+        format!(
+            "无权限写入 {}\\{}：{}",
+            match scope {
+                Scope::System => "HKLM",
+                Scope::User => "HKCU",
+            },
+            FONTS_SUBKEY,
+            e
+        )
+    })?;
+    key.set_value(value_name, &data)
+        .map_err(|e| format!("写入注册表值 “{}” 失败：{}", value_name, e))
+}
+
 /// 读取 `Inactive Fonts`（REG_MULTI_SZ）。
 pub fn read_inactive_fonts() -> Result<Vec<String>, String> {
     let hive = RegKey::predef(HKEY_CURRENT_USER);

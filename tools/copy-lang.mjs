@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Fontade Contributors
+// Copyright (c) 2026 Raku Inkyetta 羽梦千景
 
 /**
  * 把根目录 langBuild/*.ini 复制到 target/<profile>/lang/。

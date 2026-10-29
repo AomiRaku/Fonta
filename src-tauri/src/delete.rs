@@ -177,7 +177,7 @@ pub fn delete_entries(entries: &[FontEntry], elevated: bool) -> DeleteReport {
 
     if !to_purge.is_empty() {
         inactive::purge(&to_purge);
-        crate::fontchange::broadcast();
+        std::thread::spawn(crate::fontchange::broadcast);
     }
 
     report
@@ -240,7 +240,7 @@ pub fn retry_pending() -> usize {
     }
     save_pending(&remaining);
     if removed > 0 {
-        crate::fontchange::broadcast();
+        std::thread::spawn(crate::fontchange::broadcast);
     }
     removed
 }

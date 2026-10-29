@@ -45,6 +45,27 @@ export const api = {
   /** Windows「应用模式」当前解析结果（读 AppsUseLightTheme）。 */
   systemTheme: () => invoke<string>("system_theme"),
 
+  /** 切换字体禁用方式（会迁移当前已禁用的字体）。 */
+  setDisableMode: (mode: "windows" | "dynamic") =>
+    invoke<{ mode: string; migrated: number; failed: number; errors: string[] }>(
+      "set_disable_mode",
+      { mode },
+    ),
+
+  /** 启动时对账隔离目录与禁用清单。 */
+  reconcileDisabled: () =>
+    invoke<{
+      extra: Array<{ path: string; fileName: string; family: string; style: string }>;
+      missing: Array<{ id: string; family: string; style: string }>;
+    }>("reconcile_disabled"),
+
+  /** 把多出来的隔离文件加入禁用清单。 */
+  adoptDisabledFiles: (paths: string[]) => invoke<number>("adopt_disabled_files", { paths }),
+
+  /** 删除文件已丢失的禁用清单记录。 */
+  dropMissingDisabled: (ids: string[]) => invoke<number>("drop_missing_disabled", { ids }),
+
+
   /** 读取外挂语言包（`lang/<id>.ini`）。 */
   loadLanguage: (id: string) =>
     invoke<import("./i18n").LanguagePack>("load_language", { id }),

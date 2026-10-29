@@ -6,6 +6,7 @@
 pub mod commands;
 pub mod config;
 pub mod delete;
+mod frame;
 pub mod elevation;
 pub mod enumerate;
 pub mod fontchange;
@@ -13,6 +14,7 @@ pub mod i18n;
 pub mod langs;
 pub mod library;
 pub mod inactive;
+pub mod mode;
 pub mod model;
 pub mod ownership;
 pub mod official;
@@ -64,6 +66,12 @@ pub fn run() {
             // 跟随系统「应用模式」：注册表变化时推给前端。
             theme::spawn_watcher(app.handle().clone());
 
+            // 圆角交给 DWM：Windows 11 22H2+ 支持 4px 小圆角，
+            // 比自绘窗口区域更稳（阴影、最小化动画都保留）。
+            if let Some(window) = app.get_webview_window("main") {
+                frame::apply_corners(&window);
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -82,6 +90,11 @@ pub fn run() {
             commands::registry_location,
             commands::system_theme,
             commands::load_language,
+
+            commands::set_disable_mode,
+            commands::reconcile_disabled,
+            commands::adopt_disabled_files,
+            commands::drop_missing_disabled,
         ])
         .run(tauri::generate_context!())
         .expect("FontFox 启动失败");

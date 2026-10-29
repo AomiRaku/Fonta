@@ -168,6 +168,13 @@ pub struct Settings {
     /// 右侧详情面板是否展开。
     #[serde(default = "default_true")]
     pub detail_open: bool,
+    /// 字体禁用方式：`windows`（Inactive Fonts）或 `dynamic`（注销 + 隔离文件）。
+    #[serde(default = "default_disable_mode")]
+    pub disable_mode: String,
+}
+
+fn default_disable_mode() -> String {
+    "windows".to_string()
 }
 
 fn default_true() -> bool {
@@ -180,6 +187,7 @@ impl Default for Settings {
             view_mode: "compact".to_string(),
             preview_text: String::new(),
             theme: "system".to_string(),
+            disable_mode: default_disable_mode(),
             language: "schinese".to_string(),
             detail_open: true,
         }

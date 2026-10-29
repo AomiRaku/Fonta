@@ -120,7 +120,11 @@ export interface Settings {
   theme: ThemeMode;
   /** 右侧详情面板是否展开（持久化）。 */
   detailOpen: boolean;
+  /** 字体禁用方式：windows（Inactive Fonts）或 dynamic（注销 + 隔离文件）。 */
+  disableMode: DisableMode;
 }
+
+export type DisableMode = "windows" | "dynamic";
 
 
 export interface AboutPayload {
@@ -143,6 +147,7 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "system",
   language: "schinese",
   detailOpen: true,
+  disableMode: "windows",
 };
 
 const PROTECTION_KEYS: Record<Protection, string> = {

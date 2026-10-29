@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (c) 2026 Fontade Contributors
+# Copyright (c) 2026 Raku Inkyetta 羽梦千景
 """从 Microsoft Learn 抓取 Windows 10 / 11 官方字体列表，生成内置保护清单快照。
 
 用法：
@@ -48,7 +48,7 @@ def fetch(key: str, url: str, refresh: bool) -> str:
         with open(path, encoding="utf-8") as fh:
             return fh.read()
     request = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0 fontade-build"}
+        url, headers={"User-Agent": "Mozilla/5.0 fontfox-build"}
     )
     with urllib.request.urlopen(request, timeout=60) as response:
         body = response.read().decode("utf-8", "replace")

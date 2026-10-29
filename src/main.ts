@@ -43,6 +43,7 @@ import {
   type ResolvedTheme,
   type Settings,
   type ThemeMode,
+  type DisableMode,
 } from "./types";
 import {
   attachOverlayScrollbar,
@@ -237,6 +238,8 @@ function applyTheme(): void {
   document.documentElement.dataset.themeMode = state.settings.theme;
   // 让原生窗口边框跟随解析后的主题
   void appWindow.setTheme(resolved).catch(() => undefined);
+
+
 }
 
 const THEME_ORDER: ThemeMode[] = ["system", "light", "dark"];
@@ -1263,7 +1266,7 @@ function toggleMoreMenu(): void {
 
   const items: Array<{ label: string; disabled?: boolean; run?: () => void }> = [
     { label: t("more.refresh"), run: () => void refresh() },
-    { label: t("more.settings"), disabled: true },
+    { label: t("more.settings"), run: () => openSettings() },
     { label: t("more.checkUpdate"), disabled: true },
     { label: t("more.about"), run: () => void openAbout() },
   ];
@@ -1428,48 +1431,67 @@ function fontLabel(entry: FontEntry): string {
   return entry.style ? `${entry.family} ${entry.style}` : entry.family;
 }
 
+/** 正在写入的开关操作数量；切换禁用方式前要等它归零。 */
+let inflightToggles = 0;
+
+async function whenTogglesSettled(): Promise<void> {
+  while (inflightToggles > 0) {
+    await new Promise((resolve) => setTimeout(resolve, 60));
+  }
+}
+
 async function toggleHidden(entries: FontEntry[]): Promise<void> {
   const targets = entries.filter((e) => e.exists && !e.protected);
   if (targets.length === 0) return;
   // 只要还有显示的，就整体隐藏；全隐藏时整体显示
   const nextHidden = targets.some((e) => !e.hidden);
+
+  // 先本地生效：开关立即响应，不被 IPC 往返和 WM_FONTCHANGE 广播拖住
+  applyHiddenState(targets, nextHidden);
+
+  inflightToggles += 1;
   try {
     const report = await api.setFontsHidden(
       targets.map((e) => e.id),
       nextHidden,
     );
     if (report.errors.length > 0) {
+      applyHiddenState(targets, !nextHidden);
       toast(report.errors.join("；"), true);
       return;
     }
-    for (const entry of targets) entry.hidden = nextHidden;
-    if (state.sort.key === "enabled") {
-      // 按启用状态排序时顺序会变，必须整表重排
-      applyFilter();
-      renderAll();
-    } else {
-      // 其余情况原地更新开关，让 300ms 的动画能跑完
-      for (const entry of targets) syncRowSwitch(entry);
-      syncFamilySwitches();
-      renderDetailPane();
-      updateStats();
-    }
-    if (targets.length === 1) {
-      toast(
-        nextHidden
+    toast(
+      targets.length === 1
+        ? nextHidden
           ? t("hidden.oneOn", { name: fontLabel(targets[0]) })
-          : t("hidden.oneOff", { name: fontLabel(targets[0]) }),
-      );
-    } else {
-      toast(
-        nextHidden
+          : t("hidden.oneOff", { name: fontLabel(targets[0]) })
+        : nextHidden
           ? t("hidden.manyOn", { count: targets.length })
           : t("hidden.manyOff", { count: targets.length }),
-      );
-    }
+    );
   } catch (err) {
+    // 写入失败时把界面回滚到原状态
+    applyHiddenState(targets, !nextHidden);
     toast(errorText(err), true);
+  } finally {
+    inflightToggles -= 1;
   }
+}
+
+/** 把隐藏状态落到模型并就地刷新界面（不重建整表，保留开关动画）。 */
+function applyHiddenState(targets: FontEntry[], hidden: boolean): void {
+  for (const entry of targets) entry.hidden = hidden;
+
+  if (state.sort.key === "enabled") {
+    // 按启用状态排序时顺序会变，必须整表重排
+    applyFilter();
+    renderAll();
+    return;
+  }
+  for (const entry of targets) syncRowSwitch(entry);
+  syncFamilySwitches();
+  renderDetailPane();
+  updateStats();
 }
 
 /** 原地刷新某一行的开关状态（不重建 DOM，保留过渡动画）。 */
@@ -1752,12 +1774,232 @@ async function openAbout(): Promise<void> {
   presentModal(overlay);
 }
 
+/* ───────────────────────────── 设置 ───────────────────────────── */
+
+/** 设置窗口：目前只有「字体禁用方式」一项。 */
+function openSettings(): void {
+  const shell = buildModal({ title: t("settings.title") });
+  const { overlay, body, footer, close } = shell;
+
+  let busy = false;
+  let applied = false;
+
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") dismiss();
+  };
+  const dismiss = (): void => {
+    // 切换期间禁止关闭窗口
+    if (busy) return;
+    dismissModal(overlay, onKey);
+  };
+
+  const form = el("div", "settings-form");
+  const field = el("div", "settings-field");
+  const label = el("span", "settings-label", t("settings.disableMode"));
+  const select = el("select", "select") as HTMLSelectElement;
+  const modes: Array<[DisableMode, string]> = [
+    ["windows", t("settings.modeWindows")],
+    ["dynamic", t("settings.modeDynamic")],
+  ];
+  for (const [value, text] of modes) {
+    const option = el("option", "", text) as HTMLOptionElement;
+    option.value = value;
+    select.appendChild(option);
+  }
+  select.value = state.settings.disableMode;
+  field.append(label, select);
+  form.appendChild(field);
+  form.appendChild(el("p", "settings-hint", t("settings.disableHint")));
+  body.appendChild(form);
+
+  const apply = el("button", "btn btn--solid", t("settings.apply")) as HTMLButtonElement;
+  apply.type = "button";
+  apply.disabled = true;
+
+  const syncApply = (): void => {
+    apply.disabled = busy || applied || select.value === state.settings.disableMode;
+  };
+  select.addEventListener("change", syncApply);
+
+  apply.addEventListener("click", () => {
+    const target = select.value as DisableMode;
+    if (busy || applied || target === state.settings.disableMode) return;
+    busy = true;
+    apply.disabled = true;
+    select.disabled = true;
+    apply.replaceChildren(
+      el("span", "btn__spin"),
+      document.createTextNode(t("settings.applying")),
+    );
+
+    void (async () => {
+      try {
+        // 先把正在进行的开关写入排空，避免迁移读到旧的禁用集合
+        await whenTogglesSettled();
+        const report = await api.setDisableMode(target);
+        state.settings.disableMode = report.mode as DisableMode;
+        await refresh();
+        applied = true;
+        apply.classList.add("is-done");
+        apply.replaceChildren(document.createTextNode(t("settings.done")));
+        if (report.failed > 0) {
+          toast(t("settings.partial", { count: report.failed }), true);
+        } else {
+          toast(t("settings.applied"));
+        }
+      } catch (err) {
+        apply.replaceChildren(document.createTextNode(t("settings.apply")));
+        select.disabled = false;
+        toast(errorText(err), true);
+      } finally {
+        busy = false;
+        syncApply();
+      }
+    })();
+  });
+
+  footer.appendChild(apply);
+  close?.addEventListener("click", dismiss);
+  document.addEventListener("keydown", onKey);
+  syncApply();
+  presentModal(overlay);
+}
+
+/* ───────────────────────────── 禁用文件对账 ───────────────────────────── */
+
+/**
+ * 启动时把禁用清单和隔离目录对一遍：
+ * - 目录里多出来的文件 → 询问是否加入清单；
+ * - 清单里文件已丢失 → 询问是否从清单移除。
+ */
+async function checkDisabledFiles(): Promise<void> {
+  let report;
+  try {
+    report = await api.reconcileDisabled();
+  } catch {
+    return;
+  }
+  if (report.extra.length > 0) {
+    await askAdoptDisabled(report.extra);
+  }
+  if (report.missing.length > 0) {
+    await askDropMissingDisabled(report.missing);
+  }
+}
+
+function askAdoptDisabled(
+  extra: Array<{ path: string; fileName: string; family: string; style: string }>,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("reconcile.extraTitle") });
+    const { overlay, body, footer, close } = shell;
+    body.appendChild(
+      el("p", "modal__lead", t("reconcile.extraLead", { count: extra.length })),
+    );
+    const list = el("div", "modal__list");
+    for (const file of extra) {
+      const row = el("div", "modal__item");
+      row.appendChild(el("span", "modal__item-name", file.family || file.fileName));
+      row.appendChild(el("span", "modal__item-style", file.fileName));
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== "Escape") return;
+      dismissModal(overlay, onKey);
+      resolve();
+    };
+    const later = el("button", "btn btn--soft", t("reconcile.later")) as HTMLButtonElement;
+    later.type = "button";
+    later.addEventListener("click", () => {
+      dismissModal(overlay, onKey);
+      resolve();
+    });
+    const adopt = el("button", "btn btn--primary", t("reconcile.adopt")) as HTMLButtonElement;
+    adopt.type = "button";
+    adopt.addEventListener("click", () => {
+      void (async () => {
+        try {
+          await api.adoptDisabledFiles(extra.map((file) => file.path));
+          await refresh();
+        } catch (err) {
+          toast(errorText(err), true);
+        }
+        dismissModal(overlay, onKey);
+        resolve();
+      })();
+    });
+    footer.append(later, adopt);
+    close?.addEventListener("click", () => {
+      dismissModal(overlay, onKey);
+      resolve();
+    });
+    document.addEventListener("keydown", onKey);
+    presentModal(overlay);
+  });
+}
+
+function askDropMissingDisabled(
+  missing: Array<{ id: string; family: string; style: string }>,
+): Promise<void> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("reconcile.missingTitle"), closable: false });
+    const { overlay, body, footer } = shell;
+    body.appendChild(
+      el("p", "modal__lead", t("reconcile.missingLead", { count: missing.length })),
+    );
+    const list = el("div", "modal__list");
+    for (const record of missing) {
+      const row = el("div", "modal__item");
+      row.appendChild(el("span", "modal__item-name", record.family || record.id));
+      if (record.style) {
+        row.appendChild(el("span", "modal__item-style", record.style));
+      }
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key !== "Escape") return;
+      dismissModal(overlay, onKey);
+      resolve();
+    };
+    const later = el("button", "btn btn--soft", t("reconcile.later")) as HTMLButtonElement;
+    later.type = "button";
+    later.addEventListener("click", () => {
+      dismissModal(overlay, onKey);
+      resolve();
+    });
+    const drop = el("button", "btn btn--ghost-danger", t("reconcile.drop")) as HTMLButtonElement;
+    drop.type = "button";
+    drop.addEventListener("click", () => {
+      void (async () => {
+        try {
+          await api.dropMissingDisabled(missing.map((record) => record.id));
+          await refresh();
+        } catch (err) {
+          toast(errorText(err), true);
+        }
+        dismissModal(overlay, onKey);
+        resolve();
+      })();
+    });
+    footer.append(later, drop);
+    document.addEventListener("keydown", onKey);
+    presentModal(overlay);
+  });
+}
+
 /* ───────────────────────────── 事件绑定 ───────────────────────────── */
 
 /**
  * 屏蔽 WebView 自带的浏览器行为：右键菜单、缩放、打印、查找、刷新等。
  * 这是桌面应用，不应该出现任何浏览器痕迹。
  */
+
+
+
 function bindShellBehavior(): void {
   const devMode = import.meta.env.DEV;
 
@@ -2592,6 +2834,15 @@ async function boot(): Promise<void> {
   bindTitlebarBlur();
   bindEvents();
 
+
+
+  // 窗口失去焦点时标题栏按钮变淡
+  document.documentElement.dataset.focused = String(document.hasFocus());
+  void appWindow.onFocusChanged(({ payload: focused }) => {
+    document.documentElement.dataset.focused = String(focused);
+  });
+
+
   void api
     .registryLocation("system")
     .then((key) => {
@@ -2611,6 +2862,8 @@ async function boot(): Promise<void> {
     dom.viewport.focus();
     hideSplash();
   }
+  // 对账禁用清单与隔离目录（不阻塞首屏）
+  void checkDisabledFiles();
   // 兜底：万一首屏渲染出错也别一直白屏
   window.setTimeout(hideSplash, 8000);
 }

@@ -1,7 +1,7 @@
 # FontFox 架构说明
 
 本文描述当前的实现结构：模块职责、进程模型、IPC 契约与关键机制。界面规范见
-[ui-spec.md](ui-spec.md)，使用与构建见 [README](../README.md)。
+[ui-spec.md](ui-spec.md)，构建、数据落点与边界见 [development.md](development.md)。
 
 ## 运行形态
 
@@ -31,7 +31,9 @@
 | `src-tauri/src/parse.rs` | `ttf-parser` 读取 `name` / `fvar` / `GSUB`，TTC face 匹配 |
 | `src-tauri/src/official.rs` | 官方字体清单与 `core_fonts.json` 匹配 |
 | `src-tauri/src/ownership.rs` | 文件所有者判定（TrustedInstaller / SYSTEM） |
-| `src-tauri/src/inactive.rs` | `Inactive Fonts` 读写与比对 |
+| `src-tauri/src/inactive.rs` | `Inactive Fonts` 读写与比对（Windows 基础模式） |
+| `src-tauri/src/mode.rs` | 动态安装卸载模式：注销注册表值 + 隔离文件，维护 `disabled.json` |
+| `src-tauri/src/frame.rs` | 窗口外观：通过 DWM 设置 4px 圆角 |
 | `src-tauri/src/delete.rs` | 删除、待清理清单、提权子进程入口 |
 | `src-tauri/src/elevation.rs` | 提权拉起自身子进程 |
 | `src-tauri/src/settings.rs` / `library.rs` | `config.ini` 与 `library.json` 读写 |
@@ -56,6 +58,10 @@
 | `registry_location` | `scope` | 注册表路径（详情面板展示） |
 | `system_theme` | — | `light` / `dark`（读 `AppsUseLightTheme`） |
 | `load_language` | `id` | 解析后的语言包 |
+| `set_disable_mode` | `mode`（`windows` / `dynamic`） | `{ mode, migrated, failed, errors }`，内部完成旧模式恢复 → 切换 → 新模式重禁用 |
+| `reconcile_disabled` | — | `{ extra, missing }`：隔离目录多出的文件、清单里丢失的文件 |
+| `adopt_disabled_files` | `paths` | 收编为禁用记录的数量 |
+| `drop_missing_disabled` | `ids` | 移除失效记录的数量 |
 
 错误一律以字符串形式返回，前端 `errorText()` 统一转成可读文案。
 

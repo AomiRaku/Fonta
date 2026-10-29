@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (c) 2026 Fontade Contributors
+# Copyright (c) 2026 Raku Inkyetta 羽梦千景
 """把 MasterGo / Figma 导出的 SVG 反解成「元素清单」，用于还原界面。
 
 用法：

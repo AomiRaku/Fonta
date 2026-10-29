@@ -88,6 +88,9 @@ pub fn load() -> Settings {
     if let Some(v) = entry(&entries, "DetailOpen") {
         settings.detail_open = v.eq_ignore_ascii_case("true");
     }
+    if let Some(v) = entry(&entries, "DisableMode") {
+        settings.disable_mode = v.to_string();
+    }
     settings
 }
 
@@ -108,12 +111,14 @@ pub fn save(settings: &Settings) -> Result<(), String> {
          Theme={}\r\n\
          Language={}\r\n\
          PreviewText={}\r\n\
-         DetailOpen={}\r\n",
+         DetailOpen={}\r\n\
+         DisableMode={}\r\n",
         one_line(&settings.view_mode),
         one_line(&settings.theme),
         one_line(&settings.language),
         one_line(&settings.preview_text),
         settings.detail_open,
+        one_line(&settings.disable_mode),
     );
     write_atomic(&path, &text).map_err(|e| format!("无法写入配置：{}", e))
 }
