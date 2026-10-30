@@ -2,7 +2,7 @@
   "name": "fontfox",
   "private": true,
   "version": "0.1.0",
-  "description": "FontFox / 字狐 — Windows 字体管理器",
+  "description": "FontFox — Windows 字体管理器",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {

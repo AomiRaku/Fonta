@@ -15,7 +15,7 @@
 //! Translator=Raku Inkyetta 羽梦千景
 //!
 //! [ui]
-//! app.name=FontFox / 字狐
+//! app.name=FontFox
 //! ```
 
 use std::collections::BTreeMap;
@@ -131,7 +131,7 @@ mod tests {
         let (meta, entries) = parse(EMBEDDED);
         assert_eq!(meta.get("languagename").map(String::as_str), Some("简体中文"));
         assert_eq!(entries.get("list.colName").map(String::as_str), Some("字体名称"));
-        assert_eq!(entries.get("app.name").map(String::as_str), Some("FontFox / 字狐"));
+        assert_eq!(entries.get("app.name").map(String::as_str), Some("FontFox"));
     }
 
     #[test]

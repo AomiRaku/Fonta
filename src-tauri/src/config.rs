@@ -102,7 +102,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
     let dir = ensure_dir().map_err(|e| format!("无法创建配置目录：{}", e))?;
     let path = dir.join(CONFIG_FILE);
     let text = format!(
-        "; FontFox / 字狐 配置\r\n\
+        "; FontFox 配置\r\n\
          ; 卸载或迁移时直接删除本目录即可\r\n\
          \r\n\
          [general]\r\n\

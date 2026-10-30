@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 Raku Inkyetta 羽梦千景
 
-//! FontFox / 字狐 —— Windows 字体管理器的应用入口。
+//! FontFox —— Windows 字体管理器的应用入口。
 
 pub mod commands;
 pub mod config;

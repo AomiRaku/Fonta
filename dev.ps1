@@ -1,7 +1,7 @@
-﻿# SPDX-License-Identifier: Apache-2.0
+# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 Raku Inkyetta 羽梦千景
 #
-# FontFox / 字狐 —— 开发模式启动器（由 dev.cmd 双击调用）。
+# FontFox —— 开发模式启动器（由 dev.cmd 双击调用）。
 #
 # exe 清单是 asInvoker，开发会话无需提权；删除系统字体的 UAC 由应用在运行时按需申请。
 
@@ -18,7 +18,7 @@ function Stop-WithError([string]$message) {
 
 
 Write-Host "============================================================" -ForegroundColor DarkGray
-Write-Host "  FontFox / 字狐  ·  开发模式 (Vite + Tauri 热更新)" -ForegroundColor White
+Write-Host "  FontFox  ·  开发模式 (Vite + Tauri 热更新)" -ForegroundColor White
 Write-Host "============================================================" -ForegroundColor DarkGray
 Write-Host ""
 

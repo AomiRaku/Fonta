@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "FontFox / 字狐",
+        "title": "FontFox",
         "width": 1180,
         "height": 760,
         "minWidth": 1120,
@@ -40,8 +40,8 @@
       "icons/icon.ico"
     ],
     "resources": { "../LICENSE": "./", "../NOTICE": "./", "../langBuild/*.ini": "lang/" },
-    "shortDescription": "FontFox / 字狐 — 字体管理器",
-    "longDescription": "FontFox / 字狐 是一个轻量、精准、可彻底卸载的 Windows 本地字体管理器。",
+    "shortDescription": "FontFox — 字体管理器",
+    "longDescription": "FontFox 是一个轻量、精准、可彻底卸载的 Windows 本地字体管理器。",
     "copyright": "Copyright (c) 2026 Raku Inkyetta 羽梦千景",
     "license": "Apache-2.0",
     "windows": {
