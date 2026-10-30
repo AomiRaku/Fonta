@@ -37,7 +37,7 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 | 详情面板 | 可折叠；完整名称、语言、版本、版权、路径、文件大小，支持复制与「打开文件位置」；可变字体带字重滑块 |
 | 外观 | 浅色 / 深色 / 跟随系统；自绘标题栏与窗口按钮，窗口圆角 / 描边 / 阴影由 DWM 提供 |
 | 键盘 | ↑ / ↓ 移动选择，Ctrl+A 全选列表且任何位置都不选中界面文字（输入框内除外），Delete 等同删除按钮，Esc 取消选择、清空搜索；模态弹窗打开或输入框聚焦时不接管这些快捷键 |
-| 语言 | 外挂 `lang/<id>.ini`，当前提供简体中文；缺失键直接显示键名，便于发现漏翻 |
+| 语言 | 外挂 `lang/<id>.ini`，当前提供简体中文；缺失键直接显示键名，便于发现漏翻；文案里的字面 `\n` 会转成换行 |
 
 ## 技术栈
 
@@ -150,7 +150,7 @@ tools/              官方清单抓取、语言包复制脚本
 
 1. **动态安装卸载模式**（`dynamic`）：静默执行 `fontfox.exe --restore-fonts`，把 `disabled\` 里的
    隔离字体迁回 `%LOCALAPPDATA%\Microsoft\Windows\Fonts` 并重新写入 `HKCU\...\Fonts`——必须恢复，不询问；
-2. **Windows 默认模式**（`windows`）：弹窗询问「是否恢复所有已停用的字体？」；选「是」才执行同一个
+2. **Windows 基础模式**（`windows`）：弹窗询问「是否恢复所有已停用的字体？」；选「是」才执行同一个
    命令（删除 `Inactive Fonts` 值），选「否」保持现状。
 
 恢复失败时应用会弹出原生「恢复字体失败」对话框：只有一个「重试」按钮，点窗口关闭同样按重试处理。
@@ -172,7 +172,7 @@ tools/              官方清单抓取、语言包复制脚本
 - 不修改字体文件内容，不重命名、不编辑字体。
 - 自绘标题栏意味着 Win11「悬停最大化按钮弹出贴靠布局」不可用（该能力只随系统标题栏提供）。
 - 分组依据、筛选条件、预览文字为会话内状态，重启后回到默认（不分组、无筛选、预览框为空）；
-  视图模式、主题、详情面板开合、语言、禁用方式会写入配置。
+  视图模式、主题、详情面板开合、语言、禁用方式会写入配置；禁用方式变更先写入 `DisableModeNext`，重启启动时执行迁移后再清空。
 - **禁用状态持久化**：退出应用不会自动恢复字体，`disabled.json` 里的记录下次启动继续有效；
   动态模式下改动隔离目录会触发启动对账弹窗（补充未登记文件 / 清理失效记录）。
 - 动态安装卸载模式只处理用户作用域字体：系统作用域字体需要提权改动 `C:\Windows\Fonts` 与 `HKLM`，
@@ -181,6 +181,19 @@ tools/              官方清单抓取、语言包复制脚本
 - 语言包是 exe 同级的 `lang/<id>.ini`：`predev` / `prebuild` 由 `tools/copy-lang.mjs` 复制，
   `build.rs` 在编译期再兜底一次，打包时按 `bundle.resources` 映射进安装目录。改文案可直接编辑
   exe 旁那份 `lang/schinese.ini`。
+
+## 安装器外观
+
+- 欢迎页 / 完成页左侧插图：`docs/img/install.bmp`（164×314 BMP），由 `bundle.windows.nsis.sidebarImage` 引用。
+- 安装界面字体：自定义模板 `src-tauri/nsis/installer.nsi` 把语言加载改为 `MUI_LANGUAGEEX`，指向 `src-tauri/nsis-lang/mui/` 下的 `SimpChinese.*` / `English.*`；这两个 NLF 的字体的设为 `Microsoft YaHei` 9 号。
+- `src-tauri/nsis-lang/*.nsh` 是 Tauri 安装器的自定义文案，在语言加载后追加，修改时保留原有 `LangString`。
+- 升级 Tauri 后若 NSIS 模板有变化，需重新同步 `src-tauri/nsis/installer.nsi` 并保留语言加载段的改动。
+
+## 版本号
+
+- 对外版本使用 `major.minor`，不补前导零：当前 **1000.0**，后续例如 `1021.0`、`1220.0`、`2200.13`。
+- 内部需要 semver 的工具（Cargo / Tauri / NSIS）使用 `major.minor.0`，例如 `1000.0.0`；`about` 与 `app_info` 对外显示 `major.minor`。
+- 发版时同步：`package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock`（fontfox 条目）、`src-tauri/tauri.conf.json`。
 
 ## 许可证
 

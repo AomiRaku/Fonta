@@ -125,6 +125,8 @@ export interface Settings {
   detailOpen: boolean;
   /** 字体禁用方式：windows（Inactive Fonts）或 dynamic（注销 + 隔离文件）。 */
   disableMode: DisableMode;
+  /** 下次启动时应用的禁用方式；空串表示没有待应用变更。 */
+  disableModeNext: DisableMode | "";
 }
 
 export type DisableMode = "windows" | "dynamic";
@@ -150,7 +152,8 @@ export const DEFAULT_SETTINGS: Settings = {
   theme: "system",
   language: "schinese",
   detailOpen: true,
-  disableMode: "windows",
+  disableMode: "dynamic",
+  disableModeNext: "",
 };
 
 const PROTECTION_KEYS: Record<Protection, string> = {

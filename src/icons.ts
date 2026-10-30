@@ -14,6 +14,7 @@ import dataTypeString from "@siemens/ix-icons/svg/data-type-string.svg?raw";
 import filter from "@siemens/ix-icons/svg/filter.svg?raw";
 import filterFilled from "@siemens/ix-icons/svg/filter-filled.svg?raw";
 import check from "@siemens/ix-icons/svg/check.svg?raw";
+import about from "@siemens/ix-icons/svg/about.svg?raw";
 import appMenu from "@siemens/ix-icons/svg/app-menu.svg?raw";
 import errorFilled from "@siemens/ix-icons/svg/error-filled.svg?raw";
 import listGraphicsText from "@siemens/ix-icons/svg/list-graphics-text.svg?raw";
@@ -44,6 +45,7 @@ const SOURCES = {
   filter,
   "filter-filled": filterFilled,
   check,
+  about,
   "app-menu": appMenu,
   "error-filled": errorFilled,
   "list-graphics-text": listGraphicsText,

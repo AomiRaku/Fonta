@@ -77,6 +77,13 @@
 | `registry_location` | `scope` | 注册表路径（详情面板展示） |
 | `system_theme` | — | `light` / `dark`（读 `AppsUseLightTheme`） |
 | `load_language` | `id` | 解析后的语言包 |
+| `list_languages` | — | exe 同级 `lang/*.ini` 的 `{ id, name }` 列表 |
+| `open_devtools` | — | 打开当前窗口 DevTools（需要 tauri `devtools` feature） |
+| `restore_all_fonts` | — | 恢复全部已停用字体；失败返回错误 |
+| `move_disabled_to_desktop` | `paths` | 把指定隔离文件移动到桌面，返回成功数量 |
+| `move_quarantined_to_desktop` | — | 把隔离目录剩余字体移动到桌面，返回成功数量 |
+| `reset_user_data` | — | 删除 `%USERPROFILE%\.FontFox\` 全部内容 |
+| `restart_app` | — | 重启应用 |
 | `set_disable_mode` | `mode`（`windows` / `dynamic`） | `{ mode, migrated, failed, errors }`；内部完成旧模式恢复 → 切换 → 新模式重禁用，任一步失败则回滚并保持原模式 |
 | `reconcile_disabled` | — | `{ extra, missing }`：隔离目录多出的文件、清单里丢失的文件 |
 | `adopt_disabled_files` | `paths` | 收编为禁用记录的数量 |
@@ -108,7 +115,7 @@
 
 ## 设置与字体单
 
-- `config.ini`：`viewMode`、`theme`、`language`、`detailOpen`、`disableMode`
+- `config.ini`：`viewMode`、`theme`、`language`、`detailOpen`、`disableMode`、`disableModeNext`
   （预览文字只在会话内，不写入配置）。
 - `library.json`：`favorites`（字体 id 列表）与 `collections`（名称、标记色、字体 id 列表）。
 - 偏好改动 350ms 防抖后写入；字体单改动 250ms 防抖后写入；两者都用临时文件 + rename 原子落盘。
@@ -118,6 +125,7 @@
 
 - 唯一源文件在 `langBuild/<id>.ini`，`[section]` + `key=value`，`{name}` 为插值占位。
 - 构建期复制到 `target/<profile>/lang/` 并随 `bundle.resources` 打进安装目录。
+- 文案中的字面 `\n` 由前端 `t()` 转成换行；只有对话框正文、设置项描述 / 提示等段落元素启用 `white-space: pre-line`，其余单行控件不换行。
 - 运行时由 Rust 解析成 `{ "section.key": "文本" }` 交给前端；**没有内置回退**，缺失键会直接
   显示键名，便于发现漏翻。
 

@@ -19,7 +19,8 @@ export function setLanguagePack(pack: LanguagePack): void {
 
 /** 取文案并做 `{name}` 占位替换；缺键时回退为键名，便于发现漏翻。 */
 export function t(key: string, vars?: Record<string, string | number>): string {
-  const raw = entries[key] ?? key;
+  // 语言包里用字面 `\n` 表示换行；是否真的换行由目标元素的 white-space 决定
+  const raw = (entries[key] ?? key).replace(/\\n/g, "\n");
   if (!vars) return raw;
   return raw.replace(/\{(\w+)\}/g, (whole, name: string) =>
     Object.prototype.hasOwnProperty.call(vars, name) ? String(vars[name]) : whole,

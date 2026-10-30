@@ -52,6 +52,30 @@ export const api = {
       { mode },
     ),
 
+  /** 重置流程：强制对账隔离目录与禁用清单（不受当前禁用模式限制）。 */
+  reconcileDisabledForReset: () =>
+    invoke<{
+      extra: Array<{ path: string; fileName: string; family: string; style: string }>;
+      missing: Array<{ id: string; family: string; style: string }>;
+    }>("reconcile_disabled", { force: true }),
+
+  /** 重置流程：恢复全部已停用字体。 */
+  restoreAllFonts: () => invoke<number>("restore_all_fonts"),
+
+  /** 把指定隔离字体文件移动到桌面 FontFox Uninstalled Fonts。 */
+  moveDisabledToDesktop: (paths: string[]) =>
+    invoke<number>("move_disabled_to_desktop", { paths }),
+
+  /** 把隔离目录剩余字体全部移动到桌面。 */
+  moveQuarantinedToDesktop: () =>
+    invoke<number>("move_quarantined_to_desktop"),
+
+  /** 删除 `%USERPROFILE%\.FontFox\` 下的全部内容。 */
+  resetUserData: () => invoke<void>("reset_user_data"),
+
+  /** 重启应用。 */
+  restartApp: () => invoke<void>("restart_app"),
+
   /** 启动时对账隔离目录与禁用清单。 */
   reconcileDisabled: () =>
     invoke<{
@@ -72,6 +96,13 @@ export const api = {
       { ids },
     ),
 
+
+  /** 打开 DevTools（设置里的开发者工具开关）。 */
+  openDevTools: () => invoke<void>("open_devtools"),
+
+  /** 可用语言包列表（exe 同级 `lang/*.ini`）。 */
+  listLanguages: () =>
+    invoke<Array<{ id: string; name: string }>>("list_languages"),
 
   /** 读取外挂语言包（`lang/<id>.ini`）。 */
   loadLanguage: (id: string) =>

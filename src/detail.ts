@@ -386,30 +386,43 @@ export function renderDetail(
   const moreToggle = el("button", "detail__toggle");
   moreToggle.type = "button";
   moreToggle.setAttribute("aria-expanded", String(ctx.detailsOpen));
-  moreToggle.appendChild(
-      el("span", "", ctx.detailsOpen ? t("detail.technicalLess") : t("detail.technicalMore")),
+  const moreLabel = el(
+    "span",
+    "",
+    ctx.detailsOpen ? t("detail.technicalLess") : t("detail.technicalMore"),
   );
+  moreToggle.appendChild(moreLabel);
   moreToggle.appendChild(icon("chevron-down", "detail__chev"));
-  moreToggle.addEventListener("click", () => handlers.toggleDetails());
   scroll.appendChild(moreToggle);
 
-  if (ctx.detailsOpen) {
-    scroll.appendChild(
-      section(t("detail.sectionFile"), [
-        kv(t("detail.fileName"), entry.fileName, true),
-        kv(t("detail.path"), entry.path, true),
-        kv(t("detail.size"), formatBytes(entry.size)),
-        kv(t("detail.format"), entry.format),
-      ]),
-    );
-    scroll.appendChild(
-      section(t("detail.sectionRegistry"), [
-        kv(t("detail.valueName"), entry.valueName, true),
-        kv(t("detail.location"), ctx.registryKey, true),
-        kv(t("detail.state"), statusLine(entry)),
-      ]),
-    );
-  }
+  // 始终渲染详情，靠 grid 行高做展开 / 收起动画；不重建 DOM，滚动位置不会跳回顶部
+  const moreBody = el("div", ctx.detailsOpen ? "detail__more is-open" : "detail__more");
+  const moreInner = el("div", "detail__more-inner");
+  moreInner.appendChild(
+    section(t("detail.sectionFile"), [
+      kv(t("detail.fileName"), entry.fileName, true),
+      kv(t("detail.path"), entry.path, true),
+      kv(t("detail.size"), formatBytes(entry.size)),
+      kv(t("detail.format"), entry.format),
+    ]),
+  );
+  moreInner.appendChild(
+    section(t("detail.sectionRegistry"), [
+      kv(t("detail.valueName"), entry.valueName, true),
+      kv(t("detail.location"), ctx.registryKey, true),
+      kv(t("detail.state"), statusLine(entry)),
+    ]),
+  );
+  moreBody.appendChild(moreInner);
+  scroll.appendChild(moreBody);
+
+  moreToggle.addEventListener("click", () => {
+    const open = !moreBody.classList.contains("is-open");
+    moreBody.classList.toggle("is-open", open);
+    moreToggle.setAttribute("aria-expanded", String(open));
+    moreLabel.textContent = t(open ? "detail.technicalLess" : "detail.technicalMore");
+    handlers.toggleDetails();
+  });
   container.appendChild(scroll);
 }
 /** 字族详情：以一个「整体」呈现，没有具体文件信息。 */

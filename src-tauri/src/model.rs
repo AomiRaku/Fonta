@@ -176,10 +176,13 @@ pub struct Settings {
     /// 字体禁用方式：`windows`（Inactive Fonts）或 `dynamic`（注销 + 隔离文件）。
     #[serde(default = "default_disable_mode")]
     pub disable_mode: String,
+    /// 下次启动时要切换到的禁用方式；空串表示没有待应用变更。
+    #[serde(default)]
+    pub disable_mode_next: String,
 }
 
 fn default_disable_mode() -> String {
-    "windows".to_string()
+    "dynamic".to_string()
 }
 
 fn default_true() -> bool {
@@ -193,6 +196,7 @@ impl Default for Settings {
             preview_text: String::new(),
             theme: "system".to_string(),
             disable_mode: default_disable_mode(),
+            disable_mode_next: String::new(),
             language: "schinese".to_string(),
             detail_open: true,
         }

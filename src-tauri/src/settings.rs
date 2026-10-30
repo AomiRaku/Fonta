@@ -13,6 +13,15 @@ const VIEW_MODES: [&str; 2] = ["compact", "preview"];
 const THEMES: [&str; 3] = ["system", "dark", "light"];
 const DISABLE_MODES: [&str; 2] = ["windows", "dynamic"];
 
+/// 待应用的禁用方式：只接受已知值，且不能与当前生效值相同。
+fn pick_optional_mode(value: &str, current: &str) -> String {
+    if DISABLE_MODES.contains(&value) && value != current {
+        value.to_string()
+    } else {
+        String::new()
+    }
+}
+
 fn pick(value: &str, allowed: &[&str], fallback: &str) -> String {
     if allowed.contains(&value) {
         value.to_string()
@@ -29,6 +38,7 @@ pub fn load() -> Settings {
     settings.view_mode = pick(&settings.view_mode, &VIEW_MODES, &defaults.view_mode);
     settings.theme = pick(&settings.theme, &THEMES, &defaults.theme);
     settings.disable_mode = pick(&settings.disable_mode, &DISABLE_MODES, &defaults.disable_mode);
+    settings.disable_mode_next = pick_optional_mode(&settings.disable_mode_next, &settings.disable_mode);
     if settings.language.trim().is_empty() {
         settings.language = defaults.language;
     }
@@ -41,6 +51,8 @@ pub fn save(settings: &Settings) -> Result<(), String> {
     normalized.view_mode = pick(&settings.view_mode, &VIEW_MODES, &defaults.view_mode);
     normalized.theme = pick(&settings.theme, &THEMES, &defaults.theme);
     normalized.disable_mode = pick(&settings.disable_mode, &DISABLE_MODES, &defaults.disable_mode);
+    normalized.disable_mode_next =
+        pick_optional_mode(&settings.disable_mode_next, &normalized.disable_mode);
     if normalized.language.trim().is_empty() {
         normalized.language = defaults.language;
     }

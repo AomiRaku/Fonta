@@ -8,6 +8,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { api, errorText } from "./api";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { type MenuItem, openContextMenu } from "./contextmenu";
+import { createDropdown } from "./dropdown";
 import { icon, mountIcons } from "./icons";
 import { applyStaticTranslations, setLanguagePack, t } from "./i18n";
 import { renderDetail, renderFamilyDetail } from "./detail";
@@ -61,6 +62,7 @@ const dom = {
   previewClear: byId<HTMLButtonElement>("preview-clear"),
   filter: byId<HTMLButtonElement>("filter"),
   filterLabel: byId<HTMLSpanElement>("filter-label"),
+  searchCount: byId<HTMLSpanElement>("search-count"),
   theme: byId<HTMLButtonElement>("theme"),
   viewport: byId<HTMLDivElement>("viewport"),
   spacer: byId<HTMLDivElement>("spacer"),
@@ -214,7 +216,10 @@ function toast(message: string, danger = false): void {
 }
 
 let saveTimer = 0;
+/** 重置流程中禁止任何延迟保存，避免配置目录被删后又被写回。 */
+let suppressPersistence = false;
 function scheduleSave(): void {
+  if (suppressPersistence) return;
   window.clearTimeout(saveTimer);
   saveTimer = window.setTimeout(() => {
     void api.saveSettings(state.settings).catch(() => {
@@ -494,8 +499,18 @@ function updateFilterButton(): void {
   }
 }
 
-function toggleFilterMenu(): void {
-  if (isFilterMenuOpen()) {
+/** 搜索时在筛选按钮右侧显示结果数量。 */
+function updateSearchCount(): void {
+  const query = state.query.trim();
+  dom.searchCount.hidden = query.length === 0;
+  if (query.length > 0) {
+    dom.searchCount.textContent = t("toolbar.resultCount", {
+      count: state.filtered.length,
+    });
+  }
+}
+
+function toggleFilterMenu(): void {  if (isFilterMenuOpen()) {
     closeFilterMenu();
     dom.filter.classList.remove("is-open");
     dom.filter.setAttribute("aria-expanded", "false");
@@ -569,6 +584,7 @@ function applyFilter(): void {
   // 计数随筛选结果变化，统一在过滤后刷新
   updateStats();
   updateFilterButton();
+  updateSearchCount();
   syncSelectAllState();
 }
 
@@ -1603,8 +1619,8 @@ function renderDetailPane(): void {
     },
     {
       toggleDetails: () => {
+        // 展开 / 收起由详情面板自己用 DOM 动画处理，这里只记状态，避免重建后滚动跳回顶部
         state.detailsOpen = !state.detailsOpen;
-        renderDetailPane();
       },
       toggleHidden: (targets) => {
         void toggleHidden(targets);
@@ -1630,6 +1646,7 @@ function renderAll(): void {
 
   rebuild();
   renderDetailPane();
+  updateSearchCount();
   syncSelectAllState();
 }
 
@@ -1710,12 +1727,6 @@ function syncSwitchPending(): void {
         })();
     switchEl.disabled = pending;
     switchEl.classList.toggle("switch--pending", pending);
-  }
-}
-
-async function whenTogglesSettled(): Promise<void> {
-  while (inflightToggles > 0) {
-    await new Promise((resolve) => setTimeout(resolve, 60));
   }
 }
 
@@ -1828,6 +1839,26 @@ function syncRowSwitch(entry: FontEntry): void {
     : t("switch.off");
 }
 
+/** 删除后仍有文件被占用：提示用户重启电脑并再次打开 FontFox 时自动清理。 */
+function showFontsLockedNotice(): void {
+  const shell = buildModal({ title: t("delete.lockedTitle"), closable: false });
+  const { overlay, body, footer } = shell;
+  body.appendChild(el("p", "modal__lead", t("delete.lockedNote")));
+
+  const ok = el("button", "btn btn--primary", t("delete.ok")) as HTMLButtonElement;
+  ok.type = "button";
+  const dismiss = (): void => dismissModal(overlay, onKey);
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") dismiss();
+  };
+  ok.addEventListener("click", dismiss);
+  footer.appendChild(ok);
+
+  document.addEventListener("keydown", onKey);
+  presentModal(overlay);
+  ok.focus();
+}
+
 function describeDelete(report: DeleteReport, count: number): void {
   if (report.cancelled) {
     toast(report.errors[report.errors.length - 1] ?? t("toast.deleteCancelled"), false);
@@ -1835,14 +1866,12 @@ function describeDelete(report: DeleteReport, count: number): void {
   }
   if (report.errors.length > 0) {
     toast(report.errors.join("；") , true);
-    return;
   }
   if (report.lockedCount > 0) {
-    toast(
-      t("toast.deletedLocked", { count: report.lockedCount }),
-    );
+    showFontsLockedNotice();
     return;
   }
+  if (report.errors.length > 0) return;
   if (report.removedCount > 0) {
     toast(
       count === 1
@@ -1992,6 +2021,12 @@ function openDeleteDialog(entries: FontEntry[]): void {
   cancel.type = "button";
   const confirm = el("button", "btn btn--ghost-danger", t("delete.confirm")) as HTMLButtonElement;
   confirm.type = "button";
+  const permanent = el("span", "modal__footer-note modal__footer-note--danger");
+  permanent.append(
+    icon("about", "modal__footer-info"),
+    document.createTextNode(t("delete.warnPermanent")),
+  );
+  footer.appendChild(permanent);
   footer.appendChild(cancel);
   footer.appendChild(confirm);
 
@@ -2089,95 +2124,408 @@ async function openAbout(): Promise<void> {
 
 /* ───────────────────────────── 设置 ───────────────────────────── */
 
-/** 设置窗口：目前只有「字体禁用方式」一项。 */
+/** 设置窗口：界面语言 + 折叠的高级选项。 */
 function openSettings(): void {
-  const shell = buildModal({ title: t("settings.title") });
-  const { overlay, body, footer, close } = shell;
-
-  let busy = false;
-  let applied = false;
+  const shell = buildModal({ title: t("settings.title"), closable: false });
+  const { overlay, body, footer, panel } = shell;
+  panel.classList.add("modal__panel--settings");
 
   const onKey = (event: KeyboardEvent): void => {
     if (event.key === "Escape") dismiss();
   };
-  const dismiss = (): void => {
-    // 切换期间禁止关闭窗口
-    if (busy) return;
-    dismissModal(overlay, onKey);
+  const dismiss = (): void => dismissModal(overlay, onKey);
+
+  const list = el("div", "settings-list");
+  const row = (labelText: string, control: HTMLElement, desc?: string): HTMLElement => {
+    const item = el("div", "settings-row");
+    item.appendChild(el("div", "settings-row__label", labelText));
+    item.appendChild(control);
+    if (desc) item.appendChild(el("p", "settings-row__desc", desc));
+    return item;
   };
 
-  const form = el("div", "settings-form");
-  const field = el("div", "settings-field");
-  const label = el("span", "settings-label", t("settings.disableMode"));
-  const select = el("select", "select") as HTMLSelectElement;
-  const modes: Array<[DisableMode, string]> = [
-    ["windows", t("settings.modeWindows")],
-    ["dynamic", t("settings.modeDynamic")],
-  ];
-  for (const [value, text] of modes) {
-    const option = el("option", "", text) as HTMLOptionElement;
-    option.value = value;
-    select.appendChild(option);
+  const themeSelect = createDropdown(
+    THEME_ORDER.map((mode) => ({ value: mode, label: themeLabel(mode) })),
+    state.settings.theme,
+    (value) => {
+      state.settings.theme = value as ThemeMode;
+      applyTheme();
+      syncThemeButton();
+      scheduleSave();
+    },
+  );
+  themeSelect.el.classList.add("settings-row__control");
+  list.appendChild(row(t("settings.theme"), themeSelect.el));
+
+  const languageSelect = createDropdown(
+    [{ value: state.settings.language, label: state.settings.language }],
+    state.settings.language,
+    (id) => {
+      void changeLanguage(id);
+    },
+  );
+  languageSelect.el.classList.add("settings-row__control");
+  list.appendChild(row(t("settings.language"), languageSelect.el));
+
+  void api
+    .listLanguages()
+    .then((languages) => {
+      if (languages.length === 0) return;
+      const current = state.settings.language;
+      const options = languages.some((item) => item.id === current)
+        ? languages
+        : [{ id: current, name: current }, ...languages];
+      languageSelect.setOptions(
+        options.map((item) => ({ value: item.id, label: item.name })),
+      );
+      languageSelect.setValue(current);
+    })
+    .catch(() => undefined);
+
+  async function changeLanguage(id: string): Promise<void> {
+    if (id === state.settings.language) return;
+    try {
+      const pack = await api.loadLanguage(id);
+      setLanguagePack(pack);
+      state.settings.language = id;
+      scheduleSave();
+      applyStaticTranslations();
+      document.title = t("app.name");
+      renderSidebar();
+      syncToolbar();
+      renderAll();
+      // 用新语言重建设置窗口本身
+      dismiss();
+      openSettings();
+    } catch (err) {
+      toast(errorText(err), true);
+      languageSelect.setValue(state.settings.language);
+    }
   }
-  select.value = state.settings.disableMode;
-  field.append(label, select);
-  form.appendChild(field);
-  form.appendChild(el("p", "settings-hint", t("settings.disableHint")));
-  body.appendChild(form);
 
-  const apply = el("button", "btn btn--solid", t("settings.apply")) as HTMLButtonElement;
-  apply.type = "button";
-  apply.disabled = true;
+  // 高级选项：字体禁用方式，重启后生效
+  const advanced = el("div", "settings-advanced");
+  const advancedToggle = el("button", "settings-advanced__toggle") as HTMLButtonElement;
+  advancedToggle.type = "button";
+  advancedToggle.setAttribute("aria-expanded", "false");
+  advancedToggle.append(
+    el("span", "", t("settings.advanced")),
+    icon("chevron-down", "settings-advanced__chev"),
+  );
 
-  const syncApply = (): void => {
-    apply.disabled = busy || applied || select.value === state.settings.disableMode;
+  const advancedBody = el("div", "settings-advanced__body");
+  const advancedInner = el("div", "settings-advanced__inner");
+  const modes: Array<[DisableMode, string]> = [
+    ["dynamic", t("settings.modeDynamic")],
+    ["windows", t("settings.modeWindows")],
+  ];
+  const pendingMode = state.settings.disableModeNext;
+  const initialMode =
+    pendingMode && pendingMode !== state.settings.disableMode
+      ? pendingMode
+      : state.settings.disableMode;
+
+  const hint = el("p", "settings-hint", t("settings.restartHint"));
+  hint.hidden = initialMode === state.settings.disableMode;
+
+  const select = createDropdown(
+    modes.map(([value, label]) => ({ value, label })),
+    initialMode,
+    (value) => {
+      const next = value as DisableMode;
+      const pending = next !== state.settings.disableMode;
+      state.settings.disableModeNext = pending ? next : "";
+      hint.hidden = !pending;
+      scheduleSave();
+    },
+  );
+  select.el.classList.add("settings-row__control");
+
+  const disableRow = row(t("settings.disableMode"), select.el, t("settings.disableHint"));
+  disableRow.appendChild(hint);
+  advancedInner.appendChild(disableRow);
+
+  const devSwitch = el("button", "switch") as HTMLButtonElement;
+  devSwitch.type = "button";
+  devSwitch.setAttribute("role", "switch");
+  devSwitch.setAttribute("aria-checked", String(devToolsEnabled));
+  devSwitch.setAttribute("aria-label", t("settings.devtools"));
+  devSwitch.title = t("settings.devtools");
+  devSwitch.appendChild(el("span", "switch__knob"));
+  devSwitch.addEventListener("click", () => {
+    devToolsEnabled = !devToolsEnabled;
+    devSwitch.setAttribute("aria-checked", String(devToolsEnabled));
+  });
+  advancedInner.appendChild(
+    row(t("settings.devtools"), devSwitch, t("settings.devtoolsHint")),
+  );
+
+  const resetButton = el(
+    "button",
+    "btn btn--solid btn--danger",
+    t("settings.reset"),
+  ) as HTMLButtonElement;
+  resetButton.type = "button";
+  resetButton.addEventListener("click", () => openResetDialog());
+  advancedInner.appendChild(row(t("settings.resetFontFox"), resetButton));
+
+  advancedBody.appendChild(advancedInner);
+  advanced.append(advancedToggle, advancedBody);
+  advancedToggle.addEventListener("click", () => {
+    const open = !advanced.classList.contains("is-open");
+    advanced.classList.toggle("is-open", open);
+    advancedToggle.setAttribute("aria-expanded", String(open));
+  });
+  list.appendChild(advanced);
+  body.appendChild(list);
+
+  const close = el("button", "btn btn--soft", t("settings.close")) as HTMLButtonElement;
+  close.type = "button";
+  close.addEventListener("click", dismiss);
+  footer.appendChild(close);
+
+  document.addEventListener("keydown", onKey);
+  presentModal(overlay);
+  close.focus();
+}
+/* ───────────────────────────── 重置 FontFox ───────────────────────────── */
+
+function openResetDialog(): void {
+  const shell = buildModal({ title: t("settings.resetFontFox"), closable: false });
+  const { overlay, body, footer } = shell;
+  body.appendChild(el("p", "modal__lead", t("settings.resetConfirm")));
+
+  const hint = el("span", "modal__footer-note");
+  hint.append(
+    icon("about", "modal__footer-info"),
+    document.createTextNode(t("settings.resetHint")),
+  );
+  const cancel = el("button", "btn btn--soft", t("delete.cancel")) as HTMLButtonElement;
+  cancel.type = "button";
+  const reset = el("button", "btn btn--ghost-danger", t("settings.reset")) as HTMLButtonElement;
+  reset.type = "button";
+  footer.append(hint, cancel, reset);
+
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") dismiss();
   };
-  select.addEventListener("change", syncApply);
-
-  apply.addEventListener("click", () => {
-    const target = select.value as DisableMode;
-    if (busy || applied || target === state.settings.disableMode) return;
-    busy = true;
-    apply.disabled = true;
-    select.disabled = true;
-    apply.replaceChildren(
-      el("span", "btn__spin"),
-      document.createTextNode(t("settings.applying")),
-    );
-
-    void (async () => {
-      try {
-        // 先把正在进行的开关写入排空，避免迁移读到旧的禁用集合
-        await whenTogglesSettled();
-        const report = await api.setDisableMode(target);
-        state.settings.disableMode = report.mode as DisableMode;
-        await refresh();
-        applied = true;
-        apply.classList.add("is-done");
-        apply.replaceChildren(document.createTextNode(t("settings.done")));
-        if (report.failed > 0) {
-          toast(t("settings.partial", { count: report.failed }), true);
-        } else {
-          toast(t("settings.applied"));
-        }
-      } catch (err) {
-        apply.replaceChildren(document.createTextNode(t("settings.apply")));
-        select.disabled = false;
-        toast(errorText(err), true);
-      } finally {
-        busy = false;
-        syncApply();
-      }
-    })();
+  const dismiss = (): void => dismissModal(overlay, onKey);
+  cancel.addEventListener("click", dismiss);
+  reset.addEventListener("click", () => {
+    dismiss();
+    void runReset();
   });
 
-  footer.appendChild(apply);
-  close?.addEventListener("click", dismiss);
   document.addEventListener("keydown", onKey);
-  syncApply();
   presentModal(overlay);
+  cancel.focus();
 }
 
+async function runReset(): Promise<void> {
+  try {
+    const report = await api.reconcileDisabledForReset();
+    if (report.extra.length > 0) {
+      const ok = await askResetExtra(report.extra);
+      if (!ok) return;
+    }
+    if (report.missing.length > 0) {
+      const ok = await askResetMissing(report.missing);
+      if (!ok) return;
+    }
+
+    await enableAllForReset();
+
+    // 先停掉所有延迟保存，再删配置目录，避免删完又被写回
+    suppressPersistence = true;
+    window.clearTimeout(saveTimer);
+    window.clearTimeout(libraryTimer);
+    await api.resetUserData();
+    await showResetDone();
+  } catch (err) {
+    toast(errorText(err), true);
+  }
+}
+
+/** 重置对账：多出来的隔离文件。取消关闭即中止重置。 */
+function askResetExtra(
+  extra: Array<{ path: string; fileName: string; family: string; style: string }>,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("reconcile.extraTitle") });
+    const { overlay, body, footer, close } = shell;
+    body.appendChild(
+      el("p", "modal__lead", t("reconcile.extraLead", { count: extra.length })),
+    );
+    const list = el("div", "modal__list");
+    for (const file of extra) {
+      const row = el("div", "modal__item");
+      row.appendChild(el("span", "modal__item-name", file.family || file.fileName));
+      row.appendChild(el("span", "modal__item-style", file.fileName));
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+    attachOverlayScrollbar(list)?.setInset(2).setPinned(true);
+
+    const finish = (ok: boolean): void => {
+      dismissModal(overlay, onKey);
+      resolve(ok);
+    };
+    const onKey = (event: KeyboardEvent): void => {
+      if (event.key === "Escape") finish(false);
+    };
+    const move = el("button", "btn btn--soft", t("settings.moveToDesktop")) as HTMLButtonElement;
+    move.type = "button";
+    const adopt = el("button", "btn btn--primary", t("reconcile.adopt")) as HTMLButtonElement;
+    adopt.type = "button";
+    footer.append(move, adopt);
+
+    const setBusy = (busy: boolean): void => {
+      move.disabled = busy;
+      adopt.disabled = busy;
+    };
+    move.addEventListener("click", () => {
+      void (async () => {
+        setBusy(true);
+        try {
+          await api.moveDisabledToDesktop(extra.map((file) => file.path));
+          finish(true);
+        } catch (err) {
+          toast(errorText(err), true);
+          setBusy(false);
+        }
+      })();
+    });
+    adopt.addEventListener("click", () => {
+      void (async () => {
+        setBusy(true);
+        try {
+          await api.adoptDisabledFiles(extra.map((file) => file.path));
+          finish(true);
+        } catch (err) {
+          toast(errorText(err), true);
+          setBusy(false);
+        }
+      })();
+    });
+    close?.addEventListener("click", () => finish(false));
+    document.addEventListener("keydown", onKey);
+    presentModal(overlay);
+    move.focus();
+  });
+}
+
+/** 重置对账：清单里丢失的文件；只有「删除记录」按钮。 */
+function askResetMissing(
+  missing: Array<{ id: string; family: string; style: string }>,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("reconcile.missingTitle"), closable: false });
+    const { overlay, body, footer } = shell;
+    body.appendChild(
+      el("p", "modal__lead", t("reconcile.missingLead", { count: missing.length })),
+    );
+    const list = el("div", "modal__list");
+    for (const record of missing) {
+      const row = el("div", "modal__item");
+      row.appendChild(el("span", "modal__item-name", record.family || record.id));
+      if (record.style) {
+        row.appendChild(el("span", "modal__item-style", record.style));
+      }
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+    attachOverlayScrollbar(list)?.setInset(2).setPinned(true);
+
+    const drop = el("button", "btn btn--ghost-danger", t("reconcile.drop")) as HTMLButtonElement;
+    drop.type = "button";
+    footer.appendChild(drop);
+    drop.addEventListener("click", () => {
+      void (async () => {
+        drop.disabled = true;
+        try {
+          await api.dropMissingDisabled(missing.map((record) => record.id));
+          dismissModal(overlay, () => undefined);
+          resolve(true);
+        } catch (err) {
+          toast(errorText(err), true);
+          drop.disabled = false;
+        }
+      })();
+    });
+    presentModal(overlay);
+    drop.focus();
+  });
+}
+
+function askEnableRetry(): Promise<void> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("settings.retryTitle"), closable: false });
+    const { overlay, body, footer } = shell;
+    body.appendChild(el("p", "modal__lead", t("settings.enableFailed")));
+    const retry = el("button", "btn btn--primary", t("settings.retryTitle")) as HTMLButtonElement;
+    retry.type = "button";
+    footer.appendChild(retry);
+    retry.addEventListener("click", () => {
+      dismissModal(overlay, () => undefined);
+      resolve();
+    });
+    presentModal(overlay);
+    retry.focus();
+  });
+}
+
+function showEnablePartial(): Promise<void> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("settings.enablePartialTitle"), closable: false });
+    const { overlay, body, footer } = shell;
+    body.appendChild(el("p", "modal__lead", t("settings.enablePartial")));
+    const ok = el("button", "btn btn--primary", t("settings.ok")) as HTMLButtonElement;
+    ok.type = "button";
+    footer.appendChild(ok);
+    ok.addEventListener("click", () => {
+      dismissModal(overlay, () => undefined);
+      resolve();
+    });
+    presentModal(overlay);
+    ok.focus();
+  });
+}
+
+async function enableAllForReset(): Promise<void> {
+  let retries = 0;
+  for (;;) {
+    try {
+      await api.restoreAllFonts();
+      return;
+    } catch {
+      if (retries >= 3) {
+        // 移动失败时不能继续删配置目录，否则失败字体文件会丢失
+        await api.moveQuarantinedToDesktop();
+        await showEnablePartial();
+        return;
+      }
+      retries += 1;
+      await askEnableRetry();
+    }
+  }
+}
+
+function showResetDone(): Promise<void> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("settings.resetDone"), closable: false });
+    const { overlay, body, footer } = shell;
+    body.remove();
+    const restart = el("button", "btn btn--primary", t("settings.restart")) as HTMLButtonElement;
+    restart.type = "button";
+    footer.appendChild(restart);
+    restart.addEventListener("click", () => {
+      void api.restartApp().catch((err) => toast(errorText(err), true));
+      resolve();
+    });
+    presentModal(overlay);
+    restart.focus();
+  });
+}
 /* ───────────────────────────── 禁用文件对账 ───────────────────────────── */
 
 /**
@@ -2318,6 +2666,13 @@ function onListScroll(): void {
   updateGroupPin();
 }
 
+/** 开发者工具开关：只在当前会话有效，退出应用后回到关闭。 */
+let devToolsEnabled = false;
+
+function openDevTools(): void {
+  void api.openDevTools().catch((err) => toast(errorText(err), true));
+}
+
 function bindShellBehavior(): void {
   const devMode = import.meta.env.DEV;
 
@@ -2374,17 +2729,27 @@ function bindShellBehavior(): void {
     const mod = event.ctrlKey || event.metaKey;
     const key = event.key.toLowerCase();
 
-    // 页面缩放 / 打印 / 查找 / 开发者工具
+    // 页面缩放 / 打印 / 查找
     if (mod && ["+", "-", "=", "0", "p", "f", "u", "j", "g"].includes(key)) {
       event.preventDefault();
       return;
     }
+    // 开发者工具开关：允许 F5 / Ctrl+R 重载，F12 / F15 打开 DevTools
+    if (event.key === "F12" || event.key === "F15") {
+      event.preventDefault();
+      if (devToolsEnabled) openDevTools();
+      return;
+    }
+    if (event.key === "F7") {
+      event.preventDefault();
+      return;
+    }
+    if (devToolsEnabled && (event.key === "F5" || (mod && key === "r"))) return;
     // 刷新：开发期保留，方便看改动
     if (!devMode && ((mod && key === "r") || event.key === "F5")) {
       event.preventDefault();
       return;
     }
-    if (event.key === "F12" || event.key === "F7") event.preventDefault();
   });
 }
 /** 输入框右键菜单：复制 / 粘贴 / 剪切。 */
@@ -2452,6 +2817,7 @@ function bindInputMenu(input: HTMLInputElement): void {
 
 let libraryTimer = 0;
 function scheduleLibrarySave(): void {
+  if (suppressPersistence) return;
   window.clearTimeout(libraryTimer);
   libraryTimer = window.setTimeout(() => {
     void api.saveLibrary(state.library).catch((err) => toast(errorText(err), true));
@@ -2774,12 +3140,16 @@ function confirmDeleteCollection(collection: Collection): void {
   const { overlay, body, footer } = shell;
 
   body.appendChild(el("p", "modal__lead", t("deleteCollection.confirm", { name: collection.name })));
-  body.appendChild(el("p", "modal__note", t("deleteCollection.note")));
+
+  const note = el("span", "modal__footer-note");
+  note.appendChild(icon("about", "modal__footer-info"));
+  note.appendChild(document.createTextNode(t("deleteCollection.note")));
 
   const cancel = el("button", "btn btn--soft", t("delete.cancel")) as HTMLButtonElement;
   cancel.type = "button";
   const remove = el("button", "btn btn--ghost-danger", t("delete.confirm")) as HTMLButtonElement;
   remove.type = "button";
+  footer.appendChild(note);
   footer.appendChild(cancel);
   footer.appendChild(remove);
 
@@ -3189,6 +3559,19 @@ async function boot(): Promise<void> {
     state.settings = { ...DEFAULT_SETTINGS, ...(await api.getSettings()) };
   } catch {
     state.settings = { ...DEFAULT_SETTINGS };
+  }
+
+  // 上次在设置里改的禁用方式：重启后才真正迁移；失败则保留到下次启动
+  const pendingMode = state.settings.disableModeNext;
+  if (pendingMode && pendingMode !== state.settings.disableMode) {
+    try {
+      const report = await api.setDisableMode(pendingMode);
+      state.settings.disableMode = report.mode as DisableMode;
+      state.settings.disableModeNext = "";
+      await api.saveSettings(state.settings);
+    } catch {
+      /* 迁移失败：保留 DisableModeNext，下次启动继续尝试 */
+    }
   }
 
   try {

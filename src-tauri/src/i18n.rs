@@ -40,6 +40,66 @@ pub struct LanguagePack {
     pub entries: BTreeMap<String, String>,
 }
 
+/// 语言选择项：只暴露 id 与显示名。
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LanguageInfo {
+    pub id: String,
+    pub name: String,
+}
+
+/// 扫描 exe 同级 `lang/*.ini`（以及旧版的 exe 同级 `*.ini`），返回可选语言。
+pub fn available() -> Vec<LanguageInfo> {
+    use std::collections::BTreeMap;
+
+    let mut dirs = Vec::new();
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(dir) = exe.parent() {
+            dirs.push(dir.join("lang"));
+            dirs.push(dir.to_path_buf());
+        }
+    }
+
+    let mut found: BTreeMap<String, LanguageInfo> = BTreeMap::new();
+    for dir in dirs {
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .map(|ext| !ext.eq_ignore_ascii_case("ini"))
+                .unwrap_or(true)
+            {
+                continue;
+            }
+            let Some(id) = path.file_stem().and_then(|stem| stem.to_str()) else {
+                continue;
+            };
+            if found.contains_key(id) {
+                continue;
+            }
+            let Ok(text) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            let (meta, _) = parse(&text);
+            let name = meta
+                .get("languagename")
+                .cloned()
+                .unwrap_or_else(|| id.to_string());
+            found.insert(
+                id.to_string(),
+                LanguageInfo {
+                    id: id.to_string(),
+                    name,
+                },
+            );
+        }
+    }
+    found.into_values().collect()
+}
 /// 把 `[section]` + `key=value` 展平成 `section.key`。
 fn parse(text: &str) -> (BTreeMap<String, String>, BTreeMap<String, String>) {
     let mut entries = BTreeMap::new();

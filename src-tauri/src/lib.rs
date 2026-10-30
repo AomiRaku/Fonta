@@ -75,11 +75,18 @@ pub fn run() {
             commands::registry_location,
             commands::system_theme,
             commands::load_language,
+            commands::list_languages,
 
             commands::set_disable_mode,
             commands::font_extras,
             commands::render_preview,
             commands::reconcile_disabled,
+            commands::open_devtools,
+            commands::restore_all_fonts,
+            commands::move_disabled_to_desktop,
+            commands::move_quarantined_to_desktop,
+            commands::reset_user_data,
+            commands::restart_app,
             commands::adopt_disabled_files,
             commands::drop_missing_disabled,
         ])
@@ -109,23 +116,97 @@ pub fn restore_fonts_for_uninstall_with_retry() -> Result<usize, String> {
 
 /// 把隔离目录里的字体文件复制到 `桌面\FontFox Uninstalled Fonts`。
 /// 返回 (目标文件夹, 复制成功数量)；复制失败只影响数量，不阻断卸载。
-fn copy_quarantined_to_desktop() -> (String, usize) {
-    let Some(profile) = std::env::var_os("USERPROFILE") else {
-        return (String::new(), 0);
-    };
-    let profile = std::path::PathBuf::from(profile);
-    let desktop = {
-        let direct = profile.join("Desktop");
-        if direct.is_dir() {
-            direct
+fn desktop_folder() -> Option<std::path::PathBuf> {
+    let profile = std::path::PathBuf::from(std::env::var_os("USERPROFILE")?);
+    let direct = profile.join("Desktop");
+    if direct.is_dir() {
+        Some(direct)
+    } else {
+        let one_drive = profile.join("OneDrive").join("Desktop");
+        if one_drive.is_dir() {
+            Some(one_drive)
         } else {
-            let one_drive = profile.join("OneDrive").join("Desktop");
-            if one_drive.is_dir() {
-                one_drive
-            } else {
-                direct
-            }
+            Some(direct)
         }
+    }
+}
+
+fn unique_destination(dir: &std::path::Path, src: &std::path::Path) -> std::path::PathBuf {
+    let Some(name) = src.file_name() else {
+        return dir.join("font");
+    };
+    let stem = src
+        .file_stem()
+        .map(|value| value.to_string_lossy().to_string())
+        .unwrap_or_else(|| "font".to_string());
+    let ext = src
+        .extension()
+        .map(|value| format!(".{}", value.to_string_lossy()))
+        .unwrap_or_default();
+    let mut target = dir.join(name);
+    let mut index = 1usize;
+    while target.exists() {
+        target = dir.join(format!("{stem}-{index}{ext}"));
+        index += 1;
+    }
+    target
+}
+
+/// 把指定文件移动到 `桌面\FontFox Uninstalled Fonts`，返回 (目录, 成功数量)。
+pub fn move_files_to_desktop(paths: &[String]) -> Result<(String, usize), String> {
+    let desktop = desktop_folder().ok_or_else(|| "无法定位桌面目录".to_string())?;
+    let target_dir = desktop.join("FontFox Uninstalled Fonts");
+    std::fs::create_dir_all(&target_dir)
+        .map_err(|err| format!("无法创建桌面文件夹：{err}"))?;
+
+    let mut moved = 0usize;
+    let mut errors: Vec<String> = Vec::new();
+    for raw in paths {
+        let source = std::path::PathBuf::from(raw);
+        if !source.is_file() {
+            continue;
+        }
+        let target = unique_destination(&target_dir, &source);
+        let result = std::fs::rename(&source, &target).or_else(|_| {
+            std::fs::copy(&source, &target).and_then(|_| std::fs::remove_file(&source))
+        });
+        match result {
+            Ok(()) => moved += 1,
+            Err(err) => errors.push(format!("{}：{}", source.display(), err)),
+        }
+    }
+    if errors.is_empty() {
+        Ok((target_dir.to_string_lossy().to_string(), moved))
+    } else {
+        Err(errors.join("；"))
+    }
+}
+
+/// 把隔离目录里剩余的所有字体文件移动到桌面，返回 (目录, 成功数量)。
+pub fn move_quarantined_to_desktop() -> Result<(String, usize), String> {
+    let mut paths: Vec<String> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(crate::mode::quarantine_dir()) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+            if path
+                .extension()
+                .map(|ext| ext.eq_ignore_ascii_case("json"))
+                .unwrap_or(false)
+            {
+                continue;
+            }
+            paths.push(path.to_string_lossy().to_string());
+        }
+    }
+    move_files_to_desktop(&paths)
+}
+
+fn copy_quarantined_to_desktop() -> (String, usize) {
+    let Some(desktop) = desktop_folder() else {
+        return (String::new(), 0);
     };
     let target_dir = desktop.join("FontFox Uninstalled Fonts");
     if std::fs::create_dir_all(&target_dir).is_err() {
@@ -146,23 +227,7 @@ fn copy_quarantined_to_desktop() -> (String, usize) {
             {
                 continue;
             }
-            let Some(name) = path.file_name() else {
-                continue;
-            };
-            let mut target = target_dir.join(name);
-            let stem = path
-                .file_stem()
-                .map(|value| value.to_string_lossy().to_string())
-                .unwrap_or_else(|| "font".to_string());
-            let ext = path
-                .extension()
-                .map(|value| format!(".{}", value.to_string_lossy()))
-                .unwrap_or_default();
-            let mut index = 1usize;
-            while target.exists() {
-                target = target_dir.join(format!("{stem}-{index}{ext}"));
-                index += 1;
-            }
+            let target = unique_destination(&target_dir, &path);
             if std::fs::copy(&path, &target).is_ok() {
                 copied += 1;
             }

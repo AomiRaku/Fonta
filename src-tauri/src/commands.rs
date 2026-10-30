@@ -307,6 +307,18 @@ pub fn save_library(library: library::Library) -> Result<(), String> {
     crate::library::save(&library)
 }
 
+/// 对外版本号：内部 semver 为 `major.minor.0`，界面显示为 `major.minor`（minor 补足两位）。
+fn display_version(version: &str) -> String {
+    let mut parts = version.split('.');
+    let major = parts.next().unwrap_or("0");
+    let minor = parts.next().unwrap_or("0");
+    let patch = parts.next().unwrap_or("0");
+    if patch == "0" {
+        format!("{major}.{minor}")
+    } else {
+        version.to_string()
+    }
+}
 /// 诊断接口：返回版本、提权状态、待清理文件、受保护字体统计。
 ///
 /// 界面目前不调用它（状态栏已移除），保留给排障脚本 / 开发者控制台使用；
@@ -315,7 +327,7 @@ pub fn save_library(library: library::Library) -> Result<(), String> {
 pub fn app_info(app: tauri::AppHandle) -> AppInfo {
     let (official_count, core_count) = official::index().counts();
     AppInfo {
-        version: app.package_info().version.to_string(),
+        version: display_version(&app.package_info().version.to_string()),
         elevated: registry::is_elevated(),
         pending: delete::pending_items(),
         official_count,
@@ -330,7 +342,7 @@ pub fn app_info(app: tauri::AppHandle) -> AppInfo {
 #[tauri::command]
 pub fn about(app: tauri::AppHandle) -> AboutPayload {
     AboutPayload {
-        version: app.package_info().version.to_string(),
+        version: display_version(&app.package_info().version.to_string()),
         license_name: "Apache License 2.0".to_string(),
         license_text: include_str!("../../LICENSE").to_string(),
         notice_text: include_str!("../../NOTICE").to_string(),
@@ -486,6 +498,20 @@ async fn reapply_hidden(current: &str, targets: &[FontEntry]) {
     }
 }
 
+/// 打开当前窗口的 DevTools（发布版需要 tauri `devtools` feature）。
+#[tauri::command]
+pub fn open_devtools(app: tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        window.open_devtools();
+    }
+}
+/// 列出可用的界面语言包（exe 同级 `lang/*.ini`）。
+#[tauri::command]
+pub async fn list_languages() -> Vec<crate::i18n::LanguageInfo> {
+    tauri::async_runtime::spawn_blocking(crate::i18n::available)
+        .await
+        .unwrap_or_default()
+}
 /// 切换禁用方式：先在旧模式下恢复，再切到新模式并按原集合重新禁用。
 #[tauri::command]
 pub async fn set_disable_mode(
@@ -621,9 +647,9 @@ pub async fn set_disable_mode(
 }
 /// 启动时对账：隔离目录里多出来的文件、清单里丢失的文件。
 #[tauri::command]
-pub async fn reconcile_disabled() -> crate::mode::ReconcileReport {
-    // 基础模式下不使用隔离目录，直接返回空结果，避免误报
-    if crate::settings::load().disable_mode != "dynamic" {
+pub async fn reconcile_disabled(force: Option<bool>) -> crate::mode::ReconcileReport {
+    // 基础模式下不使用隔离目录，直接返回空结果，避免误报；重置流程强制完整对账
+    if !force.unwrap_or(false) && crate::settings::load().disable_mode != "dynamic" {
         return crate::mode::ReconcileReport {
             extra: Vec::new(),
             missing: Vec::new(),
@@ -637,6 +663,51 @@ pub async fn reconcile_disabled() -> crate::mode::ReconcileReport {
         })
 }
 
+/// 重置流程：恢复全部已停用字体（动态隔离 + Inactive Fonts）。
+#[tauri::command]
+pub async fn restore_all_fonts() -> Result<usize, String> {
+    tauri::async_runtime::spawn_blocking(crate::restore_fonts_for_uninstall)
+        .await
+        .map_err(|err| format!("恢复字体失败：{err}"))?
+}
+
+/// 把指定的隔离字体文件移动到桌面 FontFox Uninstalled Fonts。
+#[tauri::command]
+pub async fn move_disabled_to_desktop(paths: Vec<String>) -> Result<usize, String> {
+    tauri::async_runtime::spawn_blocking(move || crate::move_files_to_desktop(&paths))
+        .await
+        .map_err(|err| format!("移动字体失败：{err}"))?
+        .map(|(_, count)| count)
+}
+
+/// 把隔离目录里剩余字体全部移动到桌面。
+#[tauri::command]
+pub async fn move_quarantined_to_desktop() -> Result<usize, String> {
+    tauri::async_runtime::spawn_blocking(crate::move_quarantined_to_desktop)
+        .await
+        .map_err(|err| format!("移动字体失败：{err}"))?
+        .map(|(_, count)| count)
+}
+
+/// 删除 `%USERPROFILE%\.FontFox\` 下的全部内容。
+#[tauri::command]
+pub async fn reset_user_data() -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let dir = crate::config::app_dir();
+        if dir.exists() {
+            std::fs::remove_dir_all(&dir).map_err(|err| format!("删除配置目录失败：{err}"))?;
+        }
+        Ok(())
+    })
+    .await
+    .map_err(|err| format!("删除配置目录失败：{err}"))?
+}
+
+/// 重启应用。
+#[tauri::command]
+pub fn restart_app(app: tauri::AppHandle) {
+    app.restart();
+}
 /// 把多出来的文件收编为禁用记录。
 #[tauri::command]
 pub async fn adopt_disabled_files(paths: Vec<String>) -> usize {
@@ -703,4 +774,15 @@ pub async fn render_preview(
     })
     .await
     .map_err(|error| error.to_string())?
+}
+#[cfg(test)]
+mod tests {
+    use super::display_version;
+
+    #[test]
+    fn formats_two_part_release_version() {
+        assert_eq!(display_version("1000.0.0"), "1000.0");
+        assert_eq!(display_version("2200.13.0"), "2200.13");
+        assert_eq!(display_version("1000.1.2"), "1000.1.2");
+    }
 }
