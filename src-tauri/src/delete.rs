@@ -92,10 +92,12 @@ fn try_remove_file(path: &Path) -> FileDeleteOutcome {
             const ERROR_SHARING_VIOLATION: i32 = 32;
             const ERROR_LOCK_VIOLATION: i32 = 33;
             const ERROR_ACCESS_DENIED: i32 = 5;
+            // 预览 mmap / 其它进程仍映射着文件；按锁定处理，交给待清理清单
+            const ERROR_USER_MAPPED_FILE: i32 = 1224;
             match err.raw_os_error() {
-                Some(ERROR_SHARING_VIOLATION) | Some(ERROR_LOCK_VIOLATION) => {
-                    FileDeleteOutcome::Locked
-                }
+                Some(ERROR_SHARING_VIOLATION)
+                | Some(ERROR_LOCK_VIOLATION)
+                | Some(ERROR_USER_MAPPED_FILE) => FileDeleteOutcome::Locked,
                 Some(ERROR_ACCESS_DENIED) => FileDeleteOutcome::Denied,
                 _ => FileDeleteOutcome::Denied,
             }

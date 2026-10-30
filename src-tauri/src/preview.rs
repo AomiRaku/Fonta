@@ -28,6 +28,56 @@ const PAD: i32 = 2;
 /// 折行后最多渲染的行数
 const MAX_LINES: usize = 8;
 
+/// 预览文字 → 实际渲染文字的解析缓存（无字形时取样）。
+static RESOLVED: OnceLock<Mutex<VecDeque<(String, String)>>> = OnceLock::new();
+/// cmap 映射缓存：(路径, 文件时间戳, 映射)。
+type GlyphEntry = (String, String, Arc<HashMap<u32, u16>>);
+static GLYPH_MAPS: OnceLock<Mutex<VecDeque<GlyphEntry>>> = OnceLock::new();
+/// mmap 缓存：(路径, 文件时间戳, 映射)。
+type FileEntry = (String, String, Arc<Mmap>);
+static FILE_MAPS: OnceLock<Mutex<Vec<FileEntry>>> = OnceLock::new();
+
+/// 文件长度 + 修改时间；字体被替换后缓存自动失效。
+fn file_stamp(path: &str) -> String {
+    match std::fs::metadata(path) {
+        Ok(meta) => {
+            let modified = meta
+                .modified()
+                .ok()
+                .and_then(|time| time.duration_since(std::time::UNIX_EPOCH).ok())
+                .map(|span| span.as_nanos())
+                .unwrap_or(0);
+            format!("{}:{}", meta.len(), modified)
+        }
+        Err(_) => "0:0".to_string(),
+    }
+}
+
+/// 释放所有预览缓存。删除字体前调用，避免 Windows 因 mmap 占用而删不掉文件；
+/// 字体文件被替换后也用它强制重新读取。
+pub fn clear_caches() {
+    if let Ok(mut cache) = cache().lock() {
+        cache.data.clear();
+        cache.order.clear();
+        cache.bytes = 0;
+    }
+    if let Some(cache) = RESOLVED.get() {
+        if let Ok(mut cache) = cache.lock() {
+            cache.clear();
+        }
+    }
+    if let Some(cache) = GLYPH_MAPS.get() {
+        if let Ok(mut cache) = cache.lock() {
+            cache.clear();
+        }
+    }
+    if let Some(cache) = FILE_MAPS.get() {
+        if let Ok(mut cache) = cache.lock() {
+            cache.clear();
+        }
+    }
+}
+
 pub fn render(
     path: &str,
     text: &str,
@@ -42,7 +92,7 @@ pub fn render(
     // 默认预览文字在字体里没有字形时，回退到字体自身字符集；
     // 用户手动输入的预览文字则直接报「没有对应字符」。
     let text = resolve_text(path, text, fallback)?;
-    let key = format!("{path}|{text}|{size}|{dpr}|{color}|{max_width}|{weight}|{fallback}");
+    let key = format!("{path}|{}|{text}|{size}|{dpr}|{color}|{max_width}|{weight}|{fallback}", file_stamp(path));
     if !fresh {
         if let Some(hit) = cache_lookup(&key) {
             return Ok(hit);
@@ -67,8 +117,7 @@ pub fn render(
 /// 预览文本在该字体里一个字形都没有时，从字体自己的 cmap 取样一行字。
 /// 这样符号 / 图标字体不会预览成空白，而是显示它真正拥有的字符。
 fn resolve_text(path: &str, raw: &str, fallback: bool) -> Result<String, String> {
-    static RESOLVED: OnceLock<Mutex<VecDeque<(String, String)>>> = OnceLock::new();
-    let key = format!("{path}|{raw}|{fallback}");
+    let key = format!("{path}|{}|{raw}|{fallback}", file_stamp(path));
     if let Ok(mut cache) = RESOLVED.get_or_init(|| Mutex::new(VecDeque::new())).lock() {
         if let Some(position) = cache.iter().position(|(item, _)| *item == key) {
             if let Some(value) = cache.remove(position) {
@@ -145,12 +194,15 @@ fn cmap_sample(glyphs: &HashMap<u32, u16>) -> Option<String> {
 
 /// 字体文件的 cmap 映射（码位 -> 字形 id），包含 symbol 子表。
 fn glyph_map(path: &str) -> Result<Arc<HashMap<u32, u16>>, String> {
-    static MAPS: OnceLock<Mutex<VecDeque<(String, Arc<HashMap<u32, u16>>)>>> = OnceLock::new();
-    let cache = MAPS.get_or_init(|| Mutex::new(VecDeque::new()));
+    let stamp = file_stamp(path);
+    let cache = GLYPH_MAPS.get_or_init(|| Mutex::new(VecDeque::new()));
     if let Ok(mut list) = cache.lock() {
-        if let Some(position) = list.iter().position(|(key, _)| key == path) {
+        if let Some(position) = list
+            .iter()
+            .position(|(item, item_stamp, _)| item == path && item_stamp == &stamp)
+        {
             let entry = list.remove(position).expect("index valid");
-            let value = entry.1.clone();
+            let value = entry.2.clone();
             list.push_back(entry);
             return Ok(value);
         }
@@ -173,22 +225,26 @@ fn glyph_map(path: &str) -> Result<Arc<HashMap<u32, u16>>, String> {
     }
     let map = Arc::new(map);
     if let Ok(mut list) = cache.lock() {
-        list.push_back((path.to_string(), map.clone()));
+        list.push_back((path.to_string(), stamp, map.clone()));
         while list.len() > 8 {
             list.pop_front();
         }
     }
     Ok(map)
 }
+
 /// 字体文件的 mmap 缓存：大字体（10MB+）反复读盘是实时预览的主要开销。
-/// 文件页由系统管理，可回收，不计入应用堆内存。
+/// 文件页由系统管理，可回收，不计入应用堆内存；路径 + 时间戳作为缓存键。
 fn font_map(path: &str) -> Result<Arc<Mmap>, String> {
-    static MAPS: OnceLock<Mutex<Vec<(String, Arc<Mmap>)>>> = OnceLock::new();
-    let cache = MAPS.get_or_init(|| Mutex::new(Vec::new()));
+    let stamp = file_stamp(path);
+    let cache = FILE_MAPS.get_or_init(|| Mutex::new(Vec::new()));
     if let Ok(mut list) = cache.lock() {
-        if let Some(position) = list.iter().position(|(key, _)| key == path) {
+        if let Some(position) = list
+            .iter()
+            .position(|(item, item_stamp, _)| item == path && item_stamp == &stamp)
+        {
             let entry = list.remove(position);
-            let map = entry.1.clone();
+            let map = entry.2.clone();
             list.push(entry);
             return Ok(map);
         }
@@ -198,14 +254,13 @@ fn font_map(path: &str) -> Result<Arc<Mmap>, String> {
     let map = unsafe { Mmap::map(&file) }.map_err(|error| format!("映射字体失败：{error}"))?;
     let map = Arc::new(map);
     if let Ok(mut list) = cache.lock() {
-        list.push((path.to_string(), map.clone()));
+        list.push((path.to_string(), stamp, map.clone()));
         if list.len() > 8 {
             list.remove(0);
         }
     }
     Ok(map)
 }
-
 fn rasterize(
     font: &FontRef<'_>,
     glyphs: &HashMap<u32, u16>,

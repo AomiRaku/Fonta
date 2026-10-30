@@ -594,28 +594,45 @@ function updateStats(): void {
 /* ───────────────────────────── 选择 ───────────────────────────── */
 
 /** 多选：普通点击单选；Ctrl 增减；Shift 以锚点做范围选择。 */
-/** 一个字族在当前列表里的全部字体（折叠时也能取到）。 */
+/** 某个 scoped 字族行的成员（按分组拆开时各行为独立子集）。 */
+function familyMembersOfKey(key: string): FontEntry[] {
+  return state.familyMembers.get(key) ?? [];
+}
+
+/** 同名字族的并集（跨分组 / 跨作用域），用于选择归并与详情兜底。 */
 function familyMembers(family: string): FontEntry[] {
-  return state.familyMembers.get(family) ?? [];
+  const out: FontEntry[] = [];
+  const seen = new Set<string>();
+  for (const members of state.familyMembers.values()) {
+    for (const entry of members) {
+      if (entry.family !== family || seen.has(entry.id)) continue;
+      out.push(entry);
+      seen.add(entry.id);
+    }
+  }
+  return out;
 }
 
-/** 字族的全部字体都被选中，即视为选中了这个字族。 */
-function isFamilySelected(family: string): boolean {
-  const members = familyMembers(family);
-  return members.length > 0 && members.every((entry) => state.selectedIds.has(entry.id));
+
+interface SelectedFamily {
+  family: string;
+  members: FontEntry[];
+  key: string;
 }
 
-/** 当前选择若恰好是某一个字族的全部字体，返回该字族；否则 null。 */
-function soleSelectedFamily(): string | null {
+/** 当前选择若恰好是某一个字族行（某个分组里的子集）的全部字体，返回该字族。 */
+function soleSelectedFamily(): SelectedFamily | null {
   if (state.selectedIds.size === 0) return null;
-  for (const [family, members] of state.familyMembers) {
+  for (const [key, members] of state.familyMembers) {
     if (members.length < 2 || members.length !== state.selectedIds.size) continue;
-    if (members.every((entry) => state.selectedIds.has(entry.id))) return family;
+    if (members.every((entry) => state.selectedIds.has(entry.id))) {
+      return { family: members[0].family, members, key };
+    }
   }
   return null;
 }
 
-/** 列表当前的可选中单元：字体行，或一个可整体选中的字族。 */
+/** 列表当前的可选中单元：字体行，或一个可整体选中的字族行。 */
 interface SelectionUnit {
   key: string;
   ids: string[];
@@ -626,8 +643,10 @@ function selectionUnits(): SelectionUnit[] {
   for (const key of rowKeys) {
     if (key.startsWith("group:")) continue;
     if (key.startsWith("family:")) {
-      const family = key.slice("family:".length);
-      units.push({ key, ids: familyMembers(family).map((entry) => entry.id) });
+      units.push({
+        key,
+        ids: familyMembersOfKey(key).map((entry) => entry.id),
+      });
       continue;
     }
     units.push({ key, ids: [key] });
@@ -635,10 +654,10 @@ function selectionUnits(): SelectionUnit[] {
   return units;
 }
 
-/** 某个字体属于哪个（有标题行的）字族；单样式字体不属于任何字族。 */
+/** 某个字体属于哪一行字族（返回 scoped key）；单样式字体不属于任何字族。 */
 function familyOfFont(id: string): string {
-  for (const [family, members] of state.familyMembers) {
-    if (members.some((entry) => entry.id === id)) return family;
+  for (const [key, members] of state.familyMembers) {
+    if (members.some((entry) => entry.id === id)) return key;
   }
   return "";
 }
@@ -653,26 +672,22 @@ function applyRange(targetKey: string): boolean {
   if (from < 0 || to < 0) return false;
   const [start, end] = from <= to ? [from, to] : [to, from];
 
-  // 范围终点落在某个字族的子行上（没有完整覆盖该字族）时，
-  // 跳过这个字族的标题单元，只选范围里的子行，避免整族被选中
+  // 范围终点落在某个字族行的子行上（没有完整覆盖该字族行）时，
+  // 跳过这个字族行的标题单元，只选范围里的子行，避免整族被选中
   const skippedFamilies = new Set<string>();
   for (const endpoint of [anchor, targetKey]) {
     if (endpoint.startsWith("family:")) continue;
-    const family = familyOfFont(endpoint);
-    if (!family) continue;
-    const headKey = `family:${family}`;
-    if (units.slice(start, end + 1).some((unit) => unit.key === headKey)) {
-      skippedFamilies.add(family);
+    const familyKey = familyOfFont(endpoint);
+    if (!familyKey) continue;
+    if (units.slice(start, end + 1).some((unit) => unit.key === familyKey)) {
+      skippedFamilies.add(familyKey);
     }
   }
 
   const ids = new Set<string>();
   for (let i = start; i <= end; i += 1) {
     const unit = units[i];
-    if (unit.key.startsWith("family:")) {
-      const family = unit.key.slice("family:".length);
-      if (skippedFamilies.has(family)) continue;
-    }
+    if (unit.key.startsWith("family:") && skippedFamilies.has(unit.key)) continue;
     for (const id of unit.ids) ids.add(id);
   }
   state.selectedIds = ids;
@@ -687,8 +702,13 @@ function syncRowSelection(): void {
       node.classList.toggle("row--selected", state.selectedIds.has(id));
       continue;
     }
-    const family = node.dataset.family;
-    node.classList.toggle("row--selected", family ? isFamilySelected(family) : false);
+    const members = node.dataset.familyKey
+      ? familyMembersOfKey(node.dataset.familyKey)
+      : [];
+    node.classList.toggle(
+      "row--selected",
+      members.length > 0 && members.every((entry) => state.selectedIds.has(entry.id)),
+    );
   }
   syncSelectAllState();
 }
@@ -713,12 +733,14 @@ function selectEntry(entry: FontEntry, event: MouseEvent): void {
   }
   renderAll();
 }
-
 /** 选中字族行：整族等价于“全选族内字体”，Ctrl / Shift 语义与字体行一致。 */
-function selectFamily(family: string, event?: MouseEvent): void {
-  const members = familyMembers(family);
+function selectFamily(
+  family: string,
+  event?: MouseEvent,
+  members: FontEntry[] = familyMembers(family),
+  key = `family:${family}`,
+): void {
   if (members.length === 0) return;
-  const key = `family:${family}`;
 
   if (event?.shiftKey && applyRange(key)) {
     syncRowSelection();
@@ -727,7 +749,8 @@ function selectFamily(family: string, event?: MouseEvent): void {
   }
 
   const additive = Boolean(event?.ctrlKey || event?.metaKey);
-  if (additive && isFamilySelected(family)) {
+  const allSelected = members.every((member) => state.selectedIds.has(member.id));
+  if (additive && allSelected) {
     for (const member of members) state.selectedIds.delete(member.id);
   } else if (additive) {
     for (const member of members) state.selectedIds.add(member.id);
@@ -865,6 +888,7 @@ function buildGroups(): GroupSpec[] {
   const buckets = new Map<string, { order: number; label: string; entries: FontEntry[] }>();
   const styleCounts = state.groupBy === "style" ? familyStyleCount() : null;
 
+
   const add = (entry: FontEntry, key: string, order: number, label: string): void => {
     const bucket = buckets.get(key);
     if (bucket) {
@@ -954,9 +978,15 @@ function toggleFamily(scopeKey: string, family: string): void {
 }
 
 /** 双击字族标题行：详情收起时先打开详情，已展开时才切换字族展开状态。 */
-function activateFamily(scopeKey: string, displayName: string, family: string): void {
+function activateFamily(
+  scopeKey: string,
+  displayName: string,
+  family: string,
+  members: FontEntry[],
+  rowKey: string,
+): void {
   if (!state.settings.detailOpen) {
-    selectFamily(displayName);
+    selectFamily(displayName, undefined, members, rowKey);
     applyDetailOpen(true);
     scheduleSave();
     return;
@@ -1026,11 +1056,8 @@ function rebuild(): void {
       // 只要还有一个样式是启用的，总控开关就保持开启
       const enabled = members.some((item) => !item.hidden);
 
-      const known = familyMap.get(displayName) ?? [];
-      for (const member of members) {
-        if (!known.some((item) => item.id === member.id)) known.push(member);
-      }
-      familyMap.set(displayName, known);
+      const rowKey = `family:${key}`;
+      familyMap.set(rowKey, [...members]);
 
       rows.push(
         buildFamilyRow(displayName, members.length, {
@@ -1039,7 +1066,8 @@ function rebuild(): void {
           animateChevron: spinFamily?.key === key ? spinFamily.dir : null,
           animateMeta: spinFamily?.key === key ? spinFamily.dir : null,
           favorite: members.every((entry) => ctx.favoriteIds.has(entry.id)),
-          isSelected: () => isFamilySelected(displayName),
+          isSelected: () =>
+            members.length > 0 && members.every((entry) => state.selectedIds.has(entry.id)),
           preview: listMode === "preview",
           sample: () => previewSample(members[0], ctx),
           language: members[0].language || t("language.unknown"),
@@ -1049,8 +1077,9 @@ function rebuild(): void {
           lockedLabel: members.some((item) => item.exists && !item.protected)
             ? undefined
             : protectionLabel(members[0].protection) || t("detail.protected"),
-          onSelect: (event) => selectFamily(displayName, event),
-          onActivate: () => activateFamily(scopeKey, displayName, family),
+          rowKey,
+          onSelect: (event) => selectFamily(displayName, event, members, rowKey),
+          onActivate: () => activateFamily(scopeKey, displayName, family, members, rowKey),
           onToggleExpand: () => toggleFamily(scopeKey, family),
           onToggleHidden: () => {
             void toggleHidden(members);
@@ -1507,11 +1536,11 @@ function requestExtras(entries: FontEntry[]): void {
 
 function renderDetailPane(): void {
 
-  // 选中的恰好是一个字族的全部字体时，右侧显示整个字族的信息
+  // 选中的恰好是一个字族行（某个分组里的子集）的全部字体时，右侧显示该字族信息
   const selectedFamily = soleSelectedFamily();
   if (selectedFamily) {
-    const family = selectedFamily;
-    const members = familyMembers(family);
+    const family = selectedFamily.family;
+    const members = selectedFamily.members;
     if (members.length > 0) {
       requestExtras(members);
       renderFamilyDetail(
@@ -1535,7 +1564,11 @@ function renderDetailPane(): void {
           cleanMissing: (entry) => {
             void cleanMissing(entry);
           },
-          reveal: () => undefined,
+          reveal: (target) => {
+            void api
+              .revealPath(target.path)
+              .catch((err) => toast(errorText(err), true));
+          },
           invertSelection: () => invertSelection(),
         },
       );
@@ -1640,6 +1673,8 @@ function fontLabel(entry: FontEntry): string {
 
 /** 正在写入的开关操作数量；切换禁用方式前要等它归零。 */
 let inflightToggles = 0;
+let toggleSeq = 0;
+const toggleVersions = new Map<string, number>();
 
 async function whenTogglesSettled(): Promise<void> {
   while (inflightToggles > 0) {
@@ -1652,6 +1687,10 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
   if (targets.length === 0) return;
   // 只要还有显示的，就整体隐藏；全隐藏时整体显示
   const nextHidden = targets.some((e) => !e.hidden);
+  const version = ++toggleSeq;
+  for (const target of targets) toggleVersions.set(target.id, version);
+  const superseded = (): boolean =>
+    targets.some((target) => toggleVersions.get(target.id) !== version);
 
   // 先本地生效：开关立即响应，不被 IPC 往返和 WM_FONTCHANGE 广播拖住
   applyHiddenState(targets, nextHidden);
@@ -1662,6 +1701,7 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
       targets.map((e) => e.id),
       nextHidden,
     );
+    if (superseded()) return;
     if (report.errors.length > 0) {
       applyHiddenState(targets, !nextHidden);
       toast(report.errors.join("；"), true);
@@ -1677,9 +1717,11 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
           : t("hidden.manyOff", { count: targets.length }),
     );
   } catch (err) {
-    // 写入失败时把界面回滚到原状态
-    applyHiddenState(targets, !nextHidden);
-    toast(errorText(err), true);
+    // 写入失败时把界面回滚到原状态；已被更新的点击覆盖则交给新请求处理
+    if (!superseded()) {
+      applyHiddenState(targets, !nextHidden);
+      toast(errorText(err), true);
+    }
   } finally {
     inflightToggles -= 1;
   }
@@ -2152,7 +2194,7 @@ function askDropMissingDisabled(
   missing: Array<{ id: string; family: string; style: string }>,
 ): Promise<void> {
   return new Promise((resolve) => {
-    const shell = buildModal({ title: t("reconcile.missingTitle"), closable: false });
+    const shell = buildModal({ title: t("reconcile.missingTitle") });
     const { overlay, body, footer } = shell;
     body.appendChild(
       el("p", "modal__lead", t("reconcile.missingLead", { count: missing.length })),
@@ -2381,7 +2423,8 @@ function pickAnchorKey(): string | null {
   const viewBottom = viewTop + viewport.clientHeight;
 
   let candidate: string | null = null;
-  if (soleSelectedFamily()) candidate = `family:${soleSelectedFamily()}`;
+  const soleFamily = soleSelectedFamily();
+  if (soleFamily) candidate = soleFamily.key;
   else if (state.selectedIds.size === 1) candidate = [...state.selectedIds][0];
 
   if (candidate) {
@@ -2739,6 +2782,8 @@ function entriesOfRow(row: HTMLElement): FontEntry[] {
     const entry = state.fonts.find((f) => f.id === id);
     return entry ? [entry] : [];
   }
+  const key = row.dataset.familyKey;
+  if (key) return familyMembersOfKey(key);
   const family = row.dataset.family;
   if (!family) return [];
   return familyMembers(family);

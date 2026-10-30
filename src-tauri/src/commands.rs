@@ -181,10 +181,20 @@ pub async fn delete_fonts(
     ids: Vec<String>,
 ) -> Result<DeleteReport, String> {
     let state = app.state::<AppState>();
-    let entries = state.cached(&ids);
+    let mut entries = state.cached(&ids);
     if entries.len() != ids.len() {
         return Err("字体列表已过期，请刷新后重试。".to_string());
     }
+    // 动态模式下请求删除的可能是隔离中的字体：用隔离目录里的真实路径
+    let quarantine = crate::mode::quarantine_paths(&ids);
+    for entry in entries.iter_mut() {
+        if let Some(path) = quarantine.get(&entry.id) {
+            entry.path = path.clone();
+            entry.exists = std::path::Path::new(path).is_file();
+        }
+    }
+    // 释放预览 mmap，否则 Windows 可能拒绝删除仍被映射的字体文件
+    crate::preview::clear_caches();
 
     let elevated = registry::is_elevated();
     let (user_entries, system_entries): (Vec<_>, Vec<_>) =
@@ -228,9 +238,15 @@ pub async fn delete_fonts(
         }
     }
 
-    // 被删除的字体如果还在隔离清单里，一并清掉，避免下次启动误报「文件缺失」
-    if report.removed_count > 0 {
-        crate::mode::drop_missing(&ids);
+    // 只为真正删除成功的条目清理隔离记录；删除失败的不能丢记录
+    let removed_ids: Vec<String> = report
+        .items
+        .iter()
+        .filter(|item| item.registry_removed || item.file_removed)
+        .map(|item| item.id.clone())
+        .collect();
+    if !removed_ids.is_empty() {
+        crate::mode::drop_missing(&removed_ids);
     }
 
     // 删除后重新扫描，保证列表、隐藏状态、残留标记都是最新的。
@@ -452,6 +468,24 @@ pub struct ModeSwitchReport {
     pub errors: Vec<String>,
 }
 
+/// 切换失败时，尽量把字体恢复到旧模式的隐藏状态。
+async fn reapply_hidden(current: &str, targets: &[FontEntry]) {
+    if targets.is_empty() {
+        return;
+    }
+    let entries = targets.to_vec();
+    if current == "dynamic" {
+        let users: Vec<FontEntry> = entries
+            .into_iter()
+            .filter(|font| font.scope == Scope::User)
+            .collect();
+        let _ = tauri::async_runtime::spawn_blocking(move || crate::mode::disable(&users)).await;
+    } else {
+        let _ = tauri::async_runtime::spawn_blocking(move || inactive::set_hidden(&entries, true))
+            .await;
+    }
+}
+
 /// 切换禁用方式：先在旧模式下恢复，再切到新模式并按原集合重新禁用。
 #[tauri::command]
 pub async fn set_disable_mode(
@@ -489,9 +523,9 @@ pub async fn set_disable_mode(
             .collect()
     };
 
-    // 1. 在旧模式下恢复启用
+    // 1. 在旧模式下恢复启用；失败则中止切换，保持原模式不变
     if current == "dynamic" {
-        crate::mode::restore_all();
+        crate::mode::restore_all().map_err(|err| format!("恢复隔离字体失败：{}", err))?;
     } else {
         let hidden: Vec<FontEntry> = payload
             .fonts
@@ -499,14 +533,16 @@ pub async fn set_disable_mode(
             .filter(|font| font.hidden)
             .cloned()
             .collect();
-        let _ = inactive::set_hidden(&hidden, false);
+        let report = inactive::set_hidden(&hidden, false);
+        if !report.errors.is_empty() {
+            return Err(format!(
+                "恢复 Inactive Fonts 失败：{}",
+                report.errors.join("；")
+            ));
+        }
     }
 
-    // 2. 落盘新模式
-    current_settings.disable_mode = mode.clone();
-    settings_store::save(&current_settings)?;
-
-    // 3. 重新扫描（动态恢复后字体回到注册表），再按原集合禁用
+    // 2. 重新扫描（动态恢复后字体回到注册表），按原集合在新模式下停用
     let payload = tauri::async_runtime::spawn_blocking(enumerate::scan)
         .await
         .map_err(|e| format!("扫描字体失败：{}", e))?;
@@ -516,7 +552,6 @@ pub async fn set_disable_mode(
         .filter(|font| disabled_ids.contains(&font.id))
         .collect();
 
-    let mut errors: Vec<String> = Vec::new();
     let mut migrated = 0usize;
     if mode == "dynamic" {
         // 动态模式只处理用户作用域；系统作用域继续用 Windows 隐藏，避免切换后突然可见
@@ -524,19 +559,55 @@ pub async fn set_disable_mode(
             .iter()
             .cloned()
             .partition(|font| font.scope == Scope::User);
-        match crate::mode::disable(&users) {
-            Ok(count) => migrated = count,
-            Err(err) => errors.push(err),
-        }
         if !systems.is_empty() {
             let report = inactive::set_hidden(&systems, true);
+            if !report.errors.is_empty() {
+                reapply_hidden(&current, &targets).await;
+                return Err(format!(
+                    "迁移系统作用域字体失败：{}",
+                    report.errors.join("；")
+                ));
+            }
             migrated += report.changed;
-            errors.extend(report.errors);
+        }
+        match crate::mode::disable(&users) {
+            Ok(count) => migrated += count,
+            Err(err) => {
+                if !systems.is_empty() {
+                    let _ = inactive::set_hidden(&systems, false);
+                }
+                reapply_hidden(&current, &targets).await;
+                return Err(format!("切换禁用方式失败：{}", err));
+            }
         }
     } else {
         let report = inactive::set_hidden(&targets, true);
+        if !report.errors.is_empty() {
+            reapply_hidden(&current, &targets).await;
+            return Err(format!(
+                "写入 Inactive Fonts 失败：{}",
+                report.errors.join("；")
+            ));
+        }
         migrated = report.changed;
-        errors.extend(report.errors);
+    }
+
+    // 3. 全部停用成功后才落盘新模式；保存失败则撤销新模式的停用
+    current_settings.disable_mode = mode.clone();
+    if let Err(err) = settings_store::save(&current_settings) {
+        if mode == "dynamic" {
+            let users: Vec<String> = targets
+                .iter()
+                .filter(|font| font.scope == Scope::User)
+                .map(|font| font.id.clone())
+                .collect();
+            let _ = crate::mode::enable(&users);
+            let _ = inactive::set_hidden(&targets, false);
+        } else {
+            let _ = inactive::set_hidden(&targets, false);
+        }
+        reapply_hidden(&current, &targets).await;
+        return Err(format!("写入设置失败：{}", err));
     }
 
     std::thread::spawn(crate::fontchange::broadcast);
@@ -545,12 +616,12 @@ pub async fn set_disable_mode(
         mode,
         migrated,
         failed: disabled_ids.len().saturating_sub(migrated),
-        errors,
+        errors: Vec::new(),
     })
 }
 /// 启动时对账：隔离目录里多出来的文件、清单里丢失的文件。
 #[tauri::command]
-pub fn reconcile_disabled() -> crate::mode::ReconcileReport {
+pub async fn reconcile_disabled() -> crate::mode::ReconcileReport {
     // 基础模式下不使用隔离目录，直接返回空结果，避免误报
     if crate::settings::load().disable_mode != "dynamic" {
         return crate::mode::ReconcileReport {
@@ -558,19 +629,28 @@ pub fn reconcile_disabled() -> crate::mode::ReconcileReport {
             missing: Vec::new(),
         };
     }
-    crate::mode::reconcile()
+    tauri::async_runtime::spawn_blocking(crate::mode::reconcile)
+        .await
+        .unwrap_or(crate::mode::ReconcileReport {
+            extra: Vec::new(),
+            missing: Vec::new(),
+        })
 }
 
 /// 把多出来的文件收编为禁用记录。
 #[tauri::command]
-pub fn adopt_disabled_files(paths: Vec<String>) -> usize {
-    crate::mode::adopt(&paths)
+pub async fn adopt_disabled_files(paths: Vec<String>) -> usize {
+    tauri::async_runtime::spawn_blocking(move || crate::mode::adopt(&paths))
+        .await
+        .unwrap_or(0)
 }
 
 /// 删除文件已丢失的清单记录。
 #[tauri::command]
-pub fn drop_missing_disabled(ids: Vec<String>) -> usize {
-    crate::mode::drop_missing(&ids)
+pub async fn drop_missing_disabled(ids: Vec<String>) -> usize {
+    tauri::async_runtime::spawn_blocking(move || crate::mode::drop_missing(&ids))
+        .await
+        .unwrap_or(0)
 }
 /// 详情面板需要的附加字段（列表接口不再携带）。
 #[derive(Debug, Clone, Serialize)]

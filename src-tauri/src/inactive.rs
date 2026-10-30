@@ -69,9 +69,10 @@ impl InactiveSet {
             .any(|k| self.keys.contains(k))
     }
 
-    /// 隐藏时应写入的标识：优先家族名，其次注册表展示名，最后文件名。
+    /// 隐藏时写入单个样式的标识：展示名 / 完整名称 / 文件名，绝不能写家族名，
+    /// 否则一个样式被停用会连带整族。
     fn identifier_for(entry: &FontEntry) -> String {
-        for value in [&entry.family, &entry.display_name, &entry.file_name] {
+        for value in [&entry.display_name, &entry.full_name, &entry.file_name] {
             let trimmed = value.trim();
             if !trimmed.is_empty() {
                 return trimmed.to_string();

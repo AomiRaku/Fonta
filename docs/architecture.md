@@ -77,7 +77,7 @@
 | `registry_location` | `scope` | 注册表路径（详情面板展示） |
 | `system_theme` | — | `light` / `dark`（读 `AppsUseLightTheme`） |
 | `load_language` | `id` | 解析后的语言包 |
-| `set_disable_mode` | `mode`（`windows` / `dynamic`） | `{ mode, migrated, failed, errors }`；内部完成旧模式恢复 → 切换 → 新模式重禁用 |
+| `set_disable_mode` | `mode`（`windows` / `dynamic`） | `{ mode, migrated, failed, errors }`；内部完成旧模式恢复 → 切换 → 新模式重禁用，任一步失败则回滚并保持原模式 |
 | `reconcile_disabled` | — | `{ extra, missing }`：隔离目录多出的文件、清单里丢失的文件 |
 | `adopt_disabled_files` | `paths` | 收编为禁用记录的数量 |
 | `drop_missing_disabled` | `ids` | 移除失效记录的数量 |

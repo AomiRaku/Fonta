@@ -387,6 +387,8 @@ export interface FamilyRowOptions {
   animateChevron?: "expand" | "collapse" | null;
   /** 整族都已收藏：在选中竖块上方叠收藏方块。 */
   favorite?: boolean;
+  /** 行 key：按分组拆开字族时必须是唯一的 scoped key。 */
+  rowKey?: string;
   /** 本次重建要播放元信息显隐动画的方向（展开渐隐下移，收起渐显上移）。 */
   animateMeta?: "expand" | "collapse" | null;
   /** 双击标题行：展开详情或展开字族，由调用方判断。 */
@@ -401,7 +403,7 @@ export function buildFamilyRow(
   options: FamilyRowOptions,
 ): VirtualRow {
   return {
-    key: `family:${family}`,
+    key: options.rowKey ?? `family:${family}`,
     height: options.preview ? PREVIEW_ROW_H : ROW_H,
     render: () => {
       const classes = ["row", "row--family-head"];
@@ -413,6 +415,7 @@ export function buildFamilyRow(
       if (options.isSelected?.()) classes.push("row--selected");
       const row = el("div", classes.join(" "));
       row.dataset.family = family;
+      if (options.rowKey) row.dataset.familyKey = options.rowKey;
       row.prepend(selectionGutter());
       if (options.favorite) row.appendChild(favoriteMark());
 

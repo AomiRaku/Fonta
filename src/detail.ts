@@ -126,9 +126,26 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): SampleVi
   const color = toHexColor(getComputedStyle(document.body).color);
   let current: HTMLElement = text;
   let available = 0;
+  let requestSeq = 0;
+
+  const showPlaceholder = (message: string): void => {
+    if (current instanceof HTMLImageElement) {
+      const placeholder = el("div", "detail__sample-text", message);
+      placeholder.style.fontSize = "var(--fs-sm)";
+      placeholder.style.color = "var(--muted)";
+      current.replaceWith(placeholder);
+      current = placeholder;
+      return;
+    }
+    current.textContent = message;
+    current.style.fontSize = "var(--fs-sm)";
+    current.style.color = "var(--muted)";
+  };
 
   const paint = (weight: number, live: boolean): void => {
     if (available <= 0) return;
+    requestSeq += 1;
+    const seq = requestSeq;
     ctx.pool.request(
       {
         entry,
@@ -140,14 +157,14 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): SampleVi
         allowFallback,
       },
       (url, noGlyphs) => {
+        // 初始请求可能晚于字重滑杆的实时请求返回，只接受最新一次
+        if (seq !== requestSeq) return;
         if (noGlyphs) {
-          current.textContent = t("preview.noChars");
-          current.style.fontSize = "var(--fs-sm)";
-          current.style.color = "var(--muted)";
+          showPlaceholder(t("preview.noChars"));
           return;
         }
         if (!url) {
-          current.style.color = "var(--muted)";
+          showPlaceholder(t("detail.previewFailedFallback"));
           return;
         }
         const image = document.createElement("img");
@@ -434,8 +451,17 @@ export function renderFamilyDetail(
     toggle.addEventListener("click", () => handlers.toggleHidden(userEntries));
     actions.appendChild(toggle);
   } else if (entries.some((entry) => entry.protected)) {
-    // 整族都受保护：和单个受保护字体一样，只给一句说明
+    // 整族都受保护：说明 + 仍然允许定位文件
     actions.appendChild(el("span", "detail__note", t("detail.protectedNote")));
+    if (entries[0].exists) {
+      const reveal = actionButton(
+        "folder-open-filled",
+        t("detail.reveal"),
+        "btn btn--solid",
+      );
+      reveal.addEventListener("click", () => handlers.reveal(entries[0]));
+      trailing.appendChild(reveal);
+    }
   }
 
   const removable = entries.filter((entry) => entry.exists && !entry.protected);

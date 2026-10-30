@@ -94,36 +94,42 @@ fn move_file(from: &Path, to: &Path) -> std::io::Result<()> {
     }
 }
 
-/// 禁用：移文件 → 删注册表值。任何一步失败都会回滚已做的部分。
+/// 禁用：移文件 → 删注册表值。先做预检；执行中任何一步失败，回滚本次已做的全部改动并返回错误。
 pub fn disable(entries: &[FontEntry]) -> Result<usize, String> {
-    let mut records = records();
-    let mut done = 0usize;
-    let mut errors: Vec<String> = Vec::new();
-
+    // 预检：作用域与文件存在性，避免做到一半才发现必然失败
+    let mut preflight: Vec<String> = Vec::new();
     for entry in entries {
         if entry.scope != Scope::User {
-            errors.push(format!(
-                "“{}”位于系统作用域，动态模式暂不支持",
-                entry.family
-            ));
+            preflight.push(format!("“{}”位于系统作用域，动态模式暂不支持", entry.family));
             continue;
         }
+        if !PathBuf::from(&entry.path).is_file() {
+            preflight.push(format!("“{}”的字体文件不存在", entry.family));
+        }
+    }
+    if !preflight.is_empty() {
+        return Err(preflight.join("；"));
+    }
+
+    let mut records = records();
+    let mut applied: Vec<DisabledRecord> = Vec::new();
+
+    for entry in entries {
         let source = PathBuf::from(&entry.path);
-        if !source.is_file() {
-            errors.push(format!("“{}”的字体文件不存在", entry.family));
-            continue;
-        }
         let target = unique_target(&entry.file_name);
         if let Err(err) = move_file(&source, &target) {
-            errors.push(format!("移动 “{}” 失败：{}", entry.family, err));
-            continue;
+            rollback_disable(&applied);
+            return Err(format!(
+                "{}；本次操作已回滚",
+                format!("移动 “{}” 失败：{}", entry.family, err)
+            ));
         }
         if let Err(err) = registry::delete_font_value(entry.scope, &entry.value_name) {
             let _ = move_file(&target, &source);
-            errors.push(err);
-            continue;
+            rollback_disable(&applied);
+            return Err(format!("{}；本次操作已回滚", err));
         }
-        records.push(DisabledRecord {
+        applied.push(DisabledRecord {
             id: entry.id.clone(),
             value_name: entry.value_name.clone(),
             family: entry.family.clone(),
@@ -133,22 +139,36 @@ pub fn disable(entries: &[FontEntry]) -> Result<usize, String> {
             quarantine_path: target.to_string_lossy().to_string(),
             size: entry.size,
         });
-        done += 1;
     }
 
+    records.extend(applied.iter().cloned());
     save(&records);
-    if done == 0 && !errors.is_empty() {
-        return Err(errors.join("；"));
-    }
-    Ok(done)
+    Ok(applied.len())
 }
 
-/// 启用：文件移回原位 → 写回注册表值。
+/// 回滚本次已禁用的字体：文件移回原路径，并写回注册表值。
+fn rollback_disable(applied: &[DisabledRecord]) {
+    for record in applied.iter().rev() {
+        let source = PathBuf::from(&record.source_path);
+        let quarantine = PathBuf::from(&record.quarantine_path);
+        let _ = move_file(&quarantine, &source);
+        let _ = registry::write_font_value(Scope::User, &record.value_name, &record.source_path);
+    }
+}
+
+/// 启用：文件移回原位 → 写回注册表值。任一失败时回滚本次已恢复的条目并返回错误。
 pub fn enable(ids: &[String]) -> Result<usize, String> {
     let mut records = records();
-    let mut done = 0usize;
-    let mut errors: Vec<String> = Vec::new();
+    let missing: Vec<String> = ids
+        .iter()
+        .filter(|id| !records.iter().any(|record| &record.id == *id))
+        .cloned()
+        .collect();
+    if !missing.is_empty() {
+        return Err(format!("以下字体不在隔离清单中：{}", missing.join("、")));
+    }
 
+    let mut applied: Vec<DisabledRecord> = Vec::new();
     for id in ids {
         let Some(position) = records.iter().position(|record| &record.id == id) else {
             continue;
@@ -158,31 +178,52 @@ pub fn enable(ids: &[String]) -> Result<usize, String> {
         let quarantine = PathBuf::from(&record.quarantine_path);
 
         if let Err(err) = move_file(&quarantine, &source) {
-            errors.push(format!("恢复 “{}” 失败：{}", record.family, err));
-            continue;
+            rollback_enable(&applied);
+            return Err(format!(
+                "恢复 “{}” 失败：{}；本次操作已回滚",
+                record.family, err
+            ));
         }
         if let Err(err) =
             registry::write_font_value(Scope::User, &record.value_name, &record.source_path)
         {
             let _ = move_file(&source, &quarantine);
-            errors.push(err);
-            continue;
+            rollback_enable(&applied);
+            return Err(format!("{}；本次操作已回滚", err));
         }
+        applied.push(record);
         records.remove(position);
-        done += 1;
     }
 
     save(&records);
-    if done == 0 && !errors.is_empty() {
-        return Err(errors.join("；"));
-    }
-    Ok(done)
+    Ok(applied.len())
 }
 
-/// 恢复全部隔离字体（切换模式前调用）。
-pub fn restore_all() -> usize {
+/// 回滚本次已恢复的字体：删掉刚写回的注册表值，并把文件放回隔离目录。
+fn rollback_enable(applied: &[DisabledRecord]) {
+    for record in applied.iter().rev() {
+        let source = PathBuf::from(&record.source_path);
+        let quarantine = PathBuf::from(&record.quarantine_path);
+        let _ = registry::delete_font_value(Scope::User, &record.value_name);
+        let _ = move_file(&source, &quarantine);
+    }
+}
+/// 查询若干 id 对应的隔离文件路径（删除隔离中的字体时使用真实路径）。
+pub fn quarantine_paths(ids: &[String]) -> std::collections::HashMap<String, String> {
+    records()
+        .into_iter()
+        .filter(|record| ids.iter().any(|id| id == &record.id))
+        .map(|record| (record.id, record.quarantine_path))
+        .collect()
+}
+
+/// 恢复全部隔离字体（切换模式前调用）。任何失败都会返回错误，由调用方决定是否继续。
+pub fn restore_all() -> Result<usize, String> {
     let ids: Vec<String> = records().into_iter().map(|record| record.id).collect();
-    enable(&ids).unwrap_or_default()
+    if ids.is_empty() {
+        return Ok(0);
+    }
+    enable(&ids)
 }
 
 /// 把隔离中的字体拼成 `FontEntry`，让列表里仍能看到并重新启用它们。
