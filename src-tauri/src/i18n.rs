@@ -143,6 +143,7 @@ mod tests {
         );
     }
 
+    #[test]
     fn missing_file_yields_empty_pack_instead_of_fallback() {
         // 不做回退：缺文件时条目为空，界面会显示键名
         let pack = load("does-not-exist");

@@ -122,13 +122,10 @@ pub fn hide(entries: &[FontEntry]) -> Result<usize, String> {
 
 /// 把给定字体从隐藏列表移除。返回实际移除的条目数。
 pub fn show(entries: &[FontEntry]) -> Result<usize, String> {
+    // 文件名键同样唯一，保留候选键里的全部条目
     let keys: Vec<Vec<String>> = entries
         .iter()
         .map(InactiveSet::candidate_keys)
-        .map(|keys| {
-            // 去掉文件名键，避免误删恰好同名的其它条目？文件名同样唯一，保留。
-            keys
-        })
         .collect();
 
     apply(|items| {

@@ -131,7 +131,7 @@ fn decode_utf16_strings(bytes: &[u8]) -> Vec<String> {
     units
         .split(|u| *u == 0)
         .filter(|s| !s.is_empty())
-        .map(|s| String::from_utf16_lossy(s))
+        .map(String::from_utf16_lossy)
         .collect()
 }
 

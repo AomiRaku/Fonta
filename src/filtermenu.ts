@@ -110,6 +110,8 @@ function onOutside(event: PointerEvent): void {
   if (!menuEl) return;
   const target = event.target as Node | null;
   if (menuEl.contains(target)) return;
+  // 浮层滚动条挂在 body 上，点击 / 拖动它不应关闭菜单
+  if (target instanceof Element && target.closest(".ovl-scroll")) return;
   if (menuEl.dataset.anchor && document.getElementById(menuEl.dataset.anchor)?.contains(target)) {
     return;
   }

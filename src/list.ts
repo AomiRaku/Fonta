@@ -27,7 +27,7 @@ export class VirtualList {
   /** 本次动画的方向：展开时新行从上方轻微下移，收起时下方内容滑上来。 */
   private animateDirection: "expand" | "collapse" = "expand";
 
-  /** 上下各多渲染的行数（紧凑 44px ≈ 264px，预览 84px ≈ 504px）。 */
+  /** 上下各多渲染的行数（紧凑 38px ≈ 228px，预览 76px ≈ 456px）。 */
   private static readonly OVERSCAN_ROWS = 2;
 
   constructor(

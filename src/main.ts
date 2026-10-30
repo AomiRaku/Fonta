@@ -1499,7 +1499,10 @@ function requestExtras(entries: FontEntry[]): void {
       }
       renderDetailPane();
     })
-    .catch(() => undefined);
+    .catch(() => {
+      // 拉取失败时移除标记，下次打开详情可以重试
+      for (const id of ids) extrasFetched.delete(id);
+    });
 }
 
 function renderDetailPane(): void {
@@ -1533,7 +1536,6 @@ function renderDetailPane(): void {
             void cleanMissing(entry);
           },
           reveal: () => undefined,
-          clearSelection: () => clearSelection(),
           invertSelection: () => invertSelection(),
         },
       );
@@ -1572,7 +1574,6 @@ function renderDetailPane(): void {
           .revealPath(target.path)
           .catch((err) => toast(errorText(err), true));
       },
-      clearSelection: () => clearSelection(),
       invertSelection: () => invertSelection(),
     },
   );
@@ -1595,6 +1596,8 @@ async function refresh(): Promise<void> {
   try {
     const payload = await api.listFonts();
     state.fonts = payload.fonts;
+    // 列表接口不带附加字段，刷新后允许详情重新拉取
+    extrasFetched.clear();
 
     for (const warning of payload.lockedFiles) {
       toast(warning, true);
@@ -1686,8 +1689,12 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
 function applyHiddenState(targets: FontEntry[], hidden: boolean): void {
   for (const entry of targets) entry.hidden = hidden;
 
-  if (state.sort.key === "enabled") {
-    // 按启用状态排序时顺序会变，必须整表重排
+  if (
+    state.sort.key === "enabled" ||
+    state.view.kind === "hidden" ||
+    state.groupBy === "enabled"
+  ) {
+    // 顺序或分组归属会变（含「已停用」视图移除已启用的行），必须整表重排
     applyFilter();
     renderAll();
     return;
@@ -1886,10 +1893,7 @@ function openDeleteDialog(entries: FontEntry[]): void {
   const dismiss = (): void => dismissModal(overlay, onKey);
   const onKey = (event: KeyboardEvent): void => {
     if (event.key === "Escape") dismiss();
-    if (event.key === "Enter") {
-      dismiss();
-      void performDelete(entries);
-    }
+    // Enter 交给当前聚焦的按钮（默认焦点在「删除」），避免 document 监听与按钮默认动作各删一次
   };
 
   cancel.addEventListener("click", dismiss);
@@ -2981,10 +2985,12 @@ function bindEvents(): void {
     }
   });
 
-  // Esc：先取消选择，再清空搜索（在输入框里也生效）
+  // Esc：先取消选择，再清空搜索（在输入框里也生效）。
+  // 用捕获阶段：菜单的 Esc 关闭监听多在捕获阶段且晚于这里注册，
+  // 只有抢在它们之前才能看到仍然打开的浮层，避免同一次 Esc 顺带清空选择。
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
-    if (document.querySelector(".modal, .ctx")) return;
+    if (document.querySelector(".modal, .ctx, .more-menu, .group-menu, .fmenu")) return;
     if (state.selectedIds.size > 0) {
       event.preventDefault();
       clearSelection();
@@ -2995,7 +3001,7 @@ function bindEvents(): void {
     dom.search.value = "";
     applyFilter();
     rebuild();
-  });
+  }, true);
 }
 
 

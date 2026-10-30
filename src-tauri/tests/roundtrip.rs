@@ -37,6 +37,13 @@ fn make_entry(path: &std::path::Path) -> FontEntry {
         family: TEST_FAMILY.to_string(),
         style: "Regular".to_string(),
         full_name: TEST_FAMILY.to_string(),
+        language: "英语".to_string(),
+        languages: vec!["英语".to_string()],
+        variable: false,
+        weight_min: 0,
+        weight_max: 0,
+        monospace: false,
+        ligatures: false,
         scope: Scope::User,
         file_name: path
             .file_name()
@@ -45,6 +52,7 @@ fn make_entry(path: &std::path::Path) -> FontEntry {
         path: path.to_string_lossy().to_string(),
         exists: true,
         size: 1,
+        added_at: 0,
         format: "TrueType".to_string(),
         families: vec![TEST_FAMILY.to_string()],
         protected: false,

@@ -25,7 +25,6 @@ export interface DetailHandlers {
   requestDelete(entries: FontEntry[]): void;
   cleanMissing(entry: FontEntry): void;
   reveal(entry: FontEntry): void;
-  clearSelection(): void;
   /** 多选视图：把当前列表里未选中的字体选上、已选中的取消。 */
   invertSelection(): void;
 }

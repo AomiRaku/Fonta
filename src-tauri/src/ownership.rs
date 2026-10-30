@@ -116,7 +116,7 @@ mod win {
         }
         // SAFETY: sd 由 GetNamedSecurityInfoW 分配。
         unsafe {
-            LocalFree(sd as *mut c_void);
+            LocalFree(sd);
         }
         out
     }

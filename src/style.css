@@ -6,13 +6,12 @@
    --------------------------------------------------------------
    规则速查（完整规范见 docs/ui-spec.md）
    · 只有一种圆角：2px
-   · 没有阴影、没有渐变、没有描边按钮
-   · 所有可交互控件高 28px，图标 14px（窗控 12px）
+   · 无渐变、无描边按钮；仅菜单 / Toast / 弹窗使用阴影
+   · 控件高 32px，工具栏图标 16px（窗控 15px）
    · 统一 16px 外边距、8px 元素间距、4px 微间距
    · 分隔只用一个 1px 的 --line，不叠双线
    ════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. 令牌 ─────────────────────────────────────────────────────── */
 /* ── 1. 令牌 ─────────────────────────────────────────────────────── */
 
 /* 尺寸 / 间距 / 字体 / 列宽：两种主题共用，放在 :root */
@@ -191,6 +190,7 @@ html[data-theme="dark"] {
   --close: #c42b1c;
   --overlay: rgba(2, 3, 4, 0.62);
 
+  --shadow-menu: 0 8px 20px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.35);
   --shadow-menu-soft: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
   --shadow-toast: 0 12px 34px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.4);
 
@@ -812,9 +812,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   box-shadow: none;
 }
 
-/* 右键命中但未选中的行：只给底色，不显示左侧红条 */
-
-
 /* 字族内的字体行：整体缩进，并在左侧画一条贯穿的竖线 */
 .row--family-child .cell--name,
 .row--family-child .row__title {
@@ -1179,14 +1176,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   flex: 0 0 auto;
 }
 
-/* 二次确认 */
-
-.confirm {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--sp-1);
-}
 
 
 .group-slot {
@@ -2024,16 +2013,11 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 
 /* ── 10. 滚动条 / 响应式 ─────────────────────────────────────────── */
 
-.viewport::-webkit-scrollbar,
-.pane--detail::-webkit-scrollbar,
-.modal__body::-webkit-scrollbar,
+/* 仅许可证长文保留原生滚动条；列表 / 详情 / 弹窗正文使用悬浮滚动条 */
 .modal__pre::-webkit-scrollbar {
   width: 10px;
 }
 
-.viewport::-webkit-scrollbar-thumb,
-.pane--detail::-webkit-scrollbar-thumb,
-.modal__body::-webkit-scrollbar-thumb,
 .modal__pre::-webkit-scrollbar-thumb {
   background: var(--scrollbar-thumb);
   border: 3px solid transparent;
@@ -2041,17 +2025,11 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   border-radius: 0;
 }
 
-.viewport::-webkit-scrollbar-thumb:hover,
-.pane--detail::-webkit-scrollbar-thumb:hover,
-.modal__body::-webkit-scrollbar-thumb:hover,
 .modal__pre::-webkit-scrollbar-thumb:hover {
   background: var(--scrollbar-thumb-hover);
   background-clip: content-box;
 }
 
-.viewport::-webkit-scrollbar-track,
-.pane--detail::-webkit-scrollbar-track,
-.modal__body::-webkit-scrollbar-track,
 .modal__pre::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -2270,8 +2248,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
     color 50ms ease-out;
 }
 /* ════════════════════════════════════════════════════════════════════
-   重建：侧栏 / 右键菜单 / 筛选菜单 / 字族行头 / 字体单编辑器
-   （这一段曾因批量删除误伤，按 docs/ui-spec.md 的规格重写）
+   侧栏 / 右键菜单 / 筛选菜单 / 字族行头 / 字体单编辑器
    ════════════════════════════════════════════════════════════════════ */
 
 /* ── 侧栏 ─────────────────────────────────────────────────────────── */
@@ -2730,6 +2707,11 @@ html[data-detail="closed"] .pane--detail {
   flex: 0 0 auto;
 }
 
+.fmenu__check svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* ── 字族标题行 ───────────────────────────────────────────────────── */
 
 /* 样式数量标签：灰底矩形，文字 + 右侧箭头，整块可点 */
@@ -2943,11 +2925,6 @@ html[data-detail="closed"] .pane--detail {
   height: 14px;
 }
 
-/* 分组按钮激活态：和筛选按钮一致，保持底色 */
-.icon-btn.is-active {
-  background: var(--control-bg-hover);
-  color: var(--ink);
-}
 /* 图标按钮带文字（筛选激活时）：变宽、左内边距 9px 让图标与窄态同轴 */
 .icon-btn--labeled {
   width: auto;
