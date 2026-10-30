@@ -8,7 +8,7 @@
 <img src="\docs\img\FontFox_Logo.webp"  width="144" height="144" style="display: block; margin: 0 auto;" alt="icon" />
 
 # FontFox 字狐
-### 快速流畅易用的本地字体管理器
+### 快速流畅且易用的本地字体管理器
 
 Made with ❤️ by [羽梦千景 Raku Inkyetta](https://github.com/AomiRaku)
 

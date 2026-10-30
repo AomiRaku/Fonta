@@ -82,6 +82,7 @@ pub fn run() {
             commands::render_preview,
             commands::reconcile_disabled,
             commands::open_devtools,
+            commands::open_url,
             commands::restore_all_fonts,
             commands::move_disabled_to_desktop,
             commands::move_quarantined_to_desktop,

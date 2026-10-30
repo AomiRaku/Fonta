@@ -26,6 +26,7 @@ import copy from "@siemens/ix-icons/svg/copy.svg?raw";
 import eyeCancelled from "@siemens/ix-icons/svg/eye-cancelled-filled.svg?raw";
 import eyeFilled from "@siemens/ix-icons/svg/eye-filled.svg?raw";
 import folderOpen from "@siemens/ix-icons/svg/folder-open-filled.svg?raw";
+import githubLogo from "@siemens/ix-icons/svg/github-logo.svg?raw";
 import lock from "@siemens/ix-icons/svg/lock.svg?raw";
 import minus from "@siemens/ix-icons/svg/minus.svg?raw";
 import moon from "@siemens/ix-icons/svg/moon.svg?raw";
@@ -55,6 +56,7 @@ const SOURCES = {
   "eye-cancelled-filled": eyeCancelled,
   "eye-filled": eyeFilled,
   "folder-open-filled": folderOpen,
+  "github-logo": githubLogo,
   "table-rows": tableRows,
   "text-alignment-justified": justified,
   "trashcan-filled": trashcan,

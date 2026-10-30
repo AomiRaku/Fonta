@@ -1064,6 +1064,15 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   color: var(--ink);
 }
 
+.btn:disabled {
+  pointer-events: none;
+}
+
+.modal__footer .btn svg {
+  width: 22px;
+  height: 22px;
+}
+
 .btn:active {
   background: var(--control-bg-active);
   color: var(--ink);
@@ -1637,11 +1646,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   margin-bottom: var(--sp-4);
 }
 
-/* 关于面板：三个 tab 内容高度不同，固定正文高度避免弹窗跳动 */
-.modal__body--tabs {
-  height: 412px;
-  min-height: 412px;
-}
 
 /* 受保护字体：停用按钮位置上的说明文字 */
 .detail__note {
@@ -1844,6 +1848,15 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   background-color: var(--overlay);
 }
 
+.modal__drag-region {
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: 1;
+  height: var(--titlebar-h);
+  cursor: default;
+}
+
+
 .modal__panel {
   display: flex;
   flex-direction: column;
@@ -1890,11 +1903,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   flex: 1 1 auto;
 }
 
-.modal__tabs {
-  display: flex;
-  gap: var(--sp-1);
-  margin-left: auto;
-}
 
 .tab {
   height: 28px;
@@ -2040,6 +2048,18 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   padding: 20px var(--sp-5);
 }
 
+/* 关于弹窗的许可页：两边固定高度，切 tab 不跳动 */
+.modal__body--tabs {
+  height: 412px;
+  min-height: 412px;
+}
+
+.modal__tabs {
+  display: flex;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
 /* 弹窗动作按钮比工具条按钮更醒目 */
 .modal__footer .btn {
   height: 34px;
@@ -2050,21 +2070,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   border-radius: var(--radius);
 }
 
-.modal__meta {
-  margin: 0;
-  white-space: pre-line;
-  color: var(--muted);
-  font-size: var(--fs-xs);
-  line-height: 1.8;
-}
-
-.modal__meta strong {
-  display: block;
-  margin-bottom: var(--sp-1);
-  color: var(--ink);
-  font-size: var(--fs-base);
-  font-weight: 600;
-}
 
 .modal__pre {
   margin: 0;
@@ -3047,6 +3052,135 @@ html[data-detail="closed"] .pane--detail {
   font-size: var(--fs-sm);
   white-space: nowrap;
 }
+/* ── 关于窗口 ─────────────────────────────────────────────────────── */
+.modal__panel--about {
+  width: min(560px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - 32px));
+  max-height: none;
+}
+
+.about__body {
+  align-items: center;
+  padding: 0 var(--sp-5);
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+.about__icon {
+  width: 96px;
+  height: 96px;
+  display: block;
+}
+
+.about__wordmark {
+  margin-top: var(--sp-4);
+}
+
+.about__wordmark img {
+  width: 160px;
+  height: auto;
+}
+
+.about__wordmark--light {
+  display: block;
+}
+
+.about__wordmark--dark {
+  display: none;
+}
+
+html[data-theme="dark"] .about__wordmark--light {
+  display: none;
+}
+
+html[data-theme="dark"] .about__wordmark--dark {
+  display: block;
+}
+
+.about__tagline {
+  margin: var(--sp-4) 0 0;
+  font-size: var(--fs-base);
+  color: var(--ink-soft);
+}
+
+.about__version {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.about__credits {
+  margin: calc(var(--sp-5) + 6px) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+}
+
+.about__license-line {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.about__links {
+  display: flex;
+  gap: var(--sp-4);
+  margin-top: var(--sp-3);
+  /* 抵消上方 +6px，保持居中布局里的 Logo 区块位置不变 */
+  margin-bottom: -6px;
+}
+
+.about__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+}
+
+.link {
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  transition: text-decoration-color 100ms ease-out;
+}
+
+.link:hover {
+  text-decoration-color: currentColor;
+}
+
+.about__footer {
+  align-items: center;
+}
+
+.about__github {
+  gap: var(--sp-2);
+  margin-right: auto;
+  color: var(--ink);
+  font-size: var(--fs-base);
+}
+
+.modal__footer .btn.about__github {
+  padding-left: var(--sp-3);
+}
+
+
+
+
+.about__check:disabled {
+  opacity: 0.55;
+}
+
 /* ── 设置窗口 ─────────────────────────────────────────────────────── */
 .modal__panel--settings {
   width: min(520px, calc(100vw - 32px));

@@ -79,6 +79,7 @@
 | `load_language` | `id` | 解析后的语言包 |
 | `list_languages` | — | exe 同级 `lang/*.ini` 的 `{ id, name }` 列表 |
 | `open_devtools` | — | 打开当前窗口 DevTools（需要 tauri `devtools` feature） |
+| `open_url` | `url` | 用系统浏览器打开 GitHub HTTPS 链接 |
 | `restore_all_fonts` | — | 恢复全部已停用字体；失败返回错误 |
 | `move_disabled_to_desktop` | `paths` | 把指定隔离文件移动到桌面，返回成功数量 |
 | `move_quarantined_to_desktop` | — | 把隔离目录剩余字体移动到桌面，返回成功数量 |

@@ -97,6 +97,9 @@ export const api = {
     ),
 
 
+  /** 用系统默认浏览器打开 GitHub 链接。 */
+  openUrl: (url: string) => invoke<void>("open_url", { url }),
+
   /** 打开 DevTools（设置里的开发者工具开关）。 */
   openDevTools: () => invoke<void>("open_devtools"),
 

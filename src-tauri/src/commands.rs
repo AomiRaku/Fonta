@@ -498,6 +498,30 @@ async fn reapply_hidden(current: &str, targets: &[FontEntry]) {
     }
 }
 
+/// 用系统默认浏览器打开外部链接（只允许 GitHub HTTPS）。
+#[tauri::command]
+pub fn open_url(url: String) -> Result<(), String> {
+    if !url.starts_with("https://github.com/") {
+        return Err("不支持的外部链接".to_string());
+    }
+    let operation: Vec<u16> = "open\0".encode_utf16().collect();
+    let target: Vec<u16> = format!("{url}\0").encode_utf16().collect();
+    let result = unsafe {
+        windows_sys::Win32::UI::Shell::ShellExecuteW(
+            std::ptr::null_mut(),
+            operation.as_ptr(),
+            target.as_ptr(),
+            std::ptr::null(),
+            std::ptr::null(),
+            windows_sys::Win32::UI::WindowsAndMessaging::SW_SHOWNORMAL,
+        )
+    };
+    if (result as isize) <= 32 {
+        Err(format!("无法打开链接：{url}"))
+    } else {
+        Ok(())
+    }
+}
 /// 打开当前窗口的 DevTools（发布版需要 tauri `devtools` feature）。
 #[tauri::command]
 pub fn open_devtools(app: tauri::AppHandle) {

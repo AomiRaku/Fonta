@@ -9,6 +9,9 @@ import { api, errorText } from "./api";
 import { readText, writeText } from "@tauri-apps/plugin-clipboard-manager";
 import { type MenuItem, openContextMenu } from "./contextmenu";
 import { createDropdown } from "./dropdown";
+import logoUrl from "../docs/img/Logo.svg?url";
+import wordmarkLightUrl from "../docs/img/Text_L.svg?url";
+import wordmarkDarkUrl from "../docs/img/Text_D.svg?url";
 import { icon, mountIcons } from "./icons";
 import { applyStaticTranslations, setLanguagePack, t } from "./i18n";
 import { renderDetail, renderFamilyDetail } from "./detail";
@@ -1971,6 +1974,15 @@ function buildModal(options: {
   panel.appendChild(footer);
 
   overlay.appendChild(panel);
+
+  // 弹窗遮罩盖住标题栏时，顶部仍保留一条可拖动区域
+  const dragRegion = el("div", "modal__drag-region");
+  dragRegion.setAttribute("data-tauri-drag-region", "");
+  dragRegion.addEventListener("dblclick", (event) => {
+    if ((event.target as HTMLElement | null)?.closest("button, input, select")) return;
+    void appWindow.toggleMaximize();
+  });
+  overlay.appendChild(dragRegion);
   return { overlay, panel, body, head, footer, close };
 }
 
@@ -2049,6 +2061,64 @@ function openDeleteDialog(entries: FontEntry[]): void {
 
 /* ───────────────────────────── 关于面板 ───────────────────────────── */
 
+const GITHUB_PROFILE = "https://github.com/AomiRaku";
+const GITHUB_REPO = "https://github.com/AomiRaku/font-fox";
+const GITHUB_CONTRIBUTORS = "https://github.com/AomiRaku/font-fox/graphs/contributors";
+
+function openExternal(url: string): void {
+  void api.openUrl(url).catch((err) => toast(errorText(err), true));
+}
+
+/** 叠在关于窗口上的独立窗口：开源许可（声明 / 许可证）。 */
+function openLicenseDialog(
+  payload: { noticeText: string; licenseText: string },
+  onClose?: () => void,
+): void {
+  const shell = buildModal({ title: t("about.licenseTitle"), wide: true });
+  const { overlay, head, body, footer, close } = shell;
+  footer.remove();
+  body.classList.add("modal__body--tabs");
+
+  const tabs = el("div", "modal__tabs");
+  head.insertBefore(tabs, close);
+  const pre = el("pre", "modal__pre");
+  const panes = [payload.noticeText, payload.licenseText];
+  const labels = [t("about.tabNotice"), t("about.tabLicense")];
+  const tabButtons: HTMLButtonElement[] = [];
+
+  const show = (index: number): void => {
+    pre.textContent = panes[index] ?? "";
+    tabButtons.forEach((tab, i) => {
+      tab.setAttribute("aria-selected", String(i === index));
+    });
+  };
+
+  labels.forEach((label, index) => {
+    const tab = el("button", "tab", label) as HTMLButtonElement;
+    tab.type = "button";
+    tab.addEventListener("click", () => show(index));
+    tabButtons.push(tab);
+    tabs.appendChild(tab);
+  });
+
+  let closed = false;
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") finish();
+  };
+  const finish = (): void => {
+    if (closed) return;
+    closed = true;
+    dismissModal(overlay, onKey);
+    onClose?.();
+  };
+  close?.addEventListener("click", finish);
+  document.addEventListener("keydown", onKey);
+
+  body.appendChild(pre);
+  show(0);
+  presentModal(overlay);
+}
+
 async function openAbout(): Promise<void> {
   let payload;
   try {
@@ -2059,69 +2129,86 @@ async function openAbout(): Promise<void> {
   }
 
   const shell = buildModal({ title: t("app.name"), wide: true });
-  const { overlay, head, body, footer, close } = shell;
-  // 关于面板没有操作按钮，隐藏底部栏
-  footer.remove();
+  const { overlay, panel, body, footer, head } = shell;
+  panel.classList.add("modal__panel--about");
+  head.remove();
+  body.classList.add("about__body");
 
-  const tabs = el("div", "modal__tabs");
-  head.insertBefore(tabs, close);
-  // 三个标签页内容高度差别很大，固定正文高度避免切 tab 时弹窗跳动
-  body.classList.add("modal__body--tabs");
+  const main = el("div", "about");
+  const logo = el("img", "about__icon") as HTMLImageElement;
+  logo.src = logoUrl;
+  logo.alt = "";
+  const wordmark = el("div", "about__wordmark");
+  const wordmarkLight = el("img", "about__wordmark--light") as HTMLImageElement;
+  wordmarkLight.src = wordmarkLightUrl;
+  wordmarkLight.alt = "FontFox";
+  const wordmarkDark = el("img", "about__wordmark--dark") as HTMLImageElement;
+  wordmarkDark.src = wordmarkDarkUrl;
+  wordmarkDark.alt = "FontFox";
+  wordmark.append(wordmarkLight, wordmarkDark);
 
-  const aboutBox = el("div");
-  const meta = el("p", "modal__meta");
-  meta.appendChild(el("strong", "", `${t("app.name")} ${payload.version}`));
-  meta.appendChild(document.createTextNode(t("about.tagline")));
-  aboutBox.appendChild(meta);
+  const tagline = el("p", "about__tagline", t("about.tagline"));
+  const version = el(
+    "p",
+    "about__version",
+    t("about.versionLine", { version: payload.version }),
+  );
+  const credits = el("p", "about__credits");
+  credits.appendChild(document.createTextNode(`${t("about.madeWith")} `));
+  const author = el("button", "about__link link", t("about.authorName")) as HTMLButtonElement;
+  author.type = "button";
+  author.addEventListener("click", () => openExternal(GITHUB_PROFILE));
+  credits.appendChild(author);
 
-  const info = el("div", "modal__list");
-  for (const [key, value] of [
-    [t("about.version"), payload.version],
-    [t("about.license"), payload.licenseName],
-    [t("about.settingsPath"), payload.configPath],
-    [t("about.pendingPath"), payload.pendingPath],
-  ]) {
-    const row = el("div", "modal__item");
-    row.appendChild(el("span", "modal__item-name", key));
-    row.appendChild(el("span", "modal__item-style", value));
-    info.appendChild(row);
-  }
-  aboutBox.appendChild(info);
+  const licenseLine = el(
+    "p",
+    "about__license-line",
+    t("about.licenseLine", { license: payload.licenseName }),
+  );
+  const links = el("div", "about__links");
+  const openSource = el("button", "about__link link", t("about.openSource")) as HTMLButtonElement;
+  openSource.type = "button";
+  const contributors = el(
+    "button",
+    "about__link link",
+    t("about.contributors"),
+  ) as HTMLButtonElement;
+  contributors.type = "button";
+  contributors.addEventListener("click", () => openExternal(GITHUB_CONTRIBUTORS));
+  links.append(openSource, contributors);
 
-  const panes: HTMLElement[] = [
-    aboutBox,
-    Object.assign(el("pre", "modal__pre"), { textContent: payload.noticeText }),
-    Object.assign(el("pre", "modal__pre"), { textContent: payload.licenseText }),
-  ];
-  const labels = [t("about.tabAbout"), t("about.tabNotice"), t("about.tabLicense")];
+  main.append(logo, wordmark, tagline, version, credits, licenseLine, links);
 
-  const show = (index: number): void => {
-    body.replaceChildren(panes[index]);
-    Array.from(tabs.children).forEach((node, i) => {
-      node.setAttribute("aria-selected", String(i === index));
-    });
-  };
+  body.replaceChildren(main);
 
-  labels.forEach((label, index) => {
-    const tab = el("button", "tab", label) as HTMLButtonElement;
-    tab.type = "button";
-    tab.addEventListener("click", () => show(index));
-    tabs.appendChild(tab);
-  });
+  const github = el("button", "btn about__github") as HTMLButtonElement;
+  github.type = "button";
+  github.append(icon("github-logo"), document.createTextNode(t("about.github")));
+  github.addEventListener("click", () => openExternal(GITHUB_REPO));
+  const check = el("button", "btn btn--soft about__check", t("about.checkUpdate")) as HTMLButtonElement;
+  check.type = "button";
+  check.disabled = true;
+  const close = el("button", "btn btn--soft", t("delete.close")) as HTMLButtonElement;
+  close.type = "button";
+  footer.classList.add("about__footer");
+  footer.append(github, check, close);
 
-  const dismiss = (): void => dismissModal(overlay, onKey);
   const onKey = (event: KeyboardEvent): void => {
     if (event.key === "Escape") dismiss();
   };
-
-  close?.addEventListener("click", dismiss);
-  // 弹窗不允许点击背景关闭
+  const dismiss = (): void => dismissModal(overlay, onKey);
+  close.addEventListener("click", dismiss);
+  openSource.addEventListener("click", () => {
+    dismiss();
+    openLicenseDialog(payload, () => {
+      void openAbout();
+    });
+  });
   document.addEventListener("keydown", onKey);
 
-  show(0);
   presentModal(overlay);
+  close.focus();
 }
-
 /* ───────────────────────────── 设置 ───────────────────────────── */
 
 /** 设置窗口：界面语言 + 折叠的高级选项。 */

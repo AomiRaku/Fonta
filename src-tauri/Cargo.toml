@@ -1,7 +1,7 @@
 [package]
 name = "fontfox"
 version = "1000.0.0"
-description = "FontFox — Windows 字体管理器"
+description = "FontFox — 快速流畅且易用的本地字体管理器"
 authors = ["Raku Inkyetta 羽梦千景"]
 license = "Apache-2.0"
 edition = "2021"
