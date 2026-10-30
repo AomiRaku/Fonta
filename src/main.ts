@@ -802,6 +802,15 @@ function toggleSelectAll(): void {
   renderAll();
 }
 
+/** Ctrl+A：全选当前列表内容；已全选时保持选中，不反选。 */
+function selectAllVisible(): void {
+  const ids = state.filtered.map((entry) => entry.id);
+  if (ids.length === 0) return;
+  state.selectedIds = new Set(ids);
+  state.anchorId = null;
+  renderAll();
+}
+
 function clearSelection(): void {
   state.selectedIds.clear();
   state.anchorId = null;
@@ -1152,6 +1161,7 @@ function rebuild(): void {
   refreshOverlayScrollbar(dom.viewport);
   updateGroupPin();
   updateEmptyState(rows.length === 0);
+  syncSwitchPending();
 
 }
 
@@ -1535,6 +1545,8 @@ function requestExtras(entries: FontEntry[]): void {
 }
 
 function renderDetailPane(): void {
+  // 详情内容每次重建：先销毁旧的元信息滚动条，重建后再挂到新的 .detail__scroll 上
+  detachOverlayScrollbar(dom.detail.querySelector<HTMLElement>(".detail__scroll"));
 
   // 选中的恰好是一个字族行（某个分组里的子集）的全部字体时，右侧显示该字族信息
   const selectedFamily = soleSelectedFamily();
@@ -1572,6 +1584,7 @@ function renderDetailPane(): void {
           invertSelection: () => invertSelection(),
         },
       );
+      attachOverlayScrollbar(dom.detail.querySelector<HTMLElement>(".detail__scroll"));
       return;
     }
   }
@@ -1610,6 +1623,7 @@ function renderDetailPane(): void {
       invertSelection: () => invertSelection(),
     },
   );
+  attachOverlayScrollbar(dom.detail.querySelector<HTMLElement>(".detail__scroll"));
 }
 
 function renderAll(): void {
@@ -1656,7 +1670,8 @@ function syncFamilySwitches(): void {
   for (const head of dom.rows.querySelectorAll<HTMLElement>(".row--family-head")) {
     const family = head.dataset.family;
     if (!family) continue;
-    const members = familyMembers(family);
+    const key = head.dataset.familyKey;
+    const members = key ? familyMembersOfKey(key) : familyMembers(family);
     if (members.length === 0) continue;
     const on = members.some((entry) => !entry.hidden);
     const sw = head.querySelector<HTMLButtonElement>(".switch");
@@ -1675,6 +1690,28 @@ function fontLabel(entry: FontEntry): string {
 let inflightToggles = 0;
 let toggleSeq = 0;
 const toggleVersions = new Map<string, number>();
+/** 正在等待后台写入完成的字体 id：对应行的开关保持禁用，防止重复点击。 */
+const pendingToggleIds = new Set<string>();
+
+/** 行开关与字族总控开关的禁用态：有待完成写入时禁用。 */
+function syncSwitchPending(): void {
+  for (const node of dom.rows.querySelectorAll<HTMLElement>(".row")) {
+    const switchEl = node.querySelector<HTMLButtonElement>(".switch");
+    if (!switchEl) continue;
+    const id = node.dataset.id;
+    const pending = id
+      ? pendingToggleIds.has(id)
+      : (() => {
+          const key = node.dataset.familyKey;
+          const members = key
+            ? familyMembersOfKey(key)
+            : familyMembers(node.dataset.family ?? "");
+          return members.some((entry) => pendingToggleIds.has(entry.id));
+        })();
+    switchEl.disabled = pending;
+    switchEl.classList.toggle("switch--pending", pending);
+  }
+}
 
 async function whenTogglesSettled(): Promise<void> {
   while (inflightToggles > 0) {
@@ -1687,44 +1724,70 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
   if (targets.length === 0) return;
   // 只要还有显示的，就整体隐藏；全隐藏时整体显示
   const nextHidden = targets.some((e) => !e.hidden);
+  // 后台写入通常只要几毫秒；保留一个最短禁用窗口，避免“看起来没禁用”而被连续点击
+  const startedAt = performance.now();
+  const minPendingMs = 800;
   const version = ++toggleSeq;
-  for (const target of targets) toggleVersions.set(target.id, version);
+  for (const target of targets) {
+    toggleVersions.set(target.id, version);
+    pendingToggleIds.add(target.id);
+  }
   const superseded = (): boolean =>
     targets.some((target) => toggleVersions.get(target.id) !== version);
 
   // 先本地生效：开关立即响应，不被 IPC 往返和 WM_FONTCHANGE 广播拖住
   applyHiddenState(targets, nextHidden);
+  syncSwitchPending();
 
   inflightToggles += 1;
+  let outcome: "ok" | "error" | "ignore" = "ok";
+  let message = "";
   try {
     const report = await api.setFontsHidden(
       targets.map((e) => e.id),
       nextHidden,
     );
-    if (superseded()) return;
-    if (report.errors.length > 0) {
-      applyHiddenState(targets, !nextHidden);
-      toast(report.errors.join("；"), true);
+    if (superseded()) {
+      outcome = "ignore";
       return;
     }
-    toast(
-      targets.length === 1
-        ? nextHidden
-          ? t("hidden.oneOn", { name: fontLabel(targets[0]) })
-          : t("hidden.oneOff", { name: fontLabel(targets[0]) })
-        : nextHidden
-          ? t("hidden.manyOn", { count: targets.length })
-          : t("hidden.manyOff", { count: targets.length }),
-    );
+    if (report.errors.length > 0) {
+      applyHiddenState(targets, !nextHidden);
+      outcome = "error";
+      message = report.errors.join("；");
+    } else {
+      message =
+        targets.length === 1
+          ? nextHidden
+            ? t("hidden.oneOn", { name: fontLabel(targets[0]) })
+            : t("hidden.oneOff", { name: fontLabel(targets[0]) })
+          : nextHidden
+            ? t("hidden.manyOn", { count: targets.length })
+            : t("hidden.manyOff", { count: targets.length });
+    }
   } catch (err) {
     // 写入失败时把界面回滚到原状态；已被更新的点击覆盖则交给新请求处理
     if (!superseded()) {
       applyHiddenState(targets, !nextHidden);
-      toast(errorText(err), true);
+      outcome = "error";
+      message = errorText(err);
+    } else {
+      outcome = "ignore";
     }
   } finally {
+    const remaining = minPendingMs - (performance.now() - startedAt);
+    if (remaining > 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, remaining));
+    }
+    for (const target of targets) {
+      if (toggleVersions.get(target.id) === version) pendingToggleIds.delete(target.id);
+    }
+    syncSwitchPending();
     inflightToggles -= 1;
   }
+  // 等开关恢复可点、后台写入彻底结束后再弹提示，避免和禁用态重叠
+  if (outcome === "ok") toast(message);
+  else if (outcome === "error") toast(message, true);
 }
 
 /** 把隐藏状态落到模型并就地刷新界面（不重建整表，保留开关动画）。 */
@@ -2262,8 +2325,41 @@ function bindShellBehavior(): void {
     const target = event.target as HTMLElement | null;
     // 输入框与合集条目有各自的菜单，其余一律禁掉
     if (target?.closest("input, textarea, .sidebar__item--sub")) return;
+    const selectable = target?.closest<HTMLElement>(".kv__v, .modal__pre");
+    if (selectable) {
+      event.preventDefault();
+      const selected = window.getSelection()?.toString() ?? "";
+      // 没有选中文字时只屏蔽浏览器菜单，不弹自定义菜单
+      if (selected.trim().length === 0) return;
+      openContextMenu(
+        [
+          {
+            label: t("ctx.copy"),
+            run: async () => {
+              try {
+                await writeText(selected);
+              } catch {
+                toast(t("toast.clipboardFailed"), true);
+              }
+            },
+          },
+        ],
+        event.clientX,
+        event.clientY,
+      );
+      return;
+    }
     event.preventDefault();
   });
+
+  // 选中的文字不允许拖放（输入框内也不允许把文字拖走）
+  document.addEventListener(
+    "dragstart",
+    (event) => {
+      event.preventDefault();
+    },
+    true,
+  );
 
   // Ctrl + 滚轮缩放
   document.addEventListener(
@@ -3047,6 +3143,33 @@ function bindEvents(): void {
     applyFilter();
     rebuild();
   }, true);
+
+  // 主界面快捷键：Ctrl+A 全选列表、Delete 等同删除按钮。
+  // Ctrl+A 在捕获阶段处理：除输入控件内的文字外，任何地方都不允许选中界面文字。
+  // 模态弹窗打开时两个快捷键都不生效。
+  document.addEventListener("keydown", (event) => {
+    const mod = event.ctrlKey || event.metaKey;
+    const isSelectAll = mod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "a";
+    const target = event.target instanceof Element ? event.target : null;
+    const editable = target?.closest('input, textarea, select, [contenteditable="true"]');
+    if (isSelectAll) {
+      // 输入控件内保留原生行为：只选中输入内容
+      if (editable) return;
+      // 其余位置一律阻止浏览器全选界面文字
+      event.preventDefault();
+      if (document.querySelector(".modal")) return;
+      selectAllVisible();
+      return;
+    }
+    if (document.querySelector(".modal")) return;
+    if (editable) return;
+    if (!mod && !event.altKey && !event.shiftKey && event.key === "Delete") {
+      const targets = selectedEntries().filter((entry) => entry.exists && !entry.protected);
+      if (targets.length === 0) return;
+      event.preventDefault();
+      openDeleteDialog(targets);
+    }
+  }, true);
 }
 
 
@@ -3102,7 +3225,6 @@ async function boot(): Promise<void> {
 
   // 滚动条改为悬浮：不占轨道，滚动时浮在右侧
   attachOverlayScrollbar(dom.viewport);
-  attachOverlayScrollbar(dom.detail);
   attachOverlayScrollbar(dom.collections);
 
   bindWindowControls();

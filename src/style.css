@@ -108,11 +108,11 @@
 
   /* 语义色 */
   /* 开关：开=深色轨道 + 浅色滑块，关=浅色轨道 + 中灰滑块 */
-  --switch-track-off: #e1e1e1;
+  --switch-track-off: rgba(0, 0, 0, 0.1);
   --switch-track-on: #1e1e1e;
   --switch-knob-off: #808080;
   --switch-knob-on: #e3e3e3;
-  --switch-track-off-disabled: #eaeaea;
+  --switch-track-off-disabled: rgba(0, 0, 0, 0.06);
   --switch-track-on-disabled: #a7a7a7;
   --switch-knob-disabled: #d4d4d4;
   --danger: var(--brand);
@@ -125,7 +125,6 @@
   /* 阴影集合 */
   --shadow-menu: 0 8px 20px rgba(0, 0, 0, 0.14), 0 1px 4px rgba(0, 0, 0, 0.08);
   --shadow-menu-soft: 0 4px 12px rgba(0, 0, 0, 0.09), 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-toast: 0 10px 28px rgba(15, 18, 24, 0.16), 0 2px 6px rgba(15, 18, 24, 0.1);
 
   /* 悬浮滚动条（覆盖在内容上的 6px 条） */
   --ovl-thumb: rgba(0, 0, 0, 0.22);
@@ -192,7 +191,6 @@ html[data-theme="dark"] {
 
   --shadow-menu: 0 8px 20px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.35);
   --shadow-menu-soft: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
-  --shadow-toast: 0 12px 34px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.4);
 
   --ovl-thumb: rgba(255, 255, 255, 0.22);
   --ovl-thumb-hover: rgba(255, 255, 255, 0.34);
@@ -235,6 +233,19 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* 桌面应用：界面文字默认不可拖动选中，只对正文类内容开放 */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"],
+.kv__v,
+.modal__pre {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 button,
@@ -1469,7 +1480,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 
 /* 这些容器改用悬浮滚动条：隐藏原生滚动条且不占位 */
 .viewport,
-.pane--detail,
+.detail__scroll,
 .sidebar__collections,
 .fmenu__panel,
 .modal__body {
@@ -1477,7 +1488,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 }
 
 .viewport::-webkit-scrollbar,
-.pane--detail::-webkit-scrollbar,
+.detail__scroll::-webkit-scrollbar,
 .sidebar__collections::-webkit-scrollbar,
 .fmenu__panel::-webkit-scrollbar,
 .modal__body::-webkit-scrollbar {
@@ -1489,15 +1500,34 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 
 .pane--detail {
   position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 0 0 auto;
   width: var(--detail-w);
-  overflow-y: auto;
+  overflow: hidden;
   padding: var(--sp-4);
   background: var(--bg);
   /* 展开 / 收起：整块平移 + 淡出，内容宽度始终固定，不被挤压重排 */
   transition:
     margin-right 160ms cubic-bezier(0.2, 0, 0, 1),
     opacity 160ms ease-out;
+}
+
+/* 标题 / 样字 / 操作区固定，只有元信息区独立滚动 */
+.pane--detail > .detail__head,
+.pane--detail > .detail__sample,
+.pane--detail > .detail__actions,
+.pane--detail > .detail__weight {
+  flex: 0 0 auto;
+}
+
+.detail__scroll {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  margin: 0 calc(-1 * var(--sp-4)) calc(-1 * var(--sp-4));
+  padding: 0 var(--sp-4) var(--sp-4);
 }
 
 .detail__empty {
@@ -1511,13 +1541,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   text-align: center;
 }
 
-.detail__empty-title {
-  color: var(--ink-soft);
-  font-size: var(--fs-sm);
-}
-
 .detail__empty-hint {
-  margin-top: var(--sp-1);
   color: var(--muted);
   font-size: var(--fs-xs);
 }
@@ -1527,6 +1551,23 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   flex-direction: column;
   gap: var(--sp-1);
   margin-bottom: var(--sp-4);
+}
+
+.detail__title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.detail__title-row .detail__title {
+  min-width: 0;
+}
+
+.detail__title-row .detail__tag {
+  flex: 0 0 auto;
+  color: var(--muted);
+  background: var(--row-hover);
+  font-weight: 600;
 }
 
 .detail__title {
@@ -1644,11 +1685,22 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 }
 
 .section__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
   margin-bottom: var(--sp-2);
-  padding-bottom: var(--sp-1);
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font-size: var(--fs-xs);
+  color: var(--ink-soft);
+  font-size: var(--fs-base);
+}
+
+/* 组标题前的竖向长矩形，代替分割线 */
+.section__title::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 3px;
+  height: 14px;
+  border-radius: 1px;
+  background: var(--ink);
 }
 
 .kv {
@@ -1728,8 +1780,9 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   max-width: 380px;
   padding: var(--sp-2) var(--sp-3);
   background: var(--bg-raised);
+  border: 1px solid var(--popover-line);
   border-radius: var(--radius);
-  box-shadow: var(--shadow-toast);
+  box-shadow: var(--shadow-menu);
   color: var(--ink-soft);
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -2071,7 +2124,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   border-radius: 2px;
   background: var(--switch-track-off);
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
   transition: background 200ms ease;
 }
 
@@ -2092,7 +2145,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 }
 
 /* 悬停时手柄略微放大（放大不参与位移，缩放中心就是手柄中心） */
-.switch:hover:not(:disabled) .switch__knob {
+.switch:hover .switch__knob {
   transform: translateX(0) scale(1.14);
 }
 
@@ -2105,19 +2158,14 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   background: var(--switch-knob-on);
 }
 
-.switch[aria-checked="true"]:hover:not(:disabled) .switch__knob {
+.switch[aria-checked="true"]:hover .switch__knob {
   transform: translateX(17px) scale(1.14);
-}
-
-.switch:hover {
-  filter: brightness(0.97);
 }
 
 
 /* 禁用：轨道与滑块都变浅，不响应悬停 */
 .switch:disabled {
   cursor: default;
-  filter: none;
   background: var(--switch-track-off-disabled);
 }
 
@@ -2127,6 +2175,38 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 
 .switch:disabled .switch__knob {
   background: var(--switch-knob-disabled);
+}
+
+/* 等待后台写入：开关右侧空白处显示旋转加载圈，开关本体保持禁用灰态。
+   加载圈常驻但透明，显隐都用同一段透明度过渡，避免消失时瞬间跳掉。 */
+.switch::after {
+  content: "";
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 50%;
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  margin-top: -6px;
+  border: 2px solid var(--muted);
+  border-top-color: transparent;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+  animation: switch-spin 700ms linear infinite;
+  animation-play-state: paused;
+  pointer-events: none;
+}
+
+.switch--pending::after {
+  opacity: 1;
+  animation-play-state: running;
+}
+
+@keyframes switch-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* 可排序表头 */
@@ -2377,6 +2457,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   width: 22px;
   height: 22px;
   flex: 0 0 auto;
+  color: var(--muted);
 }
 
 .sidebar__add svg {

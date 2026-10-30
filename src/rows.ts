@@ -488,11 +488,13 @@ export function buildFamilyRow(
           options.onSelect({ ctrlKey: true, metaKey: false, shiftKey: false } as MouseEvent);
           return;
         }
+        // 连击用 click 的 detail 判断：快速两次双击时浏览器只会派发一个 dblclick，
+        // 但 detail 仍会累加到 4，因此偶数次点击都按双击处理。
+        if (event.detail > 1) {
+          if (event.detail % 2 === 0) options.onActivate();
+          return;
+        }
         options.onSelect(event);
-      });
-      row.addEventListener("dblclick", (event) => {
-        if ((event.target as HTMLElement).closest(".family__expand, .switch, .row__gutter")) return;
-        options.onActivate();
       });
       return row;
     },

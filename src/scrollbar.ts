@@ -134,7 +134,8 @@ export class OverlayScrollbar {
       const value = Number.parseInt(window.getComputedStyle(node).zIndex, 10);
       if (Number.isFinite(value) && value > z) z = value;
     }
-    return z + 1;
+    // 列表吸顶分组标题为 4、行内标记最高 2；宿主祖先都为 auto 时不能只返回 1
+    return Math.max(z + 1, 10);
   }
 
   /** 设置滑块轨道内缩；返回自身便于链式调用。 */

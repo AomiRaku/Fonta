@@ -225,7 +225,6 @@ function weightControl(entry: FontEntry, apply: (weight: number, live: boolean) 
 
 function emptyState(): HTMLElement {
   const empty = el("div", "detail__empty");
-  empty.appendChild(el("div", "detail__empty-title", t("list.detailEmpty")));
   empty.appendChild(
     el("div", "detail__empty-hint", t("list.detailEmptyHint")),
   );
@@ -366,11 +365,8 @@ export function renderDetail(
   if (entry.variable && entry.weightMax > entry.weightMin) {
     container.appendChild(weightControl(entry, sampleView.apply));
   }
-  // 字体信息在前，文件信息在后
+  // 字体信息在前，文件信息在后；单字体详情不重复列出所属字族
   const fontRows: HTMLElement[] = [];
-  if (entry.families.length > 1) {
-    fontRows.push(kv(t("detail.family"), entry.families.join(" / ")));
-  }
   fontRows.push(kv(t("detail.fullName"), entry.fullName || entry.displayName));
   // 语言按字形覆盖判定，可能有很多种，全部列出
   // 符号 / 图标字体通常判不出语言，与列表一致显示「未知」
@@ -382,7 +378,9 @@ export function renderDetail(
   );
   if (entry.version) fontRows.push(kv(t("detail.version"), entry.version));
   if (entry.copyright) fontRows.push(kv(t("detail.copyright"), entry.copyright));
-  container.appendChild(section(t("detail.sectionFont"), fontRows));
+  // 元信息独立滚动，标题 / 样字 / 操作区保持固定
+  const scroll = el("div", "detail__scroll");
+  scroll.appendChild(section(t("detail.sectionFont"), fontRows));
 
   // 文件与注册表等技术细节默认收起，避免详情面板过于“工程化”。
   const moreToggle = el("button", "detail__toggle");
@@ -393,10 +391,10 @@ export function renderDetail(
   );
   moreToggle.appendChild(icon("chevron-down", "detail__chev"));
   moreToggle.addEventListener("click", () => handlers.toggleDetails());
-  container.appendChild(moreToggle);
+  scroll.appendChild(moreToggle);
 
   if (ctx.detailsOpen) {
-    container.appendChild(
+    scroll.appendChild(
       section(t("detail.sectionFile"), [
         kv(t("detail.fileName"), entry.fileName, true),
         kv(t("detail.path"), entry.path, true),
@@ -404,7 +402,7 @@ export function renderDetail(
         kv(t("detail.format"), entry.format),
       ]),
     );
-    container.appendChild(
+    scroll.appendChild(
       section(t("detail.sectionRegistry"), [
         kv(t("detail.valueName"), entry.valueName, true),
         kv(t("detail.location"), ctx.registryKey, true),
@@ -412,6 +410,7 @@ export function renderDetail(
       ]),
     );
   }
+  container.appendChild(scroll);
 }
 /** 字族详情：以一个「整体」呈现，没有具体文件信息。 */
 export function renderFamilyDetail(
@@ -428,7 +427,10 @@ export function renderFamilyDetail(
   }
 
   const head = el("div", "detail__head");
-  head.appendChild(el("h2", "detail__title", family));
+  const titleRow = el("div", "detail__title-row");
+  titleRow.appendChild(el("h2", "detail__title", family));
+  titleRow.appendChild(el("span", "tag detail__tag", t("detail.familyTag")));
+  head.appendChild(titleRow);
   const sub = el("div", "detail__sub");
   sub.appendChild(el("span", "", t("detail.styleCount", { count: entries.length })));
   head.appendChild(sub);
@@ -485,5 +487,8 @@ export function renderFamilyDetail(
   if (version) info.push(kv(t("detail.version"), version));
   const copyright = entries.find((entry) => entry.copyright)?.copyright;
   if (copyright) info.push(kv(t("detail.copyright"), copyright));
-  container.appendChild(section(t("detail.sectionFont"), info));
+  // 元信息独立滚动，标题 / 样字 / 操作区保持固定
+  const scroll = el("div", "detail__scroll");
+  scroll.appendChild(section(t("detail.sectionFont"), info));
+  container.appendChild(scroll);
 }
