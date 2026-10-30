@@ -82,7 +82,7 @@ export function openContextMenu(
   items: MenuItem[],
   x: number,
   y: number,
-  options: { above?: boolean; onClose?: () => void } = {},
+  options: { above?: boolean; onClose?: () => void; note?: string } = {},
 ): void {
   closeContextMenu();
   if (items.length === 0) return;
@@ -90,6 +90,13 @@ export function openContextMenu(
   const menu = document.createElement("div");
   menu.className = "ctx";
   menu.setAttribute("role", "menu");
+
+  if (options.note) {
+    const note = document.createElement("div");
+    note.className = "ctx__note";
+    note.textContent = options.note;
+    menu.appendChild(note);
+  }
 
   for (const item of items) {
     const button = document.createElement("button");

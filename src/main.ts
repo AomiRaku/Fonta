@@ -77,6 +77,7 @@ const dom = {
   navFavorites: byId<HTMLButtonElement>("nav-favorites"),
   navHidden: byId<HTMLButtonElement>("nav-hidden"),
   collectionsEmpty: byId<HTMLDivElement>("collections-empty"),
+  emptyArt: byId<HTMLDivElement>("empty-art"),
   titlebar: document.querySelector<HTMLElement>(".titlebar") as HTMLElement,
   winMin: byId<HTMLButtonElement>("win-min"),
   winMax: byId<HTMLButtonElement>("win-max"),
@@ -132,8 +133,8 @@ interface State {
   view: SidebarView;
   /** 已展开的字族（`作用域:家族`）。默认全部折叠。 */
   expandedFamilies: Set<string>;
-  /** 选中的字族（标题行被点中时）。 */
-  selectedFamily: string | null;
+  /** 本次列表里每个字族包含的字体（折叠时不在 visible 里）。 */
+  familyMembers: Map<string, FontEntry[]>;
 
   /** 筛选条件。 */
   filters: ReturnType<typeof createFilters>;
@@ -159,7 +160,7 @@ const state: State = {
   library: { favorites: [], collections: [] },
   view: { kind: "all" },
   expandedFamilies: new Set<string>(),
-  selectedFamily: null,
+  familyMembers: new Map<string, FontEntry[]>(),
 
   filters: createFilters(),
   groupBy: "none",
@@ -232,14 +233,22 @@ function resolveTheme(): ResolvedTheme {
   return state.settings.theme;
 }
 
+/** 上一次实际解析出的主题；只有真正变色时才重绘预览。 */
+let appliedTheme: ResolvedTheme | null = null;
+
 function applyTheme(): void {
   const resolved = resolveTheme();
+  const changed = appliedTheme !== null && appliedTheme !== resolved;
+  appliedTheme = resolved;
   document.documentElement.dataset.theme = resolved;
   document.documentElement.dataset.themeMode = state.settings.theme;
   // 让原生窗口边框跟随解析后的主题
   void appWindow.setTheme(resolved).catch(() => undefined);
-
-
+  if (!changed) return;
+  // 预览位图按当前主题文字色渲染：清缓存后重绘，让所有预览按新颜色重新请求
+  pool.resetBitmaps();
+  pool.clearLive();
+  renderAll();
 }
 
 const THEME_ORDER: ThemeMode[] = ["system", "light", "dark"];
@@ -560,6 +569,7 @@ function applyFilter(): void {
   // 计数随筛选结果变化，统一在过滤后刷新
   updateStats();
   updateFilterButton();
+  syncSelectAllState();
 }
 
 /** 侧栏各分类的数量：总数 / 收藏 / 已停用 / 缺失。 */
@@ -584,23 +594,113 @@ function updateStats(): void {
 /* ───────────────────────────── 选择 ───────────────────────────── */
 
 /** 多选：普通点击单选；Ctrl 增减；Shift 以锚点做范围选择。 */
-function selectEntry(entry: FontEntry, event: MouseEvent): void {
-  state.selectedFamily = null;
-  const additive = event.ctrlKey || event.metaKey;
-  const ranged = event.shiftKey && state.anchorId !== null;
+/** 一个字族在当前列表里的全部字体（折叠时也能取到）。 */
+function familyMembers(family: string): FontEntry[] {
+  return state.familyMembers.get(family) ?? [];
+}
 
-  if (ranged) {
-    const ids = state.visible.map((item) => item.id);
-    const from = ids.indexOf(state.anchorId as string);
-    const to = ids.indexOf(entry.id);
-    if (from >= 0 && to >= 0) {
-      const [start, end] = from <= to ? [from, to] : [to, from];
-      state.selectedIds = new Set(ids.slice(start, end + 1));
-    } else {
-      state.selectedIds = new Set([entry.id]);
-      state.anchorId = entry.id;
+/** 字族的全部字体都被选中，即视为选中了这个字族。 */
+function isFamilySelected(family: string): boolean {
+  const members = familyMembers(family);
+  return members.length > 0 && members.every((entry) => state.selectedIds.has(entry.id));
+}
+
+/** 当前选择若恰好是某一个字族的全部字体，返回该字族；否则 null。 */
+function soleSelectedFamily(): string | null {
+  if (state.selectedIds.size === 0) return null;
+  for (const [family, members] of state.familyMembers) {
+    if (members.length < 2 || members.length !== state.selectedIds.size) continue;
+    if (members.every((entry) => state.selectedIds.has(entry.id))) return family;
+  }
+  return null;
+}
+
+/** 列表当前的可选中单元：字体行，或一个可整体选中的字族。 */
+interface SelectionUnit {
+  key: string;
+  ids: string[];
+}
+
+function selectionUnits(): SelectionUnit[] {
+  const units: SelectionUnit[] = [];
+  for (const key of rowKeys) {
+    if (key.startsWith("group:")) continue;
+    if (key.startsWith("family:")) {
+      const family = key.slice("family:".length);
+      units.push({ key, ids: familyMembers(family).map((entry) => entry.id) });
+      continue;
     }
-  } else if (additive) {
+    units.push({ key, ids: [key] });
+  }
+  return units;
+}
+
+/** 某个字体属于哪个（有标题行的）字族；单样式字体不属于任何字族。 */
+function familyOfFont(id: string): string {
+  for (const [family, members] of state.familyMembers) {
+    if (members.some((entry) => entry.id === id)) return family;
+  }
+  return "";
+}
+
+/** Shift 范围：按当前行顺序取两个单元之间的全部字体 id。 */
+function applyRange(targetKey: string): boolean {
+  const anchor = state.anchorId;
+  if (!anchor) return false;
+  const units = selectionUnits();
+  const from = units.findIndex((unit) => unit.key === anchor);
+  const to = units.findIndex((unit) => unit.key === targetKey);
+  if (from < 0 || to < 0) return false;
+  const [start, end] = from <= to ? [from, to] : [to, from];
+
+  // 范围终点落在某个字族的子行上（没有完整覆盖该字族）时，
+  // 跳过这个字族的标题单元，只选范围里的子行，避免整族被选中
+  const skippedFamilies = new Set<string>();
+  for (const endpoint of [anchor, targetKey]) {
+    if (endpoint.startsWith("family:")) continue;
+    const family = familyOfFont(endpoint);
+    if (!family) continue;
+    const headKey = `family:${family}`;
+    if (units.slice(start, end + 1).some((unit) => unit.key === headKey)) {
+      skippedFamilies.add(family);
+    }
+  }
+
+  const ids = new Set<string>();
+  for (let i = start; i <= end; i += 1) {
+    const unit = units[i];
+    if (unit.key.startsWith("family:")) {
+      const family = unit.key.slice("family:".length);
+      if (skippedFamilies.has(family)) continue;
+    }
+    for (const id of unit.ids) ids.add(id);
+  }
+  state.selectedIds = ids;
+  return true;
+}
+
+/** 就地刷新行选中态（重建节点会丢掉双击的第二下）。 */
+function syncRowSelection(): void {
+  for (const node of dom.rows.querySelectorAll<HTMLElement>(".row")) {
+    const id = node.dataset.id;
+    if (id) {
+      node.classList.toggle("row--selected", state.selectedIds.has(id));
+      continue;
+    }
+    const family = node.dataset.family;
+    node.classList.toggle("row--selected", family ? isFamilySelected(family) : false);
+  }
+  syncSelectAllState();
+}
+
+/** 选中单个字体行：普通点击替换，Ctrl 增减，Shift 按行顺序做范围选择。 */
+function selectEntry(entry: FontEntry, event: MouseEvent): void {
+  if (event.shiftKey && applyRange(entry.id)) {
+    renderAll();
+    return;
+  }
+  const additive = event.ctrlKey || event.metaKey;
+  if (additive) {
     if (state.selectedIds.has(entry.id)) {
       state.selectedIds.delete(entry.id);
     } else {
@@ -611,17 +711,87 @@ function selectEntry(entry: FontEntry, event: MouseEvent): void {
     state.selectedIds = new Set([entry.id]);
     state.anchorId = entry.id;
   }
-
   renderAll();
+}
+
+/** 选中字族行：整族等价于“全选族内字体”，Ctrl / Shift 语义与字体行一致。 */
+function selectFamily(family: string, event?: MouseEvent): void {
+  const members = familyMembers(family);
+  if (members.length === 0) return;
+  const key = `family:${family}`;
+
+  if (event?.shiftKey && applyRange(key)) {
+    syncRowSelection();
+    renderDetailPane();
+    return;
+  }
+
+  const additive = Boolean(event?.ctrlKey || event?.metaKey);
+  if (additive && isFamilySelected(family)) {
+    for (const member of members) state.selectedIds.delete(member.id);
+  } else if (additive) {
+    for (const member of members) state.selectedIds.add(member.id);
+  } else {
+    state.selectedIds = new Set(members.map((member) => member.id));
+  }
+  state.anchorId = key;
+  syncRowSelection();
+  renderDetailPane();
 }
 
 function selectedEntries(): FontEntry[] {
   if (state.selectedIds.size === 0) return [];
-  return state.visible.filter((entry) => state.selectedIds.has(entry.id));
+  const out: FontEntry[] = [];
+  const seen = new Set<string>();
+  const push = (entry: FontEntry): void => {
+    if (seen.has(entry.id)) return;
+    out.push(entry);
+    seen.add(entry.id);
+  };
+
+  for (const entry of state.visible) {
+    if (state.selectedIds.has(entry.id)) push(entry);
+  }
+  for (const id of state.selectedIds) {
+    if (seen.has(id)) continue;
+    const entry = state.fonts.find((item) => item.id === id);
+    if (entry) push(entry);
+  }
+  return out;
+}
+
+/** 同步表头全选方块：当前列表全部选中时点亮。 */
+function syncSelectAllState(): void {
+  const ids = state.filtered.map((entry) => entry.id);
+  const all = ids.length > 0 && ids.every((id) => state.selectedIds.has(id));
+  for (const button of document.querySelectorAll(".list-head__select-all")) {
+    button.classList.toggle("is-all-selected", all);
+  }
+}
+
+/** 表头左侧选中槽：全选当前列表，已全选时清空。 */
+function toggleSelectAll(): void {
+  const ids = state.filtered.map((entry) => entry.id);
+  if (ids.length === 0) return;
+  const allSelected = ids.every((id) => state.selectedIds.has(id));
+  state.selectedIds = allSelected ? new Set() : new Set(ids);
+  state.anchorId = null;
+  renderAll();
 }
 
 function clearSelection(): void {
   state.selectedIds.clear();
+  state.anchorId = null;
+  renderAll();
+}
+
+/** 反向选择：当前列表里未选中的选上、已选中的取消。 */
+function invertSelection(): void {
+  const next = new Set<string>();
+  for (const entry of state.filtered) {
+    if (!state.selectedIds.has(entry.id)) next.add(entry.id);
+  }
+  state.selectedIds = next;
   state.anchorId = null;
   renderAll();
 }
@@ -633,6 +803,7 @@ function makeRowContext(): RowContext {
     settings: state.settings,
     pool,
     selectedIds: state.selectedIds,
+    favoriteIds: new Set(state.library.favorites),
     handlers: {
       select: (entry, event) => selectEntry(entry, event),
       toggleHidden: (entry) => {
@@ -778,6 +949,7 @@ function toggleFamily(scopeKey: string, family: string): void {
     state.expandedFamilies.delete(key);
   }
   animateNextRebuild = expanding ? "expand" : "collapse";
+  spinFamily = { key, dir: expanding ? "expand" : "collapse" };
   rebuild();
 }
 
@@ -792,22 +964,11 @@ function activateFamily(scopeKey: string, displayName: string, family: string): 
   toggleFamily(scopeKey, family);
 }
 
-/** 选中字族标题行：右侧显示整个字族的信息。 */
-function selectFamily(family: string): void {
-
-  state.selectedFamily = family;
-  state.selectedIds.clear();
-  state.anchorId = null;
-  // 就地改选中态：重建行会让双击的第二下落在新节点上，从而丢掉 dblclick
-  for (const node of dom.rows.querySelectorAll<HTMLElement>(".row")) {
-    const isHead = node.classList.contains("row--family-head");
-    node.classList.toggle("row--selected", isHead && node.dataset.family === family);
-  }
-  renderDetailPane();
-}
 
 /** 下一次 rebuild 是否播放展开/收起动画（只有用户点展开/收起时才播）。 */
 let animateNextRebuild: false | "expand" | "collapse" = false;
+/** 本次重建要播放箭头旋转的字族（切换展开 / 收起时设置）。 */
+let spinFamily: { key: string; dir: "expand" | "collapse" } | null = null;
 
 function rebuild(): void {
 
@@ -816,6 +977,7 @@ function rebuild(): void {
   const rows: VirtualRow[] = [];
   const ordered: FontEntry[] = [];
   const meta: RowMeta[] = [];
+  const familyMap = new Map<string, FontEntry[]>();
 
   /** 一个字族内的字体行（展开时才有）。 */
   const pushFamily = (
@@ -864,21 +1026,30 @@ function rebuild(): void {
       // 只要还有一个样式是启用的，总控开关就保持开启
       const enabled = members.some((item) => !item.hidden);
 
+      const known = familyMap.get(displayName) ?? [];
+      for (const member of members) {
+        if (!known.some((item) => item.id === member.id)) known.push(member);
+      }
+      familyMap.set(displayName, known);
+
       rows.push(
         buildFamilyRow(displayName, members.length, {
           expanded,
           alternate: alternate % 2 === 1,
-          isSelected: () => state.selectedFamily === displayName,
+          animateChevron: spinFamily?.key === key ? spinFamily.dir : null,
+          animateMeta: spinFamily?.key === key ? spinFamily.dir : null,
+          favorite: members.every((entry) => ctx.favoriteIds.has(entry.id)),
+          isSelected: () => isFamilySelected(displayName),
           preview: listMode === "preview",
           sample: () => previewSample(members[0], ctx),
-          language: expanded ? "" : members[0].language || t("language.unknown"),
-          totalSize: expanded ? "" : formatBytes(total),
+          language: members[0].language || t("language.unknown"),
+          totalSize: formatBytes(total),
           enabled,
           // 整族都不可操作（受保护或文件缺失）时显示锁
           lockedLabel: members.some((item) => item.exists && !item.protected)
             ? undefined
             : protectionLabel(members[0].protection) || t("detail.protected"),
-          onSelect: () => selectFamily(displayName),
+          onSelect: (event) => selectFamily(displayName, event),
           onActivate: () => activateFamily(scopeKey, displayName, family),
           onToggleExpand: () => toggleFamily(scopeKey, family),
           onToggleHidden: () => {
@@ -934,6 +1105,7 @@ function rebuild(): void {
   }
 
   spinChevron = null;
+  state.familyMembers = familyMap;
   state.visible = ordered;
   rowMeta = meta;
   rowKeys = rows.map((row) => row.key);
@@ -947,6 +1119,7 @@ function rebuild(): void {
 
   list.setRows(rows, animateNextRebuild !== false, animateNextRebuild || "expand");
   animateNextRebuild = false;
+  spinFamily = null;
   refreshOverlayScrollbar(dom.viewport);
   updateGroupPin();
   updateEmptyState(rows.length === 0);
@@ -957,6 +1130,7 @@ function rebuild(): void {
 function updateEmptyState(empty: boolean): void {
   dom.empty.hidden = !empty;
   if (!empty) return;
+  dom.emptyArt.hidden = state.scanning;
   if (state.scanning) {
     dom.emptyTitle.textContent = t("list.emptyScanning");
     dom.emptyHint.textContent = "";
@@ -980,6 +1154,11 @@ function updateEmptyState(empty: boolean): void {
   if (state.view.kind === "favorites") {
     dom.emptyTitle.textContent = t("list.emptyFavorites");
     dom.emptyHint.textContent = t("list.emptyFavoritesHint");
+    return;
+  }
+  if (state.view.kind === "hidden") {
+    dom.emptyTitle.textContent = t("list.emptyHidden");
+    dom.emptyHint.textContent = t("list.emptyHiddenHint");
     return;
   }
   dom.emptyTitle.textContent = t("list.emptyNone");
@@ -1050,6 +1229,7 @@ function toggleGroup(key: string): void {
 
   spinChevron = { key, dir: expanding ? "expand" : "collapse" };
   animateNextRebuild = expanding ? "expand" : "collapse";
+  spinFamily = { key, dir: expanding ? "expand" : "collapse" };
   rebuild();
 
   if (!expanding && wasAboveViewport) {
@@ -1252,8 +1432,7 @@ function closeMoreMenu(): void {
   document.removeEventListener("pointerdown", onMoreOutside, true);
   document.removeEventListener("keydown", onMoreKey, true);
   dom.more.classList.remove("is-open");
-  menu.classList.remove("is-open");
-  window.setTimeout(() => menu.remove(), 120);
+  menu.remove();
 }
 
 function toggleMoreMenu(): void {
@@ -1297,8 +1476,6 @@ function toggleMoreMenu(): void {
   dom.more.classList.add("is-open");
   document.addEventListener("pointerdown", onMoreOutside, true);
   document.addEventListener("keydown", onMoreKey, true);
-  // 只做淡入，不做位移
-  window.requestAnimationFrame(() => menu.classList.add("is-open"));
 }
 /* ───────────────────────────── 详情面板 ───────────────────────────── */
 
@@ -1327,10 +1504,11 @@ function requestExtras(entries: FontEntry[]): void {
 
 function renderDetailPane(): void {
 
-  // 选中字族标题行时，右侧显示整个字族的信息
-  if (state.selectedFamily) {
-    const family = state.selectedFamily;
-    const members = state.fonts.filter((entry) => entry.family === family);
+  // 选中的恰好是一个字族的全部字体时，右侧显示整个字族的信息
+  const selectedFamily = soleSelectedFamily();
+  if (selectedFamily) {
+    const family = selectedFamily;
+    const members = familyMembers(family);
     if (members.length > 0) {
       requestExtras(members);
       renderFamilyDetail(
@@ -1355,10 +1533,8 @@ function renderDetailPane(): void {
             void cleanMissing(entry);
           },
           reveal: () => undefined,
-          clearSelection: () => {
-            state.selectedFamily = null;
-            renderDetailPane();
-          },
+          clearSelection: () => clearSelection(),
+          invertSelection: () => invertSelection(),
         },
       );
       return;
@@ -1397,6 +1573,7 @@ function renderDetailPane(): void {
           .catch((err) => toast(errorText(err), true));
       },
       clearSelection: () => clearSelection(),
+      invertSelection: () => invertSelection(),
     },
   );
 }
@@ -1405,6 +1582,7 @@ function renderAll(): void {
 
   rebuild();
   renderDetailPane();
+  syncSelectAllState();
 }
 
 /* ───────────────────────────── 数据操作 ───────────────────────────── */
@@ -1426,6 +1604,7 @@ async function refresh(): Promise<void> {
     for (const id of Array.from(state.selectedIds)) {
       if (!ids.has(id)) state.selectedIds.delete(id);
     }
+
     if (state.anchorId && !ids.has(state.anchorId)) state.anchorId = null;
     renderAll();
   } catch (err) {
@@ -1441,7 +1620,7 @@ function syncFamilySwitches(): void {
   for (const head of dom.rows.querySelectorAll<HTMLElement>(".row--family-head")) {
     const family = head.dataset.family;
     if (!family) continue;
-    const members = state.fonts.filter((entry) => entry.family === family);
+    const members = familyMembers(family);
     if (members.length === 0) continue;
     const on = members.some((entry) => !entry.hidden);
     const sw = head.querySelector<HTMLButtonElement>(".switch");
@@ -2198,7 +2377,7 @@ function pickAnchorKey(): string | null {
   const viewBottom = viewTop + viewport.clientHeight;
 
   let candidate: string | null = null;
-  if (state.selectedFamily) candidate = `family:${state.selectedFamily}`;
+  if (soleSelectedFamily()) candidate = `family:${soleSelectedFamily()}`;
   else if (state.selectedIds.size === 1) candidate = [...state.selectedIds][0];
 
   if (candidate) {
@@ -2227,12 +2406,22 @@ function pickAnchorKey(): string | null {
 function switchViewMode(mode: Settings["viewMode"]): void {
   if (mode === state.settings.viewMode) return;
 
+  const viewport = dom.viewport;
+  const atTop = viewport.scrollTop <= 1;
+  const atBottom =
+    viewport.scrollTop + viewport.clientHeight >= viewport.scrollHeight - 1;
   const anchor = pickAnchorKey();
   state.settings.viewMode = mode;
   syncToolbar();
   scheduleSave();
   rebuild();
-  if (anchor) list.centerKey(anchor);
+  if (atTop) {
+    viewport.scrollTop = 0;
+  } else if (atBottom) {
+    viewport.scrollTop = viewport.scrollHeight;
+  } else if (anchor) {
+    list.centerKey(anchor);
+  }
 }
 /** 展开 / 收起右侧详情面板（持久化到设置）。 */
 function applyDetailOpen(open: boolean): void {
@@ -2274,10 +2463,8 @@ function toggleFavorites(entries: FontEntry[]): void {
   }
   scheduleLibrarySave();
   renderSidebar();
-  if (state.view.kind === "favorites") {
-    applyFilter();
-    rebuild();
-  }
+  applyFilter();
+  rebuild();
 }
 
 function addEntriesToCollection(entries: FontEntry[], collection: Collection): void {
@@ -2501,9 +2688,9 @@ function bindRowMenu(): void {
   dom.rows.addEventListener("dblclick", (event) => {
     const row = (event.target as HTMLElement).closest<HTMLElement>(".row");
     if (!row) return;
-    // 字族行有自己的双击逻辑（见 activateFamily）
-    if (row.dataset.family) return;
-    if ((event.target as HTMLElement).closest(".switch")) return;
+    // 字族标题行有自己的双击逻辑（见 activateFamily）；字体行同样带 data-family，按 id 区分
+    if (!row.dataset.id) return;
+    if ((event.target as HTMLElement).closest(".switch, .row__gutter")) return;
     if (!state.settings.detailOpen) {
       applyDetailOpen(true);
       scheduleSave();
@@ -2516,16 +2703,31 @@ function bindRowMenu(): void {
     const entries = entriesOfRow(row);
     if (entries.length === 0) return;
     event.preventDefault();
-    const family = row.dataset.family;
-    const isSelected = family
-      ? state.selectedFamily === family
-      : state.selectedIds.has(row.dataset.id ?? "");
-    if (!isSelected) row.classList.add("row--ctx");
-    openContextMenu(rowMenuItems(entries), event.clientX, event.clientY, {
-      onClose: () => row.classList.remove("row--ctx"),
-    });
-  });
-}
+
+    const id = row.dataset.id ?? "";
+    const family = row.dataset.family ?? "";
+    const unitIds = id ? [id] : entries.map((entry) => entry.id);
+    const unitSelected = unitIds.length > 0 && unitIds.every((unitId) => state.selectedIds.has(unitId));
+
+    let targets = entries;
+    let note: string | undefined;
+    if (unitSelected && state.selectedIds.size > unitIds.length) {
+      // 多选中右键已选项：保留多选，菜单作用于全部选中项
+      targets = selectedEntries();
+      note = t("ctx.selectedCount", { count: targets.length });
+    } else if (!unitSelected) {
+      // 右键未选项：替换为这一项（字族 → 整族）
+      state.selectedIds = new Set(unitIds);
+      state.anchorId = id || `family:${family}`;
+      renderAll();
+      targets = entries;
+    }
+
+    // 字族行始终标注整族的字体数量（等价于选中了该字族的全部字体）
+    if (!note && !id) note = t("ctx.selectedCount", { count: targets.length });
+
+    openContextMenu(rowMenuItems(targets), event.clientX, event.clientY, { note });
+  });}
 /** 右键命中的行对应的字体：字族行 → 整族，普通行 → 单个。 */
 function entriesOfRow(row: HTMLElement): FontEntry[] {
   const id = row.dataset.id;
@@ -2535,7 +2737,7 @@ function entriesOfRow(row: HTMLElement): FontEntry[] {
   }
   const family = row.dataset.family;
   if (!family) return [];
-  return state.fonts.filter((entry) => entry.family === family);
+  return familyMembers(family);
 }
 
 /** 行右键菜单：单个字体与整个字族共用一套，动作作用于传入的全部条目。 */
@@ -2547,8 +2749,6 @@ function rowMenuItems(entries: FontEntry[]): MenuItem[] {
     {
       label: t("ctx.view"),
       run: () => {
-        if (entries.length > 1) selectFamily(entries[0].family);
-        else selectEntry(entries[0], { ctrlKey: false, metaKey: false, shiftKey: false } as MouseEvent);
         applyDetailOpen(true);
         scheduleSave();
       },
@@ -2752,6 +2952,10 @@ function bindEvents(): void {
     });
   }
 
+  for (const button of document.querySelectorAll<HTMLButtonElement>(".list-head__select-all")) {
+    button.addEventListener("click", () => toggleSelectAll());
+  }
+
   window.addEventListener("resize", () => {
     syncSegThumb();
   });
@@ -2774,15 +2978,19 @@ function bindEvents(): void {
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       moveSelection(-1);
-    } else if (event.key === "Escape" && state.selectedIds.size > 0) {
-      event.preventDefault();
-      clearSelection();
     }
   });
 
-  // Esc 清空搜索（在输入框里也生效）
+  // Esc：先取消选择，再清空搜索（在输入框里也生效）
   document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape" || !state.query) return;
+    if (event.key !== "Escape") return;
+    if (document.querySelector(".modal, .ctx")) return;
+    if (state.selectedIds.size > 0) {
+      event.preventDefault();
+      clearSelection();
+      return;
+    }
+    if (!state.query) return;
     state.query = "";
     dom.search.value = "";
     applyFilter();

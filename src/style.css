@@ -38,6 +38,10 @@
   --detail-w: 300px;
   --sidebar-w: 220px;
   --indicator-w: 6px;
+  --favorite: #ffd36b;
+  --logo-mark: #b84845;
+  --logo-paper: #ffffff;
+  --logo-ink: #1c1c1c;
   /* 左侧 16px 留白的中线 */
   --indicator-center: 16px;
 
@@ -90,13 +94,20 @@
   /* 线 */
   --line: rgba(0, 0, 0, 0.08);
   --line-strong: rgba(0, 0, 0, 0.16);
+  --popover-line: rgba(0, 0, 0, 0.22);
 
 
   --scrollbar-thumb: rgba(0, 0, 0, 0.1);
   --scrollbar-thumb-hover: rgba(0, 0, 0, 0.2);
 
+  /* 品牌色（强调色）：选中指示条、选中高亮；危险操作复用同一红色 */
+  --brand: #cd3b40;
+  --brand-deep: #bd363b;
+  --brand-weak: rgba(205, 59, 64, 0.1);
+  --brand-line: rgba(205, 59, 64, 0.35);
+  --selection: rgba(205, 59, 64, 0.24);
+
   /* 语义色 */
-  --accent: #5b63d3;
   /* 开关：开=深色轨道 + 浅色滑块，关=浅色轨道 + 中灰滑块 */
   --switch-track-off: #e1e1e1;
   --switch-track-on: #1e1e1e;
@@ -105,12 +116,21 @@
   --switch-track-off-disabled: #eaeaea;
   --switch-track-on-disabled: #a7a7a7;
   --switch-knob-disabled: #d4d4d4;
-  --danger: #cd3b40;
-  --danger-weak: rgba(205, 59, 64, 0.1);
-  --danger-line: rgba(205, 59, 64, 0.35);
+  --danger: var(--brand);
+  --danger-weak: var(--brand-weak);
+  --danger-line: var(--brand-line);
   --close: #c42b1c;
+  --on-close: #ffffff;
   --overlay: rgba(12, 14, 18, 0.42);
-  --toast-shadow: 0 10px 28px rgba(15, 18, 24, 0.16), 0 2px 6px rgba(15, 18, 24, 0.1);
+
+  /* 阴影集合 */
+  --shadow-menu: 0 8px 20px rgba(0, 0, 0, 0.14), 0 1px 4px rgba(0, 0, 0, 0.08);
+  --shadow-menu-soft: 0 4px 12px rgba(0, 0, 0, 0.09), 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-toast: 0 10px 28px rgba(15, 18, 24, 0.16), 0 2px 6px rgba(15, 18, 24, 0.1);
+
+  /* 悬浮滚动条（覆盖在内容上的 6px 条） */
+  --ovl-thumb: rgba(0, 0, 0, 0.22);
+  --ovl-thumb-hover: rgba(0, 0, 0, 0.34);
 
   color-scheme: light;
 }
@@ -139,17 +159,25 @@ html[data-theme="dark"] {
   --group-chevron-hover: rgba(255, 255, 255, 0.4);
 
   --ink: #f7f8f8;
+  --logo-ink: #ffffff;
   --ink-soft: #d0d6e0;
   --muted: #62666d;
 
   --line: rgba(255, 255, 255, 0.08);
   --line-strong: rgba(255, 255, 255, 0.14);
+  --popover-line: rgba(255, 255, 255, 0.14);
 
 
   --scrollbar-thumb: rgba(255, 255, 255, 0.1);
   --scrollbar-thumb-hover: rgba(255, 255, 255, 0.2);
 
-  --accent: #828fff;
+  --brand: #e5484d;
+  --brand-deep: #d34247;
+  --brand-weak: rgba(229, 72, 77, 0.14);
+  --brand-line: rgba(229, 72, 77, 0.42);
+  --selection: rgba(229, 72, 77, 0.28);
+
+  /* 语义色 */
   --switch-track-off: rgba(255, 255, 255, 0.2);
   --switch-track-on: #e6e7e8;
   --switch-knob-off: #8b8f96;
@@ -157,12 +185,17 @@ html[data-theme="dark"] {
   --switch-track-off-disabled: rgba(255, 255, 255, 0.08);
   --switch-track-on-disabled: #4b4e53;
   --switch-knob-disabled: #9aa0a6;
-  --danger: #e5484d;
-  --danger-weak: rgba(229, 72, 77, 0.14);
-  --danger-line: rgba(229, 72, 77, 0.42);
+  --danger: var(--brand);
+  --danger-weak: var(--brand-weak);
+  --danger-line: var(--brand-line);
   --close: #c42b1c;
   --overlay: rgba(2, 3, 4, 0.62);
-  --toast-shadow: 0 12px 34px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.4);
+
+  --shadow-menu-soft: 0 4px 12px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --shadow-toast: 0 12px 34px rgba(0, 0, 0, 0.55), 0 3px 10px rgba(0, 0, 0, 0.4);
+
+  --ovl-thumb: rgba(255, 255, 255, 0.22);
+  --ovl-thumb-hover: rgba(255, 255, 255, 0.34);
 
   color-scheme: dark;
 }
@@ -179,7 +212,7 @@ html[data-theme="dark"] {
 }
 
 html[data-theme="dark"] #splash {
-  background: #08090a;
+  background: var(--bg);
 }
 /* ── 2. 基础 ─────────────────────────────────────────────────────── */
 
@@ -216,13 +249,13 @@ button {
   cursor: pointer;
 }
 
+/* 键盘焦点不画外轮廓：蓝框贴着控件边缘时视觉上很突兀（输入框仍有自身的下划线反馈） */
 :focus-visible {
-  outline: 1px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
 }
 
 ::selection {
-  background: rgba(130, 143, 255, 0.28);
+  background: var(--selection);
 }
 
 /* ── 3. 骨架 ─────────────────────────────────────────────────────── */
@@ -277,30 +310,6 @@ button {
   align-self: stretch;
 }
 
-.brand {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  user-select: none;
-}
-
-.brand__mark {
-  width: 10px;
-  height: 10px;
-  background: var(--ink);
-}
-
-.brand__name {
-  font-size: var(--fs-base);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.brand__cn {
-  font-size: var(--fs-xs);
-  color: var(--muted);
-  letter-spacing: 0.06em;
-}
 
 .window-actions {
   display: flex;
@@ -655,7 +664,7 @@ html[data-theme-mode="dark"] .icon-sun {
 
 .icon-btn--close:hover {
   background: var(--close);
-  color: #ffffff;
+  color: var(--on-close);
 }
 
 .icon-restore {
@@ -673,6 +682,7 @@ html[data-maximized="true"] .icon-restore {
 /* ── 6. 列表 ─────────────────────────────────────────────────────── */
 
 .list-head {
+  position: relative;
   flex: 0 0 var(--head-h);
   height: var(--head-h);
   display: grid;
@@ -689,6 +699,44 @@ html[data-maximized="true"] .icon-restore {
 .list-head[data-mode="preview"] {
   grid-template-columns: var(--cols-preview);
   column-gap: var(--sp-4);
+}
+
+/* 表头左侧的选中槽：点击全选 / 取消全选当前列表 */
+.list-head__select-all {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--indicator-center) + var(--indicator-w) / 2 + var(--sp-4));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* 全选时显示与选中标记同宽的小方块；悬停时同样的方块半透明 */
+.list-head__select-all::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--indicator-center) - var(--indicator-w) / 2);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--indicator-w);
+  height: var(--indicator-w);
+  background: var(--brand);
+  opacity: 0;
+}
+
+.list-head__select-all:not(.is-all-selected):hover::after {
+  opacity: 0.1;
+}
+
+.list-head__select-all.is-all-selected::after {
+  opacity: 1;
+}
+
+.list-head__select-all:hover::after {
+  background: var(--brand-deep);
 }
 
 html[data-view="compact"] .list-head[data-mode="preview"],
@@ -765,9 +813,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 }
 
 /* 右键命中但未选中的行：只给底色，不显示左侧红条 */
-.row--ctx {
-  background-color: var(--row-selected);
-}
 
 
 /* 字族内的字体行：整体缩进，并在左侧画一条贯穿的竖线 */
@@ -795,7 +840,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   bottom: 8px;
 }
 
-/* 选中：左侧红色竖块（与旧版一致） */
+/* 选中：左侧品牌色竖块 */
 .row--selected::after {
   content: "";
   position: absolute;
@@ -804,7 +849,63 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   transform: translateY(-50%);
   width: var(--indicator-w);
   height: 20px;
-  background: var(--danger);
+  background: var(--brand);
+  /* 不拦截指针：点击标记本身会落到左侧选中槽，可切换选中 */
+  pointer-events: none;
+}
+
+/* 悬停在选中标记（行左侧选中槽）上时颜色略微加深 */
+.row--selected:has(.row__gutter:hover)::after {
+  background: var(--brand-deep);
+}
+
+/* 展开的字族标题：选中竖块淡化，避免和族内子行的竖块抢视觉 */
+.row--family-head.row--expanded.row--selected::after {
+  opacity: 0.25;
+}
+
+/* 行左侧的选中槽：点击按多选切换；悬停时预览 10% 透明度的选中标记 */
+.row__gutter {
+  position: absolute;
+  z-index: 2;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--indicator-center) + var(--indicator-w) / 2 + var(--sp-2));
+}
+
+.row__gutter::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--indicator-center) - var(--indicator-w) / 2);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--indicator-w);
+  height: 20px;
+  background: var(--brand);
+  opacity: 0;
+}
+
+.row__gutter:hover::after {
+  opacity: 0.1;
+}
+
+/* 已收藏字体：在选中标记中心位置叠一个小方块 */
+.row__favorite {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--indicator-center) - var(--indicator-w) / 2);
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--indicator-w);
+  height: var(--indicator-w);
+  background: var(--favorite);
+  pointer-events: none;
+}
+
+/* 展开的字族标题：收藏方块和选中竖块一样降到 25% */
+.row--family-head.row--expanded .row__favorite {
+  opacity: 0.25;
 }
 
 .cell {
@@ -839,7 +940,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 
 .cell--size {
   text-align: right;
-  font-family: var(--mono-font);
   font-size: var(--fs-xs);
   color: var(--muted);
   font-variant-numeric: tabular-nums;
@@ -1283,7 +1383,6 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--sp-2);
   padding: var(--sp-6);
   text-align: center;
   pointer-events: none;
@@ -1293,14 +1392,28 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   display: none;
 }
 
+.empty__art {
+  width: 180px;
+  height: 180px;
+  margin-bottom: var(--sp-4);
+  opacity: 0.3;
+}
+
+.empty__art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: var(--ink);
+}
+
 .empty__title {
-  font-size: var(--fs-sm);
+  margin-bottom: var(--sp-1);
+  font-size: var(--fs-base);
   color: var(--ink-soft);
 }
 
 .empty__hint {
-  font-family: var(--mono-font);
-  font-size: var(--fs-xs);
+  font-size: var(--fs-sm);
   color: var(--muted);
 }
 
@@ -1311,8 +1424,9 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   min-width: 196px;
   padding: 6px;
   background: var(--bg-raised);
+  border: 1px solid var(--popover-line);
   border-radius: var(--radius);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-menu-soft);
 }
 
 
@@ -1341,16 +1455,13 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   color: var(--muted);
 }
 
-html[data-theme="dark"] .more-menu {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.4);
-}
 
 /* 悬浮滚动条（见 src/scrollbar.ts）：不占轨道，滚动时浮在内容右侧 */
 .ovl-scroll {
   position: fixed;
   width: 6px;
   border-radius: 1px;
-  background: rgba(0, 0, 0, 0.22);
+  background: var(--ovl-thumb);
   opacity: 0;
   transition: opacity 150ms ease;
   z-index: 40;
@@ -1363,16 +1474,9 @@ html[data-theme="dark"] .more-menu {
 }
 
 .ovl-scroll.is-dragging {
-  background: rgba(0, 0, 0, 0.34);
+  background: var(--ovl-thumb-hover);
 }
 
-html[data-theme="dark"] .ovl-scroll {
-  background: rgba(255, 255, 255, 0.22);
-}
-
-html[data-theme="dark"] .ovl-scroll.is-dragging {
-  background: rgba(255, 255, 255, 0.34);
-}
 
 /* 这些容器改用悬浮滚动条：隐藏原生滚动条且不占位 */
 .viewport,
@@ -1401,10 +1505,9 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
   overflow-y: auto;
   padding: var(--sp-4);
   background: var(--bg);
-  /* 展开 / 收起：宽度 + 内边距一起过渡，内容同步淡入淡出 */
+  /* 展开 / 收起：整块平移 + 淡出，内容宽度始终固定，不被挤压重排 */
   transition:
-    width 160ms cubic-bezier(0.2, 0, 0, 1),
-    padding 160ms cubic-bezier(0.2, 0, 0, 1),
+    margin-right 160ms cubic-bezier(0.2, 0, 0, 1),
     opacity 160ms ease-out;
 }
 
@@ -1637,7 +1740,7 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
   padding: var(--sp-2) var(--sp-3);
   background: var(--bg-raised);
   border-radius: var(--radius);
-  box-shadow: var(--toast-shadow);
+  box-shadow: var(--shadow-toast);
   color: var(--ink-soft);
   font-size: var(--fs-sm);
   font-weight: 600;
@@ -1703,7 +1806,7 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
   width: min(440px, 100%);
   max-height: min(80vh, 680px);
   background: var(--bg-raised);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--popover-line);
   border-radius: var(--radius);
   opacity: 0;
   transition: opacity 100ms ease-out;
@@ -1784,7 +1887,7 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
 
 .modal__close:hover {
   background: var(--close);
-  color: #ffffff;
+  color: var(--on-close);
 }
 
 .modal__close svg {
@@ -1953,39 +2056,28 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
   background: transparent;
 }
 
-/* ──────────────────────────────────────────────────────────────
-.detail__multi {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-  margin-bottom: var(--sp-4);
+/* 多选视图：停用 / 启用按钮横向撑满剩余宽度 */
+.detail__actions .btn.detail__actions-grow {
+  flex: 1 1 auto;
 }
 
-.detail__multi-item {
-  display: flex;
-  align-items: baseline;
-  gap: var(--sp-2);
-  min-width: 0;
+/* 多选视图：主操作行与「反向选择」行紧挨着，只留一个 8px 间距 */
+.detail__actions--primary {
+  margin-bottom: 0;
 }
 
-.detail__multi-name {
-  overflow: hidden;
-  color: var(--ink);
-  font-size: var(--fs-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+/* 反向选择：独占一整行，位于停用 / 删除按钮上方 */
+.detail__actions--secondary {
+  justify-content: stretch;
+  min-height: 0;
+  margin-bottom: var(--sp-2);
+  padding-top: 0;
 }
 
-.detail__multi-style {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: var(--fs-xs);
+.detail__actions--secondary .btn {
+  flex: 1 1 auto;
 }
 
-.detail__multi-more {
-  color: var(--muted);
-  font-size: var(--fs-xs);
-}
 /* ──────────────────────────────────────────────────────────────
    启用状态开关 / 可排序表头 / 分组动画
    ────────────────────────────────────────────────────────────── */
@@ -1998,7 +2090,7 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
   height: 16px;
   padding: 0;
   border: 0;
-  border-radius: 1px;
+  border-radius: 2px;
   background: var(--switch-track-off);
   cursor: pointer;
   overflow: hidden;
@@ -2042,6 +2134,7 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
 .switch:hover {
   filter: brightness(0.97);
 }
+
 
 /* 禁用：轨道与滑块都变浅，不响应悬停 */
 .switch:disabled {
@@ -2097,7 +2190,7 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
   display: none;
   width: 0;
   height: 0;
-  margin-left: 5px;
+  margin-left: 4px;
   vertical-align: 2px;
   border-left: 3px solid transparent;
   border-right: 3px solid transparent;
@@ -2199,17 +2292,39 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
 }
 
 .sidebar__brand {
-  flex: 0 0 40px;
+  flex: 0 0 calc(40px + var(--toolbar-h));
   display: flex;
   align-items: center;
   padding: 0 var(--sp-3);
+}
+
+/* 内联 SVG Logo：占位区水平垂直居中，主题只切换文字色 */
+.brand__logo {
+  display: block;
+  width: 122px;
+  height: auto;
+  margin-left: 4px;
+  pointer-events: none;
+}
+
+.brand__logo .logo-mark {
+  fill: var(--logo-mark);
+}
+
+.brand__logo .logo-paper {
+  fill: var(--logo-paper);
+}
+
+.brand__logo .logo-ink {
+  fill: var(--logo-ink);
 }
 
 .sidebar__top {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--sp-3) var(--sp-2) var(--sp-1);
+  /* 品牌区已占满工具栏高度，导航首项与列表表头对齐 */
+  padding: 0 var(--sp-3) var(--sp-3);
 }
 
 .sidebar__item {
@@ -2254,7 +2369,8 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
 }
 
 .sidebar__item.is-active,
-.sidebar__item.is-ctx {
+.sidebar__item.is-ctx,
+.sidebar__item.is-open {
   background: var(--side-selected);
   color: var(--ink);
 }
@@ -2338,9 +2454,12 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
 }
 
 .sidebar__hint {
-  padding: var(--sp-1) 12px;
+  padding: var(--sp-1) var(--sp-2);
   font-size: var(--fs-xs);
+  text-align: center;
+  /* 比「字体单」标题更淡：同一 muted 色，60% 不透明度 */
   color: var(--muted);
+  opacity: 0.6;
 }
 
 /* 就地改名：外观与常态条目一致，只多一个输入框的底 */
@@ -2370,9 +2489,8 @@ html[data-theme="dark"] .ovl-scroll.is-dragging {
 
 /* 详情面板收起：宽度归零，列表平滑占满 */
 html[data-detail="closed"] .pane--detail {
-  width: 0;
-  padding-left: 0;
-  padding-right: 0;
+  /* 让出 300px 布局空间，整块面板保持原宽滑出窗口右侧 */
+  margin-right: calc(-1 * var(--detail-w));
   border-left-color: transparent;
   opacity: 0;
   overflow: hidden;
@@ -2386,11 +2504,18 @@ html[data-detail="closed"] .pane--detail {
   min-width: 168px;
   padding: var(--sp-1) 0;
   background: var(--bg-raised);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--popover-line);
   border-radius: var(--radius);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-menu);
   animation: ctx-fade 50ms linear both;
   user-select: none;
+}
+
+/* 右键菜单顶部的说明行（例如「3 个项目」） */
+.ctx__note {
+  padding: 4px var(--sp-4) 6px;
+  color: var(--muted);
+  font-size: var(--fs-2xs);
 }
 
 .ctx__item {
@@ -2449,7 +2574,7 @@ html[data-detail="closed"] .pane--detail {
   border: 0;
   border-radius: var(--radius);
   background: var(--bg-raised);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-menu);
   overflow: hidden;
   animation: ctx-fade 50ms linear both;
 }
@@ -2643,6 +2768,68 @@ html[data-detail="closed"] .pane--detail {
   transform: rotate(-90deg);
 }
 
+/* 展开 / 收起时播放旋转；只在点击切换的那一次重建里加类，滚动重建不重播 */
+.family__expand-chevron.is-spin-open {
+  animation: family-chevron-open 160ms ease-out;
+}
+
+.family__expand-chevron.is-spin-close {
+  animation: family-chevron-close 160ms ease-out;
+}
+
+@keyframes family-chevron-open {
+  from {
+    transform: rotate(-90deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes family-chevron-close {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-90deg);
+  }
+}
+
+/* 展开字族时语言 / 大小 / 预览示例渐隐下移；收起时反向 */
+.row--meta-out .cell--lang,
+.row--meta-out .cell--size,
+.row--meta-out .row__preview-slot > * {
+  animation: family-meta-out 160ms ease-out both;
+}
+
+.row--meta-in .cell--lang,
+.row--meta-in .cell--size,
+.row--meta-in .row__preview-slot > * {
+  animation: family-meta-in 160ms ease-out both;
+}
+
+@keyframes family-meta-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes family-meta-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* ── 字体单编辑器 ─────────────────────────────────────────────────── */
 .collection-edit {
   display: flex;
@@ -2711,9 +2898,9 @@ html[data-detail="closed"] .pane--detail {
   min-width: 168px;
   padding: var(--sp-1) 0;
   background: var(--bg-raised);
-  border: 1px solid var(--line-strong);
+  border: 1px solid var(--popover-line);
   border-radius: var(--radius);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-menu);
 }
 
 .group-menu__item {

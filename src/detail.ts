@@ -26,6 +26,8 @@ export interface DetailHandlers {
   cleanMissing(entry: FontEntry): void;
   reveal(entry: FontEntry): void;
   clearSelection(): void;
+  /** 多选视图：把当前列表里未选中的字体选上、已选中的取消。 */
+  invertSelection(): void;
 }
 
 export interface DetailContext {
@@ -227,23 +229,8 @@ function multiPane(
   head.appendChild(sub);
   fragment.appendChild(head);
 
-  const list = el("div", "detail__multi");
-  const preview = entries.slice(0, 8);
-  for (const entry of preview) {
-    const item = el("div", "detail__multi-item");
-    item.appendChild(el("span", "detail__multi-name", entry.family || entry.displayName));
-    const style = styleLabel(entry);
-  if (style) item.appendChild(el("span", "detail__multi-style", style));
-    list.appendChild(item);
-  }
-  if (entries.length > preview.length) {
-    list.appendChild(
-      el("div", "detail__multi-more", t("delete.more", { count: entries.length - preview.length })),
-    );
-  }
-  fragment.appendChild(list);
 
-  const actions = el("div", "detail__actions");
+  const actions = el("div", "detail__actions detail__actions--primary");
   const trailing = el("div", "detail__actions-end");
 
   const userEntries = entries.filter((e) => e.exists && !e.protected);
@@ -254,7 +241,7 @@ function multiPane(
       allHidden
         ? t("detail.toggleShow", { count: userEntries.length })
         : t("detail.toggleHide", { count: userEntries.length }),
-      "btn btn--solid",
+      "btn btn--solid detail__actions-grow",
     );
     toggle.addEventListener("click", () => handlers.toggleHidden(userEntries));
     actions.appendChild(toggle);
@@ -276,10 +263,12 @@ function multiPane(
     trailing.appendChild(remove);
   }
 
-  const clear = el("button", "btn btn--solid", t("detail.clearSelection"));
-  clear.type = "button";
-  clear.addEventListener("click", () => handlers.clearSelection());
-  trailing.appendChild(clear);
+  const secondary = el("div", "detail__actions detail__actions--secondary");
+  const invert = el("button", "btn btn--solid", t("detail.invertSelection"));
+  invert.type = "button";
+  invert.addEventListener("click", () => handlers.invertSelection());
+  secondary.appendChild(invert);
+  fragment.appendChild(secondary);
 
   actions.appendChild(trailing);
   fragment.appendChild(actions);

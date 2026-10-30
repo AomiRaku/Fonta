@@ -44,23 +44,6 @@ pub fn run() {
         .manage(AppState::default())
 
         .setup(|app| {
-            // asset 协议默认只放行 tauri.conf.json 里写死的 scope。系统字体目录形如
-            // `%SystemRoot%\Fonts`，盘符和安装位置都可能不同（而且 Tauri 的 `$FONT`
-            // 指向的是**每用户**字体目录），所以这里按运行时解析出的真实路径放行。
-            let scope = app.asset_protocol_scope();
-            for dir in [registry::system_font_dir(), registry::user_font_dir()] {
-                if !dir.is_dir() {
-                    continue;
-                }
-                if let Err(err) = scope.allow_directory(&dir, true) {
-                    eprintln!(
-                        "FontFox: 无法把字体目录 {} 加入 asset 作用域：{}",
-                        dir.display(),
-                        err
-                    );
-                }
-            }
-
             // 上次会话中被 GDI 锁定的字体文件，在这里重试清理。
             std::thread::spawn(delete::retry_pending);
 

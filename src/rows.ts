@@ -27,6 +27,7 @@ export interface RowContext {
   settings: Settings;
   pool: PreviewPool;
   selectedIds: ReadonlySet<string>;
+  favoriteIds: ReadonlySet<string>;
   handlers: RowHandlers;
 }
 
@@ -103,6 +104,20 @@ function buildSwitch(entry: FontEntry, handlers: RowHandlers): HTMLElement {
   return button;
 }
 
+/** 已收藏字体的小方块：叠在选中标记上方的同一中心位置。 */
+function favoriteMark(): HTMLElement {
+  const mark = el("span", "row__favorite");
+  mark.setAttribute("aria-hidden", "true");
+  return mark;
+}
+
+/** 行左侧的选中槽：点击按多选切换，悬停时显示 10% 透明度的标记。 */
+function selectionGutter(): HTMLElement {
+  const gutter = el("span", "row__gutter");
+  gutter.setAttribute("aria-hidden", "true");
+  return gutter;
+}
+
 function applyRowState(
   node: HTMLElement,
   entry: FontEntry,
@@ -124,7 +139,19 @@ function applyRowState(
   if (!entry.exists) node.classList.add("row--missing");
   if (ctx.selectedIds.has(entry.id)) node.classList.add("row--selected");
   node.dataset.id = entry.id;
-  node.addEventListener("click", (event) => ctx.handlers.select(entry, event));
+  node.prepend(selectionGutter());
+  if (ctx.favoriteIds.has(entry.id)) node.appendChild(favoriteMark());
+  node.addEventListener("click", (event) => {
+    if ((event.target as HTMLElement).closest(".row__gutter")) {
+      ctx.handlers.select(entry, {
+        ctrlKey: true,
+        metaKey: false,
+        shiftKey: false,
+      } as MouseEvent);
+      return;
+    }
+    ctx.handlers.select(entry, event);
+  });
 }
 
 /** 紧凑行：名称 / 样式 / 状态 / 大小 / 操作（作用域列已移除）。 */
@@ -293,12 +320,15 @@ export function previewSample(entry: FontEntry, ctx: RowContext): HTMLElement {
     return preview;
   }
 
-  preview.textContent = text;
-  if (!entry.exists || entry.format === "Raster") {
+  if (entry.format === "Raster") {
+    preview.textContent = t("detail.previewRaster");
+    preview.style.fontSize = "var(--fs-sm)";
+    preview.style.color = "var(--muted)";
     preview.classList.add("row__preview--fallback");
-    preview.title = t("detail.previewRaster");
     return preview;
   }
+
+  preview.textContent = text;
 
   const color = toHexColor(getComputedStyle(document.body).color);
   const request = {
@@ -351,8 +381,14 @@ export interface FamilyRowOptions {
   alternate?: boolean;
   /** 渲染时动态读取是否选中（滚动重建行后仍要保持选中）。 */
   isSelected?: () => boolean;
-  /** 点中标题行：右侧显示字族信息。 */
-  onSelect: () => void;
+  /** 点中标题行：普通点击显示字族信息，Ctrl / Shift 参与多选。 */
+  onSelect: (event: MouseEvent) => void;
+  /** 这一次重建是否需要播放箭头旋转（仅用户点击展开 / 收起时传入）。 */
+  animateChevron?: "expand" | "collapse" | null;
+  /** 整族都已收藏：在选中竖块上方叠收藏方块。 */
+  favorite?: boolean;
+  /** 本次重建要播放元信息显隐动画的方向（展开渐隐下移，收起渐显上移）。 */
+  animateMeta?: "expand" | "collapse" | null;
   /** 双击标题行：展开详情或展开字族，由调用方判断。 */
   onActivate: () => void;
   onToggleExpand: () => void;
@@ -371,9 +407,14 @@ export function buildFamilyRow(
       const classes = ["row", "row--family-head"];
       classes.push(options.preview ? "row--preview" : "row--compact");
       if (options.alternate) classes.push("row--alt");
+      if (options.expanded) classes.push("row--expanded");
+      if (options.animateMeta === "expand") classes.push("row--meta-out");
+      if (options.animateMeta === "collapse") classes.push("row--meta-in");
       if (options.isSelected?.()) classes.push("row--selected");
       const row = el("div", classes.join(" "));
       row.dataset.family = family;
+      row.prepend(selectionGutter());
+      if (options.favorite) row.appendChild(favoriteMark());
 
       const nameCell = el("div", "cell cell--name");
       nameCell.appendChild(el("span", "name", family));
@@ -384,7 +425,10 @@ export function buildFamilyRow(
         chip.setAttribute("aria-expanded", String(options.expanded));
         chip.title = options.expanded ? t("list.collapseGroup") : t("list.expandGroup");
         chip.appendChild(el("span", "family__expand-label", t("list.styleCount", { count })));
-        chip.appendChild(icon("chevron-down", "family__expand-chevron"));
+        const chevron = icon("chevron-down", "family__expand-chevron");
+        if (options.animateChevron === "expand") chevron.classList.add("is-spin-open");
+        if (options.animateChevron === "collapse") chevron.classList.add("is-spin-close");
+        chip.appendChild(chevron);
         chip.addEventListener("click", (event) => {
           event.stopPropagation();
           options.onToggleExpand();
@@ -394,17 +438,32 @@ export function buildFamilyRow(
       row.appendChild(nameCell);
 
       if (options.preview) {
-        // 预览模式：折叠时显示首个字重的示例，展开后这一格让给族内各行
+        // 预览模式：折叠时显示首个字重的示例，展开后这一格让给族内各行；
+        // 展开动画期间保留旧示例，以便渐隐下移
         const slot = el("div", "row__preview-slot");
-        if (!options.expanded) {
+        if (!options.expanded || options.animateMeta === "expand") {
           const sample = options.sample?.();
-          if (sample) slot.appendChild(sample);
+          if (sample) {
+            slot.appendChild(sample);
+            if (options.animateMeta === "expand") {
+              sample.addEventListener("animationend", () => sample.remove(), { once: true });
+            }
+          }
         }
         row.appendChild(slot);
       } else {
-        // 折叠时补充语言与总大小；展开时这两格留空，只保留总控开关
-        row.appendChild(el("div", "cell cell--lang", options.expanded ? "" : options.language));
-        row.appendChild(el("div", "cell cell--size", options.expanded ? "" : options.totalSize));
+        // 折叠时补充语言与总大小；展开时这两格留空，只保留总控开关。
+        // 展开动画期间保留旧内容并渐隐下移，结束后再清空
+        const keepMeta = !options.expanded || options.animateMeta === "expand";
+        const lang = el("div", "cell cell--lang", keepMeta ? options.language : "");
+        const size = el("div", "cell cell--size", keepMeta ? options.totalSize : "");
+        row.appendChild(lang);
+        row.appendChild(size);
+        if (options.animateMeta === "expand") {
+          for (const cell of [lang, size]) {
+            cell.addEventListener("animationend", () => { cell.textContent = ""; }, { once: true });
+          }
+        }
       }
 
       const switchCell = el("div", options.preview ? "cell cell--switch row__switch" : "cell cell--switch");
@@ -422,10 +481,14 @@ export function buildFamilyRow(
       // 单击只选中；双击交给调用方决定（打开详情 / 展开字族），标签点击展开
       row.addEventListener("click", (event) => {
         if ((event.target as HTMLElement).closest(".family__expand, .switch")) return;
-        options.onSelect();
+        if ((event.target as HTMLElement).closest(".row__gutter")) {
+          options.onSelect({ ctrlKey: true, metaKey: false, shiftKey: false } as MouseEvent);
+          return;
+        }
+        options.onSelect(event);
       });
       row.addEventListener("dblclick", (event) => {
-        if ((event.target as HTMLElement).closest(".family__expand, .switch")) return;
+        if ((event.target as HTMLElement).closest(".family__expand, .switch, .row__gutter")) return;
         options.onActivate();
       });
       return row;
