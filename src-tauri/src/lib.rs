@@ -49,6 +49,7 @@ pub fn run() {
 
             // 跟随系统「应用模式」：注册表变化时推给前端。
             theme::spawn_watcher(app.handle().clone());
+            update::cleanup_stale_updates();
 
 
             Ok(())

@@ -123,6 +123,8 @@ export interface Settings {
   theme: ThemeMode;
   /** 右侧详情面板是否展开（持久化）。 */
   detailOpen: boolean;
+  /** 启动与打开关于页时是否自动检查更新。 */
+  autoCheckUpdates: boolean;
   /** 软件更新源。 */
   updateSource: UpdateSource;
   /** 已选择“不提醒此版本”的版本号。 */
@@ -172,6 +174,7 @@ export const DEFAULT_SETTINGS: Settings = {
   previewText: "",
   theme: "system",
   language: "system",
+  autoCheckUpdates: true,
   updateSource: "github",
   ignoredUpdateVersion: "",
   detailOpen: true,

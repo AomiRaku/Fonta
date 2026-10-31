@@ -3191,6 +3191,19 @@ html[data-theme="dark"] .about__wordmark--dark {
   color: var(--muted);
   font-size: var(--fs-sm);
   white-space: nowrap;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.about__update-status.is-visible {
+  opacity: 1;
+}
+
+.about__check {
+  transition:
+    background-color 100ms ease-out,
+    color 100ms ease-out,
+    opacity 100ms ease-out;
 }
 
 .spinner {

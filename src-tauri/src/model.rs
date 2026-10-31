@@ -170,6 +170,9 @@ pub struct Settings {
     pub theme: String,
     /// 界面语言：`system` 表示跟随系统，其余为语言文件名（如 `zh-cn`）。
     pub language: String,
+    /// 启动与打开关于页时是否自动检查更新。
+    #[serde(default = "default_true")]
+    pub auto_check_updates: bool,
     /// 软件更新源：`github` 或 `mirror`。
     #[serde(default = "default_update_source")]
     pub update_source: String,
@@ -208,6 +211,7 @@ impl Default for Settings {
             disable_mode: default_disable_mode(),
             disable_mode_next: String::new(),
             language: "system".to_string(),
+            auto_check_updates: true,
             update_source: default_update_source(),
             ignored_update_version: String::new(),
             detail_open: true,

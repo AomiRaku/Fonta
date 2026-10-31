@@ -2436,14 +2436,24 @@ async function openAbout(): Promise<void> {
 
   let knownUpdate: UpdateInfo | null = null;
   let updateState: "idle" | "checking" | "available" = "checking";
+  let statusTimer = 0;
   const applyUpdateState = (
     state: "idle" | "checking" | "available",
     info?: UpdateInfo,
   ): void => {
     updateState = state;
+    window.clearTimeout(statusTimer);
     check.disabled = state === "checking";
     check.className =
       state === "available" ? "btn btn--primary about__check" : "btn btn--soft about__check";
+    if (state === "idle") {
+      updateStatus.classList.remove("is-visible");
+      statusTimer = window.setTimeout(() => {
+        if (updateState === "idle") updateStatus.replaceChildren();
+      }, 130);
+      check.textContent = t("about.checkUpdate");
+      return;
+    }
     updateStatus.replaceChildren();
     if (state === "checking") {
       updateStatus.appendChild(el("span", "spinner"));
@@ -2451,9 +2461,8 @@ async function openAbout(): Promise<void> {
     } else if (state === "available" && info) {
       updateStatus.textContent = t("about.newVersion", { version: info.latestVersion });
       check.textContent = t("about.updateButton");
-    } else {
-      check.textContent = t("about.checkUpdate");
     }
+    requestAnimationFrame(() => updateStatus.classList.add("is-visible"));
   };
   const performUpdateCheck = async (manual: boolean): Promise<void> => {
     applyUpdateState("checking");
@@ -2499,10 +2508,16 @@ async function openAbout(): Promise<void> {
   });
   document.addEventListener("keydown", onKey);
 
-  applyUpdateState("checking");
+  if (state.settings.autoCheckUpdates) {
+    applyUpdateState("checking");
+  } else {
+    applyUpdateState("idle");
+  }
   presentModal(overlay);
   close.focus();
-  void performUpdateCheck(false);
+  if (state.settings.autoCheckUpdates) {
+    void performUpdateCheck(false);
+  }
 }
 const SYSTEM_LANGUAGE = "system";
 
@@ -2656,6 +2671,52 @@ function openSettings(): void {
 
   const advancedBody = el("div", "settings-advanced__body");
   const advancedInner = el("div", "settings-advanced__inner");
+
+  const autoCheckSwitch = el("button", "switch") as HTMLButtonElement;
+  autoCheckSwitch.type = "button";
+  autoCheckSwitch.setAttribute("role", "switch");
+  autoCheckSwitch.setAttribute(
+    "aria-checked",
+    String(state.settings.autoCheckUpdates),
+  );
+  autoCheckSwitch.setAttribute("aria-label", t("settings.autoCheckUpdates"));
+  autoCheckSwitch.title = t("settings.autoCheckUpdates");
+  autoCheckSwitch.appendChild(el("span", "switch__knob"));
+  autoCheckSwitch.addEventListener("click", () => {
+    state.settings.autoCheckUpdates = !state.settings.autoCheckUpdates;
+    autoCheckSwitch.setAttribute(
+      "aria-checked",
+      String(state.settings.autoCheckUpdates),
+    );
+    scheduleSave();
+  });
+  advancedInner.appendChild(
+    row(
+      t("settings.autoCheckUpdates"),
+      autoCheckSwitch,
+      t("settings.autoCheckHint"),
+    ),
+  );
+  const updateSourceSelect = createDropdown(
+    [
+      { value: "github", label: t("settings.updateSourceGithub") },
+      { value: "mirror", label: t("settings.updateSourceMirror") },
+    ],
+    state.settings.updateSource,
+    (value) => {
+      state.settings.updateSource = value as UpdateSource;
+      scheduleSave();
+    },
+  );
+  updateSourceSelect.el.classList.add("settings-row__control");
+  advancedInner.appendChild(
+    row(
+      t("settings.updateSource"),
+      updateSourceSelect.el,
+      t("settings.updateSourceHint"),
+    ),
+  );
+
   const modes: Array<[DisableMode, string]> = [
     ["dynamic", t("settings.modeDynamic")],
     ["windows", t("settings.modeWindows")],
@@ -2699,22 +2760,6 @@ function openSettings(): void {
   });
   advancedInner.appendChild(
     row(t("settings.devtools"), devSwitch, t("settings.devtoolsHint")),
-  );
-
-  const updateSourceSelect = createDropdown(
-    [
-      { value: "github", label: t("settings.updateSourceGithub") },
-      { value: "mirror", label: t("settings.updateSourceMirror") },
-    ],
-    state.settings.updateSource,
-    (value) => {
-      state.settings.updateSource = value as UpdateSource;
-      scheduleSave();
-    },
-  );
-  updateSourceSelect.el.classList.add("settings-row__control");
-  advancedInner.appendChild(
-    row(t("settings.updateSource"), updateSourceSelect.el),
   );
 
   const resetButton = el(
@@ -4109,7 +4154,9 @@ async function boot(): Promise<void> {
   // 对账禁用清单与隔离目录（不阻塞首屏）
   void checkDisabledFiles();
   // 启动时静默检查更新；有新版本且未被忽略才弹窗
-  void checkStartupUpdate();
+  if (state.settings.autoCheckUpdates) {
+    void checkStartupUpdate();
+  }
   // 兜底：万一首屏渲染出错也别一直白屏
   window.setTimeout(hideSplash, 8000);
 }

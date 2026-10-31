@@ -82,6 +82,9 @@ pub fn load() -> Settings {
     if let Some(v) = entry(&entries, "Language") {
         settings.language = v.to_string();
     }
+    if let Some(v) = entry(&entries, "AutoCheckUpdates") {
+        settings.auto_check_updates = v.eq_ignore_ascii_case("true");
+    }
     if let Some(v) = entry(&entries, "UpdateSource") {
         settings.update_source = v.to_string();
     }
@@ -121,6 +124,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
          DetailOpen={}\r\n\
          DisableMode={}\r\n\
          DisableModeNext={}\r\n\
+         AutoCheckUpdates={}\r\n\
          UpdateSource={}\r\n\
          IgnoredUpdateVersion={}\r\n",
         one_line(&settings.view_mode),
@@ -129,6 +133,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
         settings.detail_open,
         one_line(&settings.disable_mode),
         one_line(&settings.disable_mode_next),
+        settings.auto_check_updates,
         one_line(&settings.update_source),
         one_line(&settings.ignored_update_version),
     );

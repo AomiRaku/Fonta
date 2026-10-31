@@ -142,6 +142,7 @@ tools/              语言包复制、第三方许可证生成脚本
 | 用户偏好 | `%USERPROFILE%\.FontFox\config.ini` | 删除整个目录 |
 | 收藏 / 字体单 | `%USERPROFILE%\.FontFox\library.json` | 删除（随目录一起） |
 | 待清理文件清单 | `%USERPROFILE%\.FontFox\pending-delete.json` | 删除（随目录一起） |
+| 更新安装包 | `%USERPROFILE%\.FontFox\update\` | 删除（随目录一起） |
 | 动态模式隔离字体 | `%USERPROFILE%\.FontFox\disabled\`（字体文件 + 同目录的 `disabled.json`） | 先恢复（迁回用户字体目录并重新注册），再删除目录 |
 | 字体停用状态（Inactive Fonts） | `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Font Management\Inactive Fonts` | 按禁用模式处理：`dynamic` 自动恢复；`windows` 询问后清空（见下节） |
 
@@ -173,7 +174,7 @@ tools/              语言包复制、第三方许可证生成脚本
 - 不修改字体文件内容，不重命名、不编辑字体。
 - 自绘标题栏意味着 Win11「悬停最大化按钮弹出贴靠布局」不可用（该能力只随系统标题栏提供）。
 - 分组依据、筛选条件、预览文字为会话内状态，重启后回到默认（不分组、无筛选、预览框为空）；
-  视图模式、主题、详情面板开合、语言、更新源、忽略的更新版本、禁用方式会写入配置；禁用方式变更先写入 `DisableModeNext`，重启启动时执行迁移后再清空。
+  视图模式、主题、详情面板开合、语言、自动检查更新开关、更新源、忽略的更新版本、禁用方式会写入配置；禁用方式变更先写入 `DisableModeNext`，重启启动时执行迁移后再清空。
 - **禁用状态持久化**：退出应用不会自动恢复字体，`disabled.json` 里的记录下次启动继续有效；
   动态模式下改动隔离目录会触发启动对账弹窗（补充未登记文件 / 清理失效记录）。
 - 动态安装卸载模式只处理用户作用域字体：系统作用域字体需要提权改动 `C:\Windows\Fonts` 与 `HKLM`，
@@ -189,10 +190,10 @@ tools/              语言包复制、第三方许可证生成脚本
 
 - 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`，镜像源加 `https://gh-proxy.org/` 前缀。
 - 版本比较按 `tag` 去掉 `v` 后的数字段进行，只有高于当前 `major.minor` 才视为更新。
-- 启动后静默检查；关于窗口打开时也自动检查但不弹窗。手动检查才显示「已是最新版本」「更新失败」等结果。
+- 启动后静默检查（仅「检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
 - 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。
 - Release 正文只取第一个 `***` 之前的内容，再按 `---` 分为中文 / 英文；当前语言代码为 `zh-*` 时取中文，否则取英文，空段回退另一段。按纯文本展示，不渲染 Markdown。
-- 下载地址为 `FontFox_[版本号]_x64.exe`，写入 `%TEMP%\FontFox\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。
+- 下载地址为 `FontFox_[版本号]_x64.exe`，写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
 ## 安装器外观
 
 - 欢迎页 / 完成页左侧插图：`docs/img/install.bmp`（164×314 BMP），由 `bundle.windows.nsis.sidebarImage` 引用。

@@ -172,11 +172,24 @@ pub async fn release_notes(source: String, version: String) -> Result<String, St
     .map_err(|err| format!("读取更新日志失败：{err}"))?
 }
 
+/// 删除上次更新遗留的安装包。启动时调用；正在被安装器占用的文件会跳过。
+pub fn cleanup_stale_updates() {
+    let dir = update_dir();
+    let Ok(entries) = std::fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_file() {
+            let _ = std::fs::remove_file(path);
+        }
+    }
+}
 fn update_dir() -> PathBuf {
-    std::env::temp_dir().join("FontFox")
+    crate::config::app_dir().join("update")
 }
 
-fn temp_path(version: &str) -> PathBuf {
+fn download_path(version: &str) -> PathBuf {
     update_dir().join(format!("FontFox_{version}_x64.exe"))
 }
 
@@ -196,7 +209,7 @@ fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String,
     let url = download_url(source, &version);
     let dir = update_dir();
     std::fs::create_dir_all(&dir).map_err(|err| format!("无法创建下载目录：{err}"))?;
-    let path = temp_path(&version);
+    let path = download_path(&version);
     let _ = std::fs::remove_file(&path);
 
     let mut response = client()?
