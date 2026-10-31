@@ -771,6 +771,7 @@ function syncRowSelection(): void {
 /** 选中单个字体行：普通点击替换，Ctrl 增减，Shift 按行顺序做范围选择。 */
 function selectEntry(entry: FontEntry, event: MouseEvent): void {
   if (event.shiftKey && applyRange(entry.id)) {
+    revealDetailForMultiSelection();
     renderAll();
     return;
   }
@@ -786,6 +787,7 @@ function selectEntry(entry: FontEntry, event: MouseEvent): void {
     state.selectedIds = new Set([entry.id]);
     state.anchorId = entry.id;
   }
+  revealDetailForMultiSelection();
   renderAll();
 }
 /** 选中字族行：整族等价于“全选族内字体”，Ctrl / Shift 语义与字体行一致。 */
@@ -798,6 +800,7 @@ function selectFamily(
   if (members.length === 0) return;
 
   if (event?.shiftKey && applyRange(key)) {
+    revealDetailForMultiSelection();
     syncRowSelection();
     renderDetailPane();
     return;
@@ -813,6 +816,7 @@ function selectFamily(
     state.selectedIds = new Set(members.map((member) => member.id));
   }
   state.anchorId = key;
+  revealDetailForMultiSelection();
   syncRowSelection();
   renderDetailPane();
 }
@@ -854,6 +858,7 @@ function toggleSelectAll(): void {
   const allSelected = ids.every((id) => state.selectedIds.has(id));
   state.selectedIds = allSelected ? new Set() : new Set(ids);
   state.anchorId = null;
+  revealDetailForMultiSelection();
   renderAll();
 }
 
@@ -863,6 +868,7 @@ function selectAllVisible(): void {
   if (ids.length === 0) return;
   state.selectedIds = new Set(ids);
   state.anchorId = null;
+  revealDetailForMultiSelection();
   renderAll();
 }
 
@@ -880,6 +886,7 @@ function invertSelection(): void {
   }
   state.selectedIds = next;
   state.anchorId = null;
+  revealDetailForMultiSelection();
   renderAll();
 }
 
@@ -3538,6 +3545,13 @@ async function syncMaximizeLabel(): Promise<void> {
   }
 }
 
+/** 多选字体时展开详情面板。 */
+function revealDetailForMultiSelection(): void {
+  if (state.selectedIds.size > 1 && !state.settings.detailOpen) {
+    applyDetailOpen(true);
+    scheduleSave();
+  }
+}
 function applyDetailOpen(open: boolean): void {
   state.settings.detailOpen = open;
   document.documentElement.dataset.detail = open ? "open" : "closed";
