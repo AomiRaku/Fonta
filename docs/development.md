@@ -190,7 +190,7 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 
 ## 软件更新
 
-- 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`，镜像源加 `https://gh-proxy.org/` 前缀。
+- 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`，镜像源加 `https://gh-proxy.org/` 前缀。网络请求跟随 Windows 系统代理，并支持 `HTTP(S)_PROXY` / `NO_PROXY` 环境变量。
 - 版本比较按 `tag` 去掉 `v` 后的数字段补零后比较，只有更高版本才视为更新。
 - 启动后静默检查（仅「检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
 - 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。
@@ -211,8 +211,8 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 
 ## 版本号
 
-- 对外版本使用 `major.minor`，不补前导零：当前 **1000.1**，后续例如 `1021.0`、`1220.0`、`2200.13`。
-- 内部需要 semver 的工具（Cargo / Tauri / NSIS）使用 `major.minor.0`，例如 `1000.1.0`；`about` 与 `app_info` 对外显示 `major.minor`。
+- 对外版本使用 `major.minor`，不补前导零：当前 **1000.2**，后续例如 `1021.0`、`1220.0`、`2200.13`。
+- 内部需要 semver 的工具（Cargo / Tauri / NSIS）使用 `major.minor.0`，例如 `1000.2.0`；`about` 与 `app_info` 对外显示 `major.minor`。
 - 发版时同步：`package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock`（fontfox 条目）、`src-tauri/tauri.conf.json`。
 
 ## 许可证

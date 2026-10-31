@@ -1,6 +1,6 @@
 [package]
 name = "fontfox"
-version = "1000.1.0"
+version = "1000.2.0"
 description = "FontFox — 快速流畅且易用的本地字体管理器"
 authors = ["羽梦千景 Raku Inkyetta"]
 license = "Apache-2.0"
@@ -42,7 +42,7 @@ windows-sys = { version = "0.59", features = [
   "Win32_Graphics_Dwm",
 ] }
 tauri-plugin-clipboard-manager = "2"
-reqwest = { version = "0.12", default-features = false, features = ["blocking", "native-tls", "json"] }
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "native-tls", "json", "system-proxy"] }
 
 [profile.release]
 codegen-units = 1

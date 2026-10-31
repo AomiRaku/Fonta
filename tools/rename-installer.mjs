@@ -9,11 +9,6 @@ const displayVersion = `${major}.${minor}`;
 const expected = `FontFox_${displayVersion}_x64.exe`;
 const bundleDir = join(root, "src-tauri", "target", "release", "bundle", "nsis");
 
-if (existsSync(join(bundleDir, expected))) {
-  console.log(`[installer] 已是目标文件名：${expected}`);
-  process.exit(0);
-}
-
 if (!existsSync(bundleDir)) {
   console.error(`[installer] 找不到 NSIS 输出目录：${bundleDir}`);
   process.exit(1);
@@ -23,6 +18,10 @@ const candidates = readdirSync(bundleDir)
   .map((name) => ({ name, path: join(bundleDir, name), time: statSync(join(bundleDir, name)).mtimeMs }))
   .sort((a, b) => b.time - a.time);
 if (candidates.length === 0) {
+  if (existsSync(join(bundleDir, expected))) {
+    console.log(`[installer] 已是目标文件名：${expected}`);
+    process.exit(0);
+  }
   console.error(`[installer] 没有可重命名的安装包；期望 ${expected}`);
   process.exit(1);
 }
