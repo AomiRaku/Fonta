@@ -1,11 +1,9 @@
 > [!IMPORTANT]
-> 当前本项目还处于早期开发中，基本功能正在修缮中，暂无 Release。
->
-> 首个版本即将发布。
+> 当前项目处于早期开发阶段，暂无 Release。
 
 <div align="center">
 
-<img src="\docs\img\FontFox_Logo.webp"  width="144" height="144" style="display: block; margin: 0 auto;" alt="icon" />
+<img src="docs/img/FontFox_Logo.webp"  width="144" height="144" style="display: block; margin: 0 auto;" alt="icon" />
 
 # FontFox 字狐
 ### 快速流畅且易用的本地字体管理器
@@ -16,9 +14,9 @@ Made with ❤️ by [羽梦千景 Raku Inkyetta](https://github.com/AomiRaku)
 
 ## 快速开始
 
-~~下载请点击 **[此处](https://github.com/AomiRaku/font-fox/releases/latest)** ，前往最新 Release 页面下载最新版安装包。~~ (首个版本即将发布。)
+当前尚未发布 Release，暂无可下载的安装包。
 
-或下载仓库源码自行编译。
+可从仓库源码自行构建。
 
 
 
@@ -64,12 +62,12 @@ FontFox 包含以下功能：
 
 ```
 src/                前端：入口 main.ts、虚拟列表、行渲染、详情、菜单、i18n等
-src/assets/icons/   自绘 SVG 图标
+src/assets/icons/   自绘图标扩展目录
 src-tauri/src/      Rust：枚举、解析、保护判定、隐藏/删除、提权、设置与字体单存储
 src-tauri/src/data/ 系统内置字体清单（system_fonts.json / core_fonts.json）
 langBuild/          语言包编辑目录（构建时会复制到 exe 同级 lang/）
 docs/               UI 规范、架构说明、开发文档、截图
-tools/              图标生成、语言包复制脚本
+tools/              语言包复制、第三方许可证生成、设计稿解析脚本
 ```
 
 
@@ -78,7 +76,7 @@ tools/              图标生成、语言包复制脚本
 
 内置简体中文、English (US)、Français、Русский、日本語、한국어、繁體中文（香港 / 台灣 / 澳門 / 文言）；默认跟随系统语言。语言包存放于软件运行目录 `lang` 文件夹内，可继续添加翻译。
 
-~~如要提交翻译，请放在仓库根目录的langBuild文件夹内提交PR。~~（目前处于早期开发中，还未发布，暂时不接受任何 PR 提交）
+目前暂不接受 PR 提交。
 
 
 
@@ -93,8 +91,8 @@ tools/              图标生成、语言包复制脚本
 
 ## 其他
 
-- 本软件无需网络，仅用于管理本地字体。
+- 字体管理功能完全本地运行；仅检查更新时会访问网络。
 - 本项目以 Tauri + Rust 构建。界面由 WebView2 渲染，无内置浏览器。
-- 字体预览的前端渲染采用 Rust 栅格化处理，极大程度优化了流畅度和内存占用。测试预览模式下列表500个字体只有150MB内存占用，高速上下滚动预览列表时最大只有500MB左右内存占用。
+- 字体预览由 Rust 栅格化，前端只缓存位图，避免 WebView 加载字体文件。
 - 卸载时，若禁用模式处于动态卸载模式，则会强制恢复所有已停用字体。
 - 本项目采用 [Apache 2.0 协议](LICENSE) ，第三方组件与数据来源见 [NOTICE](NOTICE)。

@@ -120,8 +120,8 @@ pub fn disable(entries: &[FontEntry]) -> Result<usize, String> {
         if let Err(err) = move_file(&source, &target) {
             rollback_disable(&applied);
             return Err(format!(
-                "{}；本次操作已回滚",
-                format!("移动 “{}” 失败：{}", entry.family, err)
+                "移动 “{}” 失败：{}；本次操作已回滚",
+                entry.family, err
             ));
         }
         if let Err(err) = registry::delete_font_value(entry.scope, &entry.value_name) {

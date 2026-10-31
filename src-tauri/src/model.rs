@@ -182,6 +182,9 @@ pub struct Settings {
     /// 右侧详情面板是否展开。
     #[serde(default = "default_true")]
     pub detail_open: bool,
+    /// 字体列表行是否显示悬停底色。
+    #[serde(default)]
+    pub row_hover: bool,
     /// 字体禁用方式：`windows`（Inactive Fonts）或 `dynamic`（注销 + 隔离文件）。
     #[serde(default = "default_disable_mode")]
     pub disable_mode: String,
@@ -205,7 +208,7 @@ fn default_true() -> bool {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            view_mode: "compact".to_string(),
+            view_mode: "preview".to_string(),
             preview_text: String::new(),
             theme: "system".to_string(),
             disable_mode: default_disable_mode(),
@@ -215,6 +218,7 @@ impl Default for Settings {
             update_source: default_update_source(),
             ignored_update_version: String::new(),
             detail_open: true,
+            row_hover: false,
         }
     }
 }

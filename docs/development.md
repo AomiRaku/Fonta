@@ -44,7 +44,7 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 - **应用外壳**：Tauri v2（Rust 1.77+，`windows-sys` / `winreg` / `memmap2` / `ab_glyph` / `png`）
 - **字体解析**：`ttf-parser` 只读 `name` / `fvar` / `GSUB`，支持 `.ttc` 多 face 匹配
 - **前端**：Vite 7 + TypeScript（无框架，手写虚拟滚动与悬浮滚动条）
-- **图标**：`@siemens/ix-icons`（MIT）+ 少量自绘 SVG，构建时内联，不发起网络请求
+- **图标**：`@siemens/ix-icons`（MIT），自绘图标可放入 `src/assets/icons/`；构建时内联，不发起网络请求
 - **窗口**：不透明、无边框（`decorations: false`、`shadow: true`、`backgroundColor: #F7F7F8`）；
   DWM 负责系统圆角、描边、阴影与窗口动画，页面不画窗口外壳。保持系统默认圆角，
   不要覆盖 `DWMWA_WINDOW_CORNER_PREFERENCE`：Windows 11 上 `ROUNDSMALL` 或直角偏好会明显缩小 DWM 阴影
@@ -52,7 +52,7 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 
 ## 开发环境
 
-前置：Rust（MSVC 工具链 + Windows SDK）、Node.js 20+、WebView2 运行时。
+前置：Rust（MSVC 工具链 + Windows SDK）、Node.js 20.19+ 或 22.12+、WebView2 运行时。
 
 双击根目录的 `dev.cmd` 会检查 Node / Rust / 依赖 / 端口占用并启动 `tauri dev`，
 前端与 Rust 代码都会热重载。首次编译 Rust 约 1 分钟，之后数秒。关闭控制台窗口即停止全部进程。
@@ -92,7 +92,7 @@ npx tauri icon path/to/icon.png            # 重新生成 src-tauri/icons/（应
 
 ```
 src/                前端：入口 main.ts、虚拟列表、行渲染、详情、菜单、i18n、悬浮滚动条
-src/assets/icons/   自绘 SVG 图标
+src/assets/icons/   自绘图标扩展目录
 src-tauri/src/      Rust：枚举、解析、保护判定、停用 / 删除、提权、设置、字体单、预览栅格化
 src-tauri/src/data/ 内置字体清单（system_fonts.json / core_fonts.json）
 langBuild/          语言包唯一源文件（构建时复制到 exe 同级 lang/）
@@ -159,7 +159,7 @@ tools/              语言包复制、第三方许可证生成脚本
 首次失败后最多重试 4 次；仍失败则把 `disabled\` 里剩余的字体文件复制到
 `桌面\FontFox Uninstalled Fonts`（兼容 OneDrive 桌面），并提示可手动重新安装。
 
-`POSTUNINSTALL` 默认删除 `%USERPROFILE%\.FontFox\`；若恢复最终失败（`--restore-fonts` 以非零退出码结束），
+`POSTUNINSTALL` 默认删除 `%USERPROFILE%\.FontFox\`；带 `/UPDATE` 时跳过恢复与删除。若恢复最终失败（`--restore-fonts` 以非零退出码结束），
 则保留该目录，避免隔离字体在复制不完整时被一并删除。恢复结果会写入 `%TEMP%\fontfox-restore.log`。
 
 ## 已知边界
@@ -174,7 +174,7 @@ tools/              语言包复制、第三方许可证生成脚本
 - 不修改字体文件内容，不重命名、不编辑字体。
 - 自绘标题栏意味着 Win11「悬停最大化按钮弹出贴靠布局」不可用（该能力只随系统标题栏提供）。
 - 分组依据、筛选条件、预览文字为会话内状态，重启后回到默认（不分组、无筛选、预览框为空）；
-  视图模式、主题、详情面板开合、语言、自动检查更新开关、更新源、忽略的更新版本、禁用方式会写入配置；禁用方式变更先写入 `DisableModeNext`，重启启动时执行迁移后再清空。
+  视图模式、主题、详情面板开合、语言、行悬停开关、自动检查更新开关、更新源、忽略的更新版本、禁用方式会写入配置；禁用方式变更先写入 `DisableModeNext`，重启启动时执行迁移后再清空。
 - **禁用状态持久化**：退出应用不会自动恢复字体，`disabled.json` 里的记录下次启动继续有效；
   动态模式下改动隔离目录会触发启动对账弹窗（补充未登记文件 / 清理失效记录）。
 - 动态安装卸载模式只处理用户作用域字体：系统作用域字体需要提权改动 `C:\Windows\Fonts` 与 `HKLM`，
@@ -182,24 +182,24 @@ tools/              语言包复制、第三方许可证生成脚本
 - 动态模式禁用正在被应用加载的字体时，移动文件会失败并提示；关闭占用字体的程序后重试即可。删除隔离中的字体时使用 `disabled.json` 里的真实路径，删除前会先释放预览 mmap。
 - 语言包是 exe 同级的 `lang/<id>.ini`：`predev` / `prebuild` 由 `tools/copy-lang.mjs` 复制，
   `build.rs` 在编译期再兜底一次，打包时按 `bundle.resources` 映射进安装目录。复制时目标目录里
-  存在、但 `langBuild` 已没有的 `.ini` 会被删除。改文案可直接编辑 exe 旁那份 `lang/zh-cn.ini`。
+  存在、但 `langBuild` 已没有的 `.ini` 会被删除。改文案编辑 `langBuild/zh-cn.ini`，重新构建后会复制到 exe 同级 `lang/`。
 - 每个语言包在 `[meta]` 中提供 `LanguageCode`（BCP 47，如 `zh-CN`）。设置默认值为「使用系统语言」：
-  通过 `GetUserDefaultLocaleName` 读取系统 locale，先精确匹配代码；`zh-*` 未命中回退 `zh-HK`，其他语言未命中回退 `en-US`，仍缺失再回退 `zh-CN`（`zh-cn.ini`）。回退时设置仍保持「使用系统语言」。
+  通过 `GetUserDefaultLocaleName` 读取系统 locale，先精确匹配代码；`zh-*` 未命中回退 `zh-HK`，其他语言未命中时优先同主语言，再回退 `en-US`，仍缺失再回退 `zh-CN`（`zh-cn.ini`）。回退时设置仍保持「使用系统语言」。
 
 ## 软件更新
 
 - 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`，镜像源加 `https://gh-proxy.org/` 前缀。
-- 版本比较按 `tag` 去掉 `v` 后的数字段进行，只有高于当前 `major.minor` 才视为更新。
+- 版本比较按 `tag` 去掉 `v` 后的数字段补零后比较，只有更高版本才视为更新。
 - 启动后静默检查（仅「检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
 - 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。
 - Release 正文只取第一个 `***` 之前的内容，再按 `---` 分为中文 / 英文；当前语言代码为 `zh-*` 时取中文，否则取英文，空段回退另一段。按纯文本展示，不渲染 Markdown。
-- 下载地址为 `FontFox_[版本号]_x64.exe`，写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
+- 下载地址优先取 Release assets 中的 x64 exe，缺失时回退 `https://github.com/AomiRaku/font-fox/releases/download/v[版本号]/FontFox_[版本号]_x64.exe`；安装包写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
 ## 安装器外观
 
 - 欢迎页 / 完成页左侧插图：`docs/img/install.bmp`（164×314 BMP），由 `bundle.windows.nsis.sidebarImage` 引用。
-- 安装界面字体：自定义模板 `src-tauri/nsis/installer.nsi` 把语言加载改为 `MUI_LANGUAGEEX`，指向 `src-tauri/nsis-lang/mui/` 下的 `SimpChinese.*` / `English.*`；这两个 NLF 的字体的设为 `Microsoft YaHei` 9 号。
+- 安装界面字体：自定义模板 `src-tauri/nsis/installer.nsi` 把语言加载改为 `MUI_LANGUAGEEX`，指向 `src-tauri/nsis-lang/mui/` 下的 `SimpChinese.*` / `English.*`；这两个 NLF 的字体设为 `Microsoft YaHei` 9 号。
 - `src-tauri/nsis-lang/*.nsh` 是 Tauri 安装器的自定义文案，在语言加载后追加，修改时保留原有 `LangString`。
-- 升级 Tauri 后若 NSIS 模板有变化，需重新同步 `src-tauri/nsis/installer.nsi` 并保留语言加载段的改动。
+- NSIS 模板有变化时，需同步 `src-tauri/nsis/installer.nsi` 并保留语言加载段。
 
 ## 第三方许可证
 

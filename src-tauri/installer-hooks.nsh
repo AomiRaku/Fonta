@@ -12,6 +12,11 @@
 Var FontFoxRestoreFailed
 
 !macro NSIS_HOOK_PREUNINSTALL
+  ; 更新模式不恢复字体、不删除用户数据
+  ${GetOptions} $CMDLINE "/UPDATE" $2
+  ${IfNot} ${Errors}
+    Goto FontFoxRestoreDone
+  ${EndIf}
   StrCpy $0 ""
   ; 恢复失败时保留 %USERPROFILE%\.FontFox，避免隔离字体被连目录删除
   StrCpy $FontFoxRestoreFailed "0"
@@ -33,6 +38,10 @@ FontFoxRestoreDone:
 !macroend
 
 !macro NSIS_HOOK_POSTUNINSTALL
+  ${GetOptions} $CMDLINE "/UPDATE" $2
+  ${IfNot} ${Errors}
+    Goto FontFoxPostUninstallDone
+  ${EndIf}
   ; 恢复失败时保留数据目录：桌面已有一份字体副本，但这里再留一份以防复制不完整
   StrCmp $FontFoxRestoreFailed "1" FontFoxKeepData
   ; 配置目录：%USERPROFILE%\.FontFox（配置、字体单、待清理清单、动态模式隔离目录）

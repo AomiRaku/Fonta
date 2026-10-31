@@ -15,9 +15,14 @@
 
 - 前端无框架：原生 DOM + 手写虚拟列表（`src/list.ts`）与悬浮滚动条（`src/scrollbar.ts`）。
 - 所有系统操作走 IPC（`src-tauri/src/commands.rs`），前端不直接访问注册表或文件系统。
-- 文案一律经 `t("section.key")`；`langBuild/schinese.ini` 是唯一源文件，**没有内置回退**，缺失键会显示键名。
+- 文案一律经 `t("section.key")`；语言包源目录为 `langBuild/`，`zh-cn.ini` 是基准包；**没有内置回退**，缺失键会显示键名。
 - CSS 只用 `docs/ui-spec.md` 里的令牌（`--sp-*`、`--fs-*`、`--control-h`、`--row-h` 等），不写野值。
 - 光标约定：列表行、分组带、菜单项、侧栏条目用箭头；按钮、开关、输入框清空叉、「N 个样式」标签用手型。
+
+### 注释
+
+- 只标注代码块职责、输入输出和必要约束；不写背景故事、演进过程、对话内容或重复解释。
+- 能用一句说清的不分段；不写「之前 / 现在 / 本次 / 修复」等历史叙述，追溯交给 git。
 
 ## 平台约束
 
@@ -41,5 +46,5 @@ cargo test --manifest-path src-tauri/Cargo.toml --lib
 ## 发布
 
 - 包名 `fontfox`，可执行文件 `fontfox.exe`，标识符 `dev.fontfox.desktop`（发布后不再变更）。
-- 用户数据在 `%USERPROFILE%\.FontFox\`（`config.ini`、`library.json`、`pending-delete.json`）。
+- 用户数据在 `%USERPROFILE%\.FontFox\`（`config.ini`、`library.json`、`pending-delete.json`、`update\`）。
 - 许可证 Apache-2.0，第三方组件与数据来源见 `NOTICE`。

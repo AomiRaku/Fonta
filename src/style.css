@@ -803,6 +803,10 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   box-shadow: inset 0 0 0 999px var(--row-hover);
 }
 
+.rows:not(.rows--hover) .row:hover {
+  box-shadow: none;
+}
+
 /* 选中行不吃悬停：点击后行节点会重建，若不锁死会在两种底色间闪 */
 .row--selected,
 .row--selected:hover {

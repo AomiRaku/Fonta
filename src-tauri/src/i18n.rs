@@ -3,10 +3,7 @@
 
 //! 界面语言包：外挂 `.ini`，源文件在项目根目录 `langBuild/`，构建时复制到 exe 同级 `lang/`。
 //!
-//! 查找顺序：
-//! 1. 可执行文件同级的 `lang/<name>.ini`（由 `build.rs` 从 `langBuild/` 复制，也可直接手改）；
-//! 2. 安装资源目录 `lang/<name>.ini`（NSIS 安装后）；
-//! 3. 编译期内置的简体中文（文件缺失或损坏时不至于界面空白）。
+//! 语言文件位于可执行文件同级的 `lang/<name>.ini`。
 //!
 //! 文件结构：
 //! ```ini
@@ -24,7 +21,7 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-/// 内置回退语言包。
+/// 测试用基准语言包。
 #[cfg(test)]
 const EMBEDDED: &str = include_str!("../../langBuild/zh-cn.ini");
 
@@ -53,7 +50,7 @@ pub struct LanguageInfo {
     pub code: String,
 }
 
-/// 扫描 exe 同级 `lang/*.ini`（以及旧版的 exe 同级 `*.ini`），返回可选语言。
+/// 扫描 `lang/*.ini`，返回可选语言。
 pub fn available() -> Vec<LanguageInfo> {
     use std::collections::BTreeMap;
 
@@ -61,7 +58,6 @@ pub fn available() -> Vec<LanguageInfo> {
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             dirs.push(dir.join("lang"));
-            dirs.push(dir.to_path_buf());
         }
     }
 
@@ -152,7 +148,6 @@ fn candidates(name: &str) -> Vec<PathBuf> {
     if let Ok(exe) = std::env::current_exe() {
         if let Some(dir) = exe.parent() {
             paths.push(dir.join("lang").join(&file));
-            paths.push(dir.join(&file));
         }
     }
     paths
@@ -205,7 +200,7 @@ mod tests {
 
     #[test]
     fn embedded_pack_has_meta_and_entries() {
-        // 内置包不再作为运行时回退，只用来校验仓库里的语言文件本身完整
+        // 用基准包校验仓库语言文件的完整性
         let (meta, entries) = parse(EMBEDDED);
         assert_eq!(meta.get("languagename").map(String::as_str), Some("简体中文"));
         assert_eq!(meta.get("languagecode").map(String::as_str), Some("zh-CN"));

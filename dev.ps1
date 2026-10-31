@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: Apache-2.0
+﻿# SPDX-License-Identifier: Apache-2.0
 # Copyright (c) 2026 羽梦千景 Raku Inkyetta
 #
 # FontFox —— 开发模式启动器（由 dev.cmd 双击调用）。
@@ -18,7 +18,7 @@ function Stop-WithError([string]$message) {
 
 
 Write-Host "============================================================" -ForegroundColor DarkGray
-Write-Host "  FontFox  ·  开发模式 (Vite + Tauri 热更新)" -ForegroundColor White
+Write-Host "  FontFox 开发模式" -ForegroundColor White
 Write-Host "============================================================" -ForegroundColor DarkGray
 Write-Host ""
 
@@ -38,7 +38,6 @@ if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
 $cargoVersion = (& cargo --version) -join " "
 Write-Host "[*] $cargoVersion" -ForegroundColor DarkGray
 Write-Host "[*] node $(& node --version)" -ForegroundColor DarkGray
-Write-Host "[*] 以当前用户身份运行（无需管理员）" -ForegroundColor DarkGray
 
 # ── 端口占用提示（不阻断）──────────────────────────────────────
 try {

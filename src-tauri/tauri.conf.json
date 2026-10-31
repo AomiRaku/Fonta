@@ -22,6 +22,7 @@
         "backgroundColor": "#F7F7F8",
         "additionalBrowserArgs": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection",
         "decorations": false,
+        "visible": false,
         "shadow": true,
         "dragDropEnabled": false
       }
@@ -44,6 +45,7 @@
     "publisher": "Raku Inkyetta",
     "copyright": "Copyright (c) 2026 羽梦千景 Raku Inkyetta",
     "license": "Apache-2.0",
+    "licenseFile": "../LICENSE",
     "windows": {
       "nsis": {
         "displayLanguageSelector": false,

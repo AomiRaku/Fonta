@@ -8,6 +8,7 @@
       content="default-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' asset: http://asset.localhost data:; img-src 'self' asset: http://asset.localhost data:; script-src 'self'"
     />
     <title>FontFox</title>
+    <script src="/theme-boot.js"></script>
     <style>
       /* 启动遮罩：样式表加载前就要生效，所以写成内联 */
       #splash {
@@ -20,6 +21,12 @@
         #splash {
           background: #111214;
         }
+      }
+      html[data-theme="light"] #splash {
+        background: #f7f7f8;
+      }
+      html[data-theme="dark"] #splash {
+        background: #111214;
       }
     </style>
   </head>

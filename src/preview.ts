@@ -2,14 +2,7 @@
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 /**
- * 预览样字：由 Rust 栅格化成 PNG，前端只负责贴图。
- *
- * 为什么不让 WebView 自己加载字体：Chromium 把加载过的字体缓存在渲染进程里，
- * 删除 `FontFace`、重载页面、销毁 Worker 都不会释放，滚一遍全库能涨到 1GB。
- * 现在字体文件只在 Rust 里读一次、渲染成小位图，WebView 完全不碰字体文件。
- *
- * 这里维护一份 data URL 缓存（按路径 + 文本 + 字号 + 颜色），滚动时命中缓存直接贴图，
- * 不会再出现「一滚动整列变回默认字体」的情况。
+ * 预览样字由 Rust 栅格化为 PNG，前端负责贴图和缓存。
  */
 
 import { invoke } from "@tauri-apps/api/core";
@@ -41,10 +34,7 @@ export interface PreviewRequest {
 /** 缺字提示的回调标记 */
 export type PreviewDone = (url: string | null, noGlyphs?: boolean) => void;
 
-/**
- * 可变字体预览用的字重：有 Regular（400）就用 400，
- * 否则取可变范围的中点；非可变字体返回 0（不实例化）。
- */
+/** 可变字体预览使用的字重。 */
 export function previewWeight(entry: FontEntry): number {
   if (!entry.variable) return 0;
   const min = entry.weightMin || 100;

@@ -123,6 +123,8 @@ export interface Settings {
   theme: ThemeMode;
   /** 右侧详情面板是否展开（持久化）。 */
   detailOpen: boolean;
+  /** 字体列表行是否显示悬停底色。 */
+  rowHover: boolean;
   /** 启动与打开关于页时是否自动检查更新。 */
   autoCheckUpdates: boolean;
   /** 软件更新源。 */
@@ -140,9 +142,7 @@ export type DisableMode = "windows" | "dynamic";
 export type UpdateSource = "github" | "mirror";
 
 export interface UpdateInfo {
-  currentVersion: string;
   latestVersion: string;
-  tag: string;
   notes: string;
   downloadUrl: string;
 }
@@ -170,7 +170,7 @@ export function defaultPreviewText(): string {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  viewMode: "compact",
+  viewMode: "preview",
   previewText: "",
   theme: "system",
   language: "system",
@@ -178,6 +178,7 @@ export const DEFAULT_SETTINGS: Settings = {
   updateSource: "github",
   ignoredUpdateVersion: "",
   detailOpen: true,
+  rowHover: false,
   disableMode: "dynamic",
   disableModeNext: "",
 };

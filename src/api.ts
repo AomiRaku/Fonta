@@ -34,7 +34,6 @@ export const api = {
   saveSettings: (settings: Settings) =>
     invoke<void>("save_settings", { settings }),
 
-
   about: () => invoke<AboutPayload>("about"),
 
   revealPath: (path: string) => invoke<void>("reveal_path", { path }),
@@ -96,7 +95,6 @@ export const api = {
       { ids },
     ),
 
-
   /** 用系统默认浏览器打开 GitHub 链接。 */
   openUrl: (url: string) => invoke<void>("open_url", { url }),
 
@@ -119,8 +117,8 @@ export const api = {
     invoke<string>("release_notes", { source, version }),
 
   /** 下载更新，返回临时安装包路径。 */
-  downloadUpdate: (source: string, version: string) =>
-    invoke<string>("download_update", { source, version }),
+  downloadUpdate: (source: string, version: string, url: string) =>
+    invoke<string>("download_update", { source, version, url }),
 
   /** 取消当前更新下载。 */
   cancelUpdateDownload: () => invoke<void>("cancel_update_download"),

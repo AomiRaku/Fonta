@@ -23,6 +23,7 @@
 | `src/detail.ts` | 详情面板（单字体 / 字族 / 多选 / 空态，含可变字体字重滑块） |
 | `src/filtermenu.ts` | 筛选菜单（分类 tab + 选项面板 + 清除筛选） |
 | `src/contextmenu.ts` | 右键菜单与二级菜单（「添加到字体单」） |
+| `src/dropdown.ts` | 自定义下拉框 |
 | `src/scrollbar.ts` | 悬浮滚动条（不占轨道、可拖动、可常驻） |
 | `src/preview.ts` | 预览样字缓存：请求 Rust 栅格化的 PNG（data URL），供行与详情面板贴图 |
 | `src/i18n.ts` | 语言包载入、`t()` 插值、静态文案替换 |
@@ -55,6 +56,7 @@
 | `src-tauri/src/library.rs` | `library.json` 读写（收藏 / 字体单） |
 | `src-tauri/src/i18n.rs` | 外挂语言包解析（`section.key`） |
 | `src-tauri/src/theme.rs` | 读取系统应用明暗并在变化时推事件 |
+| `src-tauri/src/restore_dialog.rs` | 卸载恢复失败时的原生重试对话框 |
 | `src-tauri/src/update.rs` | 版本检查、Release 日志、更新下载与取消 |
 | `src-tauri/build.rs` | 编译期复制 `langBuild/*.ini` 到 `target/<profile>/lang/`，并删除目标目录中的过期语言文件 |
 
@@ -79,9 +81,9 @@
 | `load_language` | `id` | 解析后的语言包（含 `[meta] LanguageCode`） |
 | `list_languages` | — | exe 同级 `lang/*.ini` 的 `{ id, name, code }` 列表 |
 | `system_locale` | — | 当前 Windows 用户区域设置（BCP 47，如 `zh-CN`） |
-| `check_update` | `source` | `UpdateInfo \| null`：最新版本、标签、原始 release 正文、下载地址 |
+| `check_update` | `source` | `UpdateInfo \| null`：最新版本、原始 release 正文、资产下载地址 |
 | `release_notes` | `source`, `version` | 指定版本 Release 的原始正文 |
-| `download_update` | `source`, `version` | 下载完成后的临时安装包路径 |
+| `download_update` | `source`, `version`, `url` | 下载完成后的临时安装包路径 |
 | `cancel_update_download` | — | 取消当前下载并删除临时文件 |
 | `install_update` | `path` | 启动安装包并退出应用 |
 | `open_devtools` | — | 打开当前窗口 DevTools（需要 tauri `devtools` feature） |
@@ -124,11 +126,11 @@
 
 ## 设置与字体单
 
-- `config.ini`：`viewMode`、`theme`、`language`、`detailOpen`、`disableMode`、`disableModeNext`
+- `config.ini`：`viewMode`、`theme`、`language`、`detailOpen`、`rowHover`、`disableMode`、`disableModeNext`、`autoCheckUpdates`、`updateSource`、`ignoredUpdateVersion`
   （预览文字只在会话内，不写入配置）。
 - `library.json`：`favorites`（字体 id 列表）与 `collections`（名称、标记色、字体 id 列表）。
 - 偏好改动 350ms 防抖后写入；字体单改动 250ms 防抖后写入；两者都用临时文件 + rename 原子落盘。
-- 语言包与配置都在 `%USERPROFILE%\.FontFox\`，卸载时随目录删除。
+- 配置与字体单在 `%USERPROFILE%\.FontFox\`，随用户数据删除；语言包在 exe 同级 `lang/`，随安装目录删除。
 
 ## 语言包
 
@@ -137,7 +139,7 @@
 - 文案中的字面 `\n` 由前端 `t()` 转成换行；只有对话框正文、设置项描述 / 提示等段落元素启用 `white-space: pre-line`，其余单行控件不换行。
 - 运行时由 Rust 解析成 `{ "section.key": "文本" }` 交给前端；**没有内置回退**，缺失键会直接
   显示键名，便于发现漏翻。
-- 设置默认「使用系统语言」；`zh-*` 未匹配回退 `zh-HK`，其他语言未匹配回退 `en-US`。
+- 设置默认「使用系统语言」；先精确匹配 `LanguageCode`，`zh-*` 未匹配回退 `zh-HK`，其他语言未匹配时优先同主语言，再回退 `en-US`，最后 `zh-CN`。
 
 ## 构建
 

@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 版本检查与更新下载。
-//!
-//! 更新源只区分 GitHub 与 gh-proxy 镜像；检查使用 GitHub Releases API，
-//! 因为 release 正文需要原始 Markdown，而 `releases/latest` 的 HTML 已被渲染，
-//! 无法可靠区分 `---` 与 `***` 分隔线。
+//! 版本检查与更新下载，使用 GitHub Releases API 读取原始日志。
 
 use std::cmp::Ordering;
 use std::fs::File;
@@ -20,7 +16,7 @@ use tauri::{AppHandle, Emitter};
 const REPO: &str = "AomiRaku/font-fox";
 const GITHUB_API: &str = "https://api.github.com";
 const MIRROR_PREFIX: &str = "https://gh-proxy.org/";
-const DOWNLOAD_BASE: &str = "https://github.com/AomiRaku/font-fox/releases/latest/download";
+const DOWNLOAD_BASE: &str = "https://github.com/AomiRaku/font-fox/releases/download";
 const DOWNLOAD_EVENT: &str = "update-download";
 
 static DOWNLOAD_CANCEL: AtomicBool = AtomicBool::new(false);
@@ -29,9 +25,7 @@ static DOWNLOAD_ACTIVE: AtomicBool = AtomicBool::new(false);
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateInfo {
-    pub current_version: String,
     pub latest_version: String,
-    pub tag: String,
     pub notes: String,
     pub download_url: String,
 }
@@ -48,6 +42,14 @@ struct DownloadProgress {
 struct ReleaseResponse {
     tag_name: String,
     body: Option<String>,
+    #[serde(default)]
+    assets: Vec<ReleaseAsset>,
+}
+
+#[derive(Deserialize)]
+struct ReleaseAsset {
+    name: String,
+    browser_download_url: String,
 }
 
 fn current_version() -> String {
@@ -107,11 +109,48 @@ fn api_url(source: &str, version: Option<&str>) -> String {
 
 fn download_url(source: &str, version: &str) -> String {
     let file = format!("FontFox_{version}_x64.exe");
-    let url = format!("{DOWNLOAD_BASE}/{file}");
+    let url = format!("{DOWNLOAD_BASE}/v{version}/{file}");
     if source == "mirror" {
         format!("{MIRROR_PREFIX}{url}")
     } else {
         url
+    }
+}
+
+fn release_asset_url(source: &str, release: &ReleaseResponse, version: &str) -> String {
+    let asset = release
+        .assets
+        .iter()
+        .find(|asset| {
+            let name = asset.name.to_ascii_lowercase();
+            name.ends_with(".exe") && name.contains("x64")
+        })
+        .or_else(|| {
+            release
+                .assets
+                .iter()
+                .find(|asset| asset.name.to_ascii_lowercase().ends_with(".exe"))
+        });
+    match asset {
+        Some(asset) if source == "mirror" => {
+            format!("{MIRROR_PREFIX}{}", asset.browser_download_url)
+        }
+        Some(asset) => asset.browser_download_url.clone(),
+        None => download_url(source, version),
+    }
+}
+
+fn normalize_download_url(source: &str, url: &str, version: &str) -> Result<String, String> {
+    let url = url.trim();
+    if url.is_empty() {
+        return Ok(download_url(source, version));
+    }
+    if url.starts_with("https://github.com/")
+        || url.starts_with("https://gh-proxy.org/https://github.com/")
+    {
+        Ok(url.to_string())
+    } else {
+        Err("更新地址无效".to_string())
     }
 }
 
@@ -146,12 +185,11 @@ fn check_update_sync(source: &str) -> Result<Option<UpdateInfo>, String> {
     if !is_newer(&latest, &current) {
         return Ok(None);
     }
+    let download_url = release_asset_url(source, &release, &latest);
     Ok(Some(UpdateInfo {
-        current_version: current,
-        latest_version: latest.clone(),
-        tag: release.tag_name,
+        latest_version: latest,
         notes: release.body.unwrap_or_default(),
-        download_url: download_url(source, &latest),
+        download_url,
     }))
 }
 
@@ -204,9 +242,14 @@ fn emit_progress(app: &AppHandle, downloaded: u64, total: u64, speed_kbps: f64) 
     );
 }
 
-fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String, String> {
+fn download_sync(
+    app: &AppHandle,
+    source: &str,
+    version: &str,
+    url: &str,
+) -> Result<String, String> {
     let version = normalize_version(version)?;
-    let url = download_url(source, &version);
+    let url = normalize_download_url(source, url, &version)?;
     let dir = update_dir();
     std::fs::create_dir_all(&dir).map_err(|err| format!("无法创建下载目录：{err}"))?;
     let path = download_path(&version);
@@ -277,6 +320,7 @@ pub async fn download_update(
     app: AppHandle,
     source: String,
     version: String,
+    url: String,
 ) -> Result<String, String> {
     if DOWNLOAD_ACTIVE.swap(true, AtomicOrdering::SeqCst) {
         return Err("已有更新正在下载".to_string());
@@ -284,8 +328,10 @@ pub async fn download_update(
     DOWNLOAD_CANCEL.store(false, AtomicOrdering::SeqCst);
     let app_for_task = app.clone();
     let result =
-        tauri::async_runtime::spawn_blocking(move || download_sync(&app_for_task, &source, &version))
-            .await;
+        tauri::async_runtime::spawn_blocking(move || {
+            download_sync(&app_for_task, &source, &version, &url)
+        })
+        .await;
     DOWNLOAD_ACTIVE.store(false, AtomicOrdering::SeqCst);
     result.map_err(|err| format!("下载更新失败：{err}"))?
 }
@@ -308,6 +354,7 @@ pub fn install_update(app: AppHandle, path: String) -> Result<(), String> {
         return Err("安装包路径无效".to_string());
     }
     std::process::Command::new(&canonical_path)
+        .arg("/UPDATE")
         .spawn()
         .map_err(|err| format!("无法启动安装程序：{err}"))?;
     app.exit(0);

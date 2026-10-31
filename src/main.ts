@@ -187,10 +187,7 @@ let rowHeights: number[] = [];
 
 /* ───────────────────────────── 通用 UI ───────────────────────────── */
 
-/**
- * 提示条：出现在右上角，新提示插到最上层并把旧提示往下推（FLIP 平滑过渡），
- * 各自计时后只淡出、不做位移。
- */
+/** 右上角提示条：新提示置顶，计时结束后淡出。 */
 function toast(message: string, danger = false): void {
   const node = el("div", danger ? "toast toast--danger" : "toast", message);
   const before = Array.from(dom.toastStack.children).map((child) =>
@@ -247,12 +244,30 @@ function resolveTheme(): ResolvedTheme {
 /** 上一次实际解析出的主题；只有真正变色时才重绘预览。 */
 let appliedTheme: ResolvedTheme | null = null;
 
+/** 先设置窗口底色再显示，避免首帧使用系统默认白底。 */
+async function revealWindow(): Promise<void> {
+  try {
+    await appWindow.setBackgroundColor(resolveTheme() === "dark" ? "#111214" : "#F7F7F8");
+  } catch {
+    /* 权限或平台不支持时只影响首帧底色 */
+  }
+  try {
+    await appWindow.show();
+  } catch {
+    /* 窗口已显示或平台不支持 */
+  }
+}
 function applyTheme(): void {
   const resolved = resolveTheme();
   const changed = appliedTheme !== null && appliedTheme !== resolved;
   appliedTheme = resolved;
   document.documentElement.dataset.theme = resolved;
   document.documentElement.dataset.themeMode = state.settings.theme;
+  try {
+    localStorage.setItem("fontfox.themeMode", state.settings.theme);
+  } catch {
+    /* localStorage 不可用时只影响启动遮罩，不影响主题 */
+  }
   // 让原生窗口边框跟随解析后的主题
   void appWindow.setTheme(resolved).catch(() => undefined);
   if (!changed) return;
@@ -265,6 +280,11 @@ function applyTheme(): void {
 const THEME_ORDER: ThemeMode[] = ["system", "light", "dark"];
 function themeLabel(mode: ThemeMode): string {
   return t(`theme.${mode}`);
+}
+
+/** 应用字体列表行悬停设置。 */
+function applyRowHover(): void {
+  dom.rows.classList.toggle("rows--hover", state.settings.rowHover);
 }
 
 function syncThemeButton(): void {
@@ -299,10 +319,7 @@ function syncSortMarks(): void {
 
 let segThumbReady = false;
 
-/**
- * 视图切换滑块：只改容器上的 data-active，位移由 CSS 用 `translateX(100%)` 完成，
- * 不做任何像素测量，因此不会出现宽度伸缩或边界抖动。
- */
+/** 视图切换滑块：由 data-active 驱动 CSS 位移。 */
 function syncSegThumb(): void {
   const cluster = dom.segThumb.parentElement;
   if (!cluster) return;
@@ -350,13 +367,31 @@ const LANGUAGE_RANK: Record<string, number> = {
   中文: 0,
   日文: 1,
   韩文: 2,
-  拉丁文: 3,
-  西里尔文: 4,
-  阿拉伯文: 5,
-  希伯来文: 6,
-  希腊文: 7,
-  泰文: 8,
-  天城文: 9,
+  英语: 3,
+  德语: 3,
+  法语: 3,
+  西班牙语: 3,
+  葡萄牙语: 3,
+  意大利语: 3,
+  荷兰语: 3,
+  瑞典语: 3,
+  挪威语: 3,
+  丹麦语: 3,
+  芬兰语: 3,
+  波兰语: 3,
+  捷克语: 3,
+  匈牙利语: 3,
+  罗马尼亚语: 3,
+  土耳其语: 3,
+  越南语: 3,
+  俄语: 4,
+  乌克兰语: 4,
+  阿拉伯语: 5,
+  波斯语: 5,
+  希伯来语: 6,
+  希腊语: 7,
+  泰语: 8,
+  印地语: 9,
   其他: 10,
   未知: 11,
 };
@@ -371,10 +406,7 @@ const PINYIN_COLLATOR = (() => {
   }
 })();
 
-/**
- * 名称排序的类别：符号 → 数字 → 英文 → 拼音（汉字） → 其他文字。
- * 先比类别，再比同类别内的顺序，避免拼音和英文混在一起。
- */
+/** 名称排序类别：符号、数字、英文、拼音、其他文字。 */
 function nameBucket(name: string): number {
   const first = Array.from(name.trim())[0];
   if (!first) return 5;
@@ -2344,7 +2376,11 @@ async function openDownloadDialog(update: UpdateInfo): Promise<void> {
   }
 
   try {
-    const path = await api.downloadUpdate(state.settings.updateSource, update.latestVersion);
+    const path = await api.downloadUpdate(
+      state.settings.updateSource,
+      update.latestVersion,
+      update.downloadUrl,
+    );
     finished = true;
     if (cancelled) return;
     close();
@@ -2614,18 +2650,26 @@ function openSettings(): void {
     return item;
   };
 
-  const themeSelect = createDropdown(
-    THEME_ORDER.map((mode) => ({ value: mode, label: themeLabel(mode) })),
-    state.settings.theme,
-    (value) => {
-      state.settings.theme = value as ThemeMode;
-      applyTheme();
-      syncThemeButton();
-      scheduleSave();
-    },
-  );
-  themeSelect.el.classList.add("settings-row__control");
-  list.appendChild(row(t("settings.theme"), themeSelect.el));
+  const switchRow = (
+    label: string,
+    checked: boolean,
+    onChange: (value: boolean) => void,
+    desc?: string,
+  ): HTMLElement => {
+    const control = el("button", "switch") as HTMLButtonElement;
+    control.type = "button";
+    control.setAttribute("role", "switch");
+    control.setAttribute("aria-checked", String(checked));
+    control.setAttribute("aria-label", label);
+    control.title = label;
+    control.appendChild(el("span", "switch__knob"));
+    control.addEventListener("click", () => {
+      const next = control.getAttribute("aria-checked") !== "true";
+      control.setAttribute("aria-checked", String(next));
+      onChange(next);
+    });
+    return row(label, control, desc);
+  };
 
   const languageSelect = createDropdown(
     [{ value: SYSTEM_LANGUAGE, label: t("settings.systemLanguage") }],
@@ -2641,28 +2685,40 @@ function openSettings(): void {
   );
   list.appendChild(languageRow);
 
-  const autoCheckSwitch = el("button", "switch") as HTMLButtonElement;
-  autoCheckSwitch.type = "button";
-  autoCheckSwitch.setAttribute("role", "switch");
-  autoCheckSwitch.setAttribute(
-    "aria-checked",
-    String(state.settings.autoCheckUpdates),
+  const themeSelect = createDropdown(
+    THEME_ORDER.map((mode) => ({ value: mode, label: themeLabel(mode) })),
+    state.settings.theme,
+    (value) => {
+      state.settings.theme = value as ThemeMode;
+      applyTheme();
+      syncThemeButton();
+      scheduleSave();
+    },
   );
-  autoCheckSwitch.setAttribute("aria-label", t("settings.autoCheckUpdates"));
-  autoCheckSwitch.title = t("settings.autoCheckUpdates");
-  autoCheckSwitch.appendChild(el("span", "switch__knob"));
-  autoCheckSwitch.addEventListener("click", () => {
-    state.settings.autoCheckUpdates = !state.settings.autoCheckUpdates;
-    autoCheckSwitch.setAttribute(
-      "aria-checked",
-      String(state.settings.autoCheckUpdates),
-    );
-    scheduleSave();
-  });
+  themeSelect.el.classList.add("settings-row__control");
+  list.appendChild(row(t("settings.theme"), themeSelect.el));
   list.appendChild(
-    row(
+    switchRow(
+      t("settings.rowHover"),
+      state.settings.rowHover,
+      (value) => {
+        state.settings.rowHover = value;
+        applyRowHover();
+        scheduleSave();
+      },
+      t("settings.rowHoverHint"),
+    ),
+  );
+
+
+  list.appendChild(
+    switchRow(
       t("settings.autoCheckUpdates"),
-      autoCheckSwitch,
+      state.settings.autoCheckUpdates,
+      (value) => {
+        state.settings.autoCheckUpdates = value;
+        scheduleSave();
+      },
       t("settings.autoCheckHint"),
     ),
   );
@@ -3050,11 +3106,7 @@ function showResetDone(): Promise<void> {
 }
 /* ───────────────────────────── 禁用文件对账 ───────────────────────────── */
 
-/**
- * 启动时把禁用清单和隔离目录对一遍：
- * - 目录里多出来的文件 → 询问是否加入清单；
- * - 清单里文件已丢失 → 询问是否从清单移除。
- */
+/** 启动时对账禁用清单与隔离目录。 */
 async function checkDisabledFiles(): Promise<void> {
   let report;
   try {
@@ -3176,10 +3228,7 @@ function askDropMissingDisabled(
 
 /* ───────────────────────────── 事件绑定 ───────────────────────────── */
 
-/**
- * 屏蔽 WebView 自带的浏览器行为：右键菜单、缩放、打印、查找、刷新等。
- * 这是桌面应用，不应该出现任何浏览器痕迹。
- */
+/** 屏蔽 WebView 的浏览器默认行为。 */
 
 
 
@@ -4109,6 +4158,7 @@ async function boot(): Promise<void> {
 
   applyTheme();
   syncToolbar();
+  void revealWindow();
 
   try {
     state.library = { ...DEFAULT_LIBRARY, ...(await api.loadLibrary()) };
@@ -4128,6 +4178,7 @@ async function boot(): Promise<void> {
 
   list = new VirtualList(dom.viewport, dom.spacer, dom.rows);
   applyDetailOpen(state.settings.detailOpen);
+  applyRowHover();
   syncGroupButton();
 
   // 滚动条改为悬浮：不占轨道，滚动时浮在右侧
@@ -4180,5 +4231,7 @@ async function boot(): Promise<void> {
   // 兜底：万一首屏渲染出错也别一直白屏
   window.setTimeout(hideSplash, 8000);
 }
+
+window.setTimeout(() => { void appWindow.show(); }, 2500);
 
 void boot();

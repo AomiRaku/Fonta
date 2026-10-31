@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 应用数据目录与配置读写。
-//!
-//! 所有应用自己的状态都放在用户目录下的 `.FontFox`：
-//!
-//! - `%USERPROFILE%\.FontFox\config.ini`：界面偏好（视图模式、主题、预览文字、语言）
-//! - `%USERPROFILE%\.FontFox\pending-delete.json`：被占用、等待下次启动清理的文件
-//!
-//! 不写注册表，卸载时删掉这个目录即可彻底清除。
+//! 应用数据目录与配置读写，数据位于 `%USERPROFILE%\.FontFox\`。
 
 use std::path::{Path, PathBuf};
 
@@ -91,10 +84,13 @@ pub fn load() -> Settings {
     if let Some(v) = entry(&entries, "IgnoredUpdateVersion") {
         settings.ignored_update_version = v.to_string();
     }
-    // 预览文字只存在于本次会话，启动时一律为空（旧配置里的 PreviewText 会被忽略）
+    // 预览文字只存在于本次会话，启动时为空。
     settings.preview_text = String::new();
     if let Some(v) = entry(&entries, "DetailOpen") {
         settings.detail_open = v.eq_ignore_ascii_case("true");
+    }
+    if let Some(v) = entry(&entries, "RowHover") {
+        settings.row_hover = v.eq_ignore_ascii_case("true");
     }
     if let Some(v) = entry(&entries, "DisableMode") {
         settings.disable_mode = v.to_string();
@@ -122,6 +118,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
          Theme={}\r\n\
          Language={}\r\n\
          DetailOpen={}\r\n\
+         RowHover={}\r\n\
          DisableMode={}\r\n\
          DisableModeNext={}\r\n\
          AutoCheckUpdates={}\r\n\
@@ -131,6 +128,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
         one_line(&settings.theme),
         one_line(&settings.language),
         settings.detail_open,
+        settings.row_hover,
         one_line(&settings.disable_mode),
         one_line(&settings.disable_mode_next),
         settings.auto_check_updates,

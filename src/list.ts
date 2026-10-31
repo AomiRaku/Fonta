@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-/**
- * 虚拟滚动列表。
- *
- * 只渲染「可视窗口 + 上下各若干行」的 DOM，撑起 500+ 字体的流畅滚动。
- * 上下都留出 overscan：滚动时新行已经提前画好，不会出现"滚到位才蹦出来"的空白带。
- */
+/** 虚拟列表：只渲染可视区域与 overscan。 */
 
 export interface VirtualRow {
   key: string;

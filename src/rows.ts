@@ -154,7 +154,7 @@ function applyRowState(
   });
 }
 
-/** 紧凑行：名称 / 样式 / 状态 / 大小 / 操作（作用域列已移除）。 */
+/** 紧凑行：名称 / 样式 / 状态 / 大小 / 操作。 */
 export function buildCompactRow(
   entry: FontEntry,
   ctx: RowContext,

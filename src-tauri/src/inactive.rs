@@ -1,15 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! `Inactive Fonts` 的读写与匹配。
-//!
-//! 该值位于 `HKCU\Software\Microsoft\Windows NT\CurrentVersion\Font Management`，
-//! 类型为 `REG_MULTI_SZ`，每行一个字体标识。Windows 没有公开 API，只能直接
-//! 读写注册表；因为键在 HKCU 下，天然只影响当前用户，不会波及系统字体。
-//!
-//! 写入口径：使用**字体家族名**（与 Windows 字体设置页的粒度一致）。
-//! 读取口径：家族名 / 完整名 / 注册表值名 / 文件名 任一命中即视为隐藏，
-//! 这样即使某个 Windows 版本写入的是别的标识形式，UI 状态也不会失真。
+//! `Inactive Fonts` 位于 HKCU，类型为 `REG_MULTI_SZ`。
+//! 写入家族名；读取时按家族名、完整名、注册表值名或文件名匹配。
 
 use std::collections::HashSet;
 

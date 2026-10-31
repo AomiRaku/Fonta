@@ -2,10 +2,7 @@
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 /**
- * 图标：全部来自 Siemens iX 图标库（MIT），构建时按需内联，不额外请求网络。
- *
- * 图标源文件是填充型路径，根节点带 `fill="none"`，这里统一改写成
- * `fill="currentColor"`，让图标颜色跟随 CSS 的 `color`。
+ * 图标来自 Siemens iX（MIT），构建时内联，颜色跟随 currentColor。
  */
 
 import add from "@siemens/ix-icons/svg/add.svg?raw";
@@ -96,18 +93,7 @@ function parseDeclarations(text: string | null): Record<string, string> {
 
 const KEPT_PROPS = /^(stroke-width|stroke-linecap|stroke-linejoin|stroke-miterlimit|stroke-dasharray|fill-rule|fill-opacity|stroke-opacity|opacity|clip-rule)$/;
 
-/**
- * 把 SVG 字符串规整成可内联的标记。
- *
- * 兼容 Illustrator / Figma 常见的几种导出方式：
- * - `<style>` + `class="st0"`（Illustrator 默认）：先把类规则展开成属性，再删掉 `<style>`，
- *   否则内联后这些全局样式会污染整个页面；
- * - `style="fill:#000"` 行内样式、`fill="#000"` 表现属性：都会转成 `currentColor`；
- * - 去掉 `id` / `data-name` / 注释 / 根节点宽高，避免同一图标多处使用时 id 冲突。
- *
- * 两种画法都支持：描边型保留 `fill="none"` 并给根节点补 `stroke="currentColor"`；
- * 填充型剥掉 `fill="none"` 让路径继承根节点的 `fill="currentColor"`。
- */
+/** 将 SVG 源规整为可内联、颜色跟随 currentColor 的标记。 */
 function normalize(svg: string): string {
   const doc = new DOMParser().parseFromString(svg, "image/svg+xml");
   const root = doc.documentElement;

@@ -112,7 +112,7 @@ pub fn normalize(input: &str) -> String {
     out.trim_end().to_string()
 }
 
-/// 判定一条字体记录是否受保护。\n///\n/// 首选信号是文件所有权（见 ownership 模块）：系统字体属于 TrustedInstaller，\n/// 第三方字体不会。清单只在所有权判不出来时兜底，例如随语言包安装、\n/// 所有者是 Administrators 的老式系统字体。
+/// 判定字体是否受保护：优先看文件所有权，无法判断时用系统字体清单兜底。
 ///
 /// * `file_name` —— 注册表 Data 指向的文件名；
 /// * `family_names` —— 字体文件内的全部家族名（TTC 可能有多个）以及完整名；

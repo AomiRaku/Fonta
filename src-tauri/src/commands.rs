@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 暴露给前端的 Tauri 命令。
-//!
-//! 所有会触碰文件系统 / 注册表的操作都在 `spawn_blocking` 线程上执行，
-//! 避免阻塞 WebView 的 IPC。
+//! 暴露给前端的 Tauri 命令；文件系统与注册表操作放入阻塞线程。
 
 use std::sync::Mutex;
 
@@ -320,10 +317,7 @@ fn display_version(version: &str) -> String {
         version.to_string()
     }
 }
-/// 诊断接口：返回版本、提权状态、待清理文件、受保护字体统计。
-///
-/// 界面目前不调用它（状态栏已移除），保留给排障脚本 / 开发者控制台使用；
-/// 删除前请先确认没有外部工具依赖。
+/// 诊断接口：版本、提权状态、待清理文件与受保护字体统计。
 #[tauri::command]
 pub fn app_info(app: tauri::AppHandle) -> AppInfo {
     let (system_count, core_count) = system_fonts::index().counts();
@@ -404,10 +398,7 @@ fn is_system_fonts_dir(path: &std::path::Path) -> bool {
     }
 }
 
-/// 用 Shell 接口在资源管理器里选中文件。
-///
-/// SHOpenFolderAndSelectItems 要求 STA：Tauri 命令线程的 COM 套间可能已是 MTA，
-/// 所以单独起一个线程自己初始化 STA，避免 RPC_E_CHANGED_MODE。
+/// 在资源管理器中选中文件；使用独立 STA 线程调用 Shell 接口。
 fn select_in_explorer(path: &str) -> Result<(), String> {
     let path = path.to_owned();
     std::thread::spawn(move || unsafe { select_in_explorer_sta(&path) })

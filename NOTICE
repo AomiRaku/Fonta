@@ -52,6 +52,7 @@ Build Tools
   @tauri-apps/cli                   Apache-2.0 OR MIT   https://tauri.app
   tauri-build                       Apache-2.0 OR MIT   https://tauri.app
   TypeScript                        Apache-2.0          https://www.typescriptlang.org
+  @types/node                       MIT                 https://github.com/DefinitelyTyped/DefinitelyTyped
   Vite                              MIT                 https://vite.dev
 
   Build tools are used to produce the application and are not included in the

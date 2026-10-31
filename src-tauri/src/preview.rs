@@ -1,14 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 预览样字的 Rust 栅格化。
-//!
-//! 为什么不用 WebView 的字体：Chromium 会把加载过的字体文件缓存在渲染进程里，
-//! 删除 `FontFace`、重载页面、甚至 Worker 被销毁都不会释放，滚一遍全库能涨到 1GB。
-//! 因此样字改由 Rust 渲染成位图，前端只贴图，WebView 不再接触任何字体文件。
-//!
-//! 字体里没有的字符直接跳过（不做字形回退）：英文字体展示中文时留空，
-//! 而不是用系统字体冒充该字体的字形。`max_width > 0` 时按词 / 字符折行。
+//! 预览样字的 Rust 栅格化；WebView 不加载字体文件。
+//! 缺失字符不回落；`max_width > 0` 时按词或字符折行。
 
 use std::collections::{HashMap, VecDeque};
 use std::fs::File;
