@@ -159,7 +159,7 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 首次失败后最多重试 4 次；仍失败则把 `disabled\` 里剩余的字体文件复制到
 `桌面\FontFox Uninstalled Fonts`（兼容 OneDrive 桌面），并提示可手动重新安装。
 
-`POSTUNINSTALL` 默认删除 `%USERPROFILE%\.FontFox\`；带 `/UPDATE` 时跳过恢复与删除。若恢复最终失败（`--restore-fonts` 以非零退出码结束），
+安装器在已有安装上直接覆盖，不显示卸载选项，安装目录固定为上次安装位置且不可编辑；卸载仍通过系统「应用」或应用自身入口执行。`POSTUNINSTALL` 默认删除 `%USERPROFILE%\.FontFox\`；带 `/UPDATE` 时跳过恢复与删除。若恢复最终失败（`--restore-fonts` 以非零退出码结束），
 则保留该目录，避免隔离字体在复制不完整时被一并删除。恢复结果会写入 `%TEMP%\fontfox-restore.log`。
 
 ## 已知边界
@@ -195,7 +195,7 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 - 启动后静默检查（仅「检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
 - 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。
 - Release 正文只取第一个 `***` 之前的内容，再按 `---` 分为中文 / 英文；当前语言代码为 `zh-*` 时取中文，否则取英文，空段回退另一段。按纯文本展示，不渲染 Markdown。
-- 下载地址为 `https://github.com/AomiRaku/font-fox/releases/download/v[版本号]/FontFox_[版本号]_x64.exe`；`npm run tauri:build` 会在打包后自动重命名为该格式；安装包写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
+- 下载地址为 `https://github.com/AomiRaku/font-fox/releases/latest/download/FontFox_[版本号]_x64.exe`；`npm run tauri:build` 会在打包后自动重命名为该格式；安装包写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
 ## 安装器外观
 
 - 欢迎页 / 完成页左侧插图：`docs/img/install.bmp`（164×314 BMP），由 `bundle.windows.nsis.sidebarImage` 引用。

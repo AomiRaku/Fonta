@@ -41,6 +41,7 @@ ${StrLoc}
 !define MANUFACTURER "{{manufacturer}}"
 !define PRODUCTNAME "{{product_name}}"
 !define VERSION "{{version}}"
+!searchreplace DISPLAYVERSION "${VERSION}" ".0" ""
 !define VERSIONWITHBUILD "{{version_with_build}}"
 !define HOMEPAGE "{{homepage}}"
 !define INSTALLMODE "{{install_mode}}"
@@ -77,7 +78,7 @@ Var NoShortcutMode
 Var WixMode
 Var OldMainBinaryName
 
-Name "${PRODUCTNAME}"
+Name "${PRODUCTNAME} ${DISPLAYVERSION}"
 BrandingText "${COPYRIGHT}"
 OutFile "${OUTFILE}"
 
@@ -182,10 +183,8 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
   !insertmacro MULTIUSER_PAGE_INSTALLMODE
 !endif
 
-; 4. Custom page to ask user if he wants to reinstall/uninstall
-;    only if a previous installation was detected
+; 4. 覆盖安装：不再提供「先卸载再安装」选项
 Var ReinstallPageCheck
-Page custom PageReinstall PageLeaveReinstall
 
 ; Find a previous WiX installation and set $R6 to its uninstall registry key, or to "" if none.
 ;
@@ -411,6 +410,24 @@ Function PageLeaveReinstall
 FunctionEnd
 
 ; 5. Choose install directory page
+!if "${STARTMENUFOLDER}" == ""
+  Function DirectoryShow
+    ReadRegStr $0 SHCTX "${UNINSTKEY}" ""
+    ReadRegStr $1 SHCTX "${UNINSTKEY}" "InstallLocation"
+    IfFileExists "$INSTDIR\${MAINBINARYNAME}.exe" DirectoryLocked
+    StrCmp "$0$1" "" DirectoryEditable
+DirectoryLocked:
+    FindWindow $2 "#32770" "" $HWNDPARENT
+    GetDlgItem $0 $2 1019
+    EnableWindow $0 0
+    GetDlgItem $0 $2 1001
+    EnableWindow $0 0
+DirectoryEditable:
+    GetDlgItem $0 $HWNDPARENT 1
+    SendMessage $0 0x000C 0 "STR:$(^InstallBtn)"
+  FunctionEnd
+  !define MUI_PAGE_CUSTOMFUNCTION_SHOW DirectoryShow
+!endif
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 !insertmacro MUI_PAGE_DIRECTORY
 

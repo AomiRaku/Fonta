@@ -1,8 +1,9 @@
-﻿;Language: 'Chinese (Simplified)' (2052)
+;Language: 'Chinese (Simplified)' (2052)
 ;Translator: Kii Ali <kiiali@cpatch.org>, <kiiali@ms1.url.com.tw>, <kiiali@pchome.com.tw>, Tyson Tan <tysontan@tysontan.com>
 ;Revision date: 2020-06-03
 
 !insertmacro LANGFILE "SimpChinese" "Chinese (Simplified)" "中文(简体)" "Hanyu (Jiantizi)"
+${LangFileString} FontFoxInstall "安装"
 
 !ifdef MUI_WELCOMEPAGE
   ${LangFileString} MUI_TEXT_WELCOME_INFO_TITLE "欢迎使用 $(^NameDA) 安装程序"

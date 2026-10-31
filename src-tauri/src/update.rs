@@ -16,7 +16,7 @@ use tauri::{AppHandle, Emitter};
 const REPO: &str = "AomiRaku/font-fox";
 const GITHUB_API: &str = "https://api.github.com";
 const MIRROR_PREFIX: &str = "https://gh-proxy.org/";
-const DOWNLOAD_BASE: &str = "https://github.com/AomiRaku/font-fox/releases/download";
+const DOWNLOAD_BASE: &str = "https://github.com/AomiRaku/font-fox/releases/latest/download";
 const DOWNLOAD_EVENT: &str = "update-download";
 
 static DOWNLOAD_CANCEL: AtomicBool = AtomicBool::new(false);
@@ -86,21 +86,21 @@ fn normalize_version(raw: &str) -> Result<String, String> {
     Ok(text.to_string())
 }
 
-fn api_url(source: &str, version: Option<&str>) -> String {
+fn api_url(source: &str, tag: Option<&str>) -> String {
     let base = if source == "mirror" {
         format!("{MIRROR_PREFIX}{GITHUB_API}")
     } else {
         GITHUB_API.to_string()
     };
-    match version {
-        Some(version) => format!("{base}/repos/{REPO}/releases/tags/v{version}"),
+    match tag {
+        Some(tag) => format!("{base}/repos/{REPO}/releases/tags/{tag}"),
         None => format!("{base}/repos/{REPO}/releases/latest"),
     }
 }
 
 fn download_url(source: &str, version: &str) -> String {
     let file = format!("FontFox_{version}_x64.exe");
-    let url = format!("{DOWNLOAD_BASE}/v{version}/{file}");
+    let url = format!("{DOWNLOAD_BASE}/{file}");
     if source == "mirror" {
         format!("{MIRROR_PREFIX}{url}")
     } else {
@@ -116,8 +116,8 @@ fn client() -> Result<reqwest::blocking::Client, String> {
         .map_err(|err| format!("创建网络客户端失败：{err}"))
 }
 
-fn fetch_release(source: &str, version: Option<&str>) -> Result<ReleaseResponse, String> {
-    let url = api_url(source, version);
+fn fetch_release(source: &str, tag: Option<&str>) -> Result<ReleaseResponse, String> {
+    let url = api_url(source, tag);
     let response = client()?
         .get(url)
         .timeout(Duration::from_secs(20))
@@ -156,7 +156,10 @@ pub async fn check_update(source: String) -> Result<Option<UpdateInfo>, String> 
 pub async fn release_notes(source: String, version: String) -> Result<String, String> {
     let version = normalize_version(&version)?;
     tauri::async_runtime::spawn_blocking(move || {
-        fetch_release(&source, Some(&version)).map(|release| release.body.unwrap_or_default())
+        let prefixed = format!("v{version}");
+        fetch_release(&source, Some(&prefixed))
+            .or_else(|_| fetch_release(&source, Some(&version)))
+            .map(|release| release.body.unwrap_or_default())
     })
     .await
     .map_err(|err| format!("读取更新日志失败：{err}"))?
