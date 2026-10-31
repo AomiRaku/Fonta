@@ -2133,6 +2133,7 @@ const GITHUB_PROFILE = "https://github.com/AomiRaku";
 const GITHUB_REPO = "https://github.com/AomiRaku/font-fox";
 const GITHUB_CONTRIBUTORS = "https://github.com/AomiRaku/font-fox/graphs/contributors";
 const GITHUB_RELEASES = "https://github.com/AomiRaku/font-fox/releases/latest";
+const GITHUB_ISSUES = "https://github.com/AomiRaku/font-fox/issues";
 
 function openExternal(url: string): void {
   void api.openUrl(url).catch((err) => toast(errorText(err), true));
@@ -2489,7 +2490,10 @@ async function openAbout(): Promise<void> {
   ) as HTMLButtonElement;
   contributors.type = "button";
   contributors.addEventListener("click", () => openExternal(GITHUB_CONTRIBUTORS));
-  links.append(openSource, contributors);
+  const feedback = el("button", "about__link link", t("about.feedback")) as HTMLButtonElement;
+  feedback.type = "button";
+  feedback.addEventListener("click", () => openExternal(GITHUB_ISSUES));
+  links.append(openSource, contributors, feedback);
 
   main.append(logo, wordmark, tagline, version, credits, licenseLine, links);
 
