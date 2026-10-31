@@ -78,10 +78,7 @@ pub fn expand_env(input: &str) -> String {
     out
 }
 
-/// 把注册表 Data 解析为绝对路径。
-///
-/// Data 可能是纯文件名（HKLM 常见），也可能是绝对路径（HKCU 常见），
-/// 因此不能只按作用域拼目录，必须先判断是否为绝对路径。
+/// 把注册表 Data 解析为绝对路径；同时兼容文件名与绝对路径。
 pub fn resolve_font_path(scope: Scope, data: &str) -> PathBuf {
     let expanded = expand_env(data.trim());
     let candidate = Path::new(&expanded);
@@ -294,9 +291,6 @@ pub fn clear_inactive_fonts() -> Result<(), String> {
 }
 
 /// 当前进程是否具备管理员权限。
-///
-/// 用“能否以写方式打开 HKLM 字体键”来判断，避免为一次权限检查引入
-/// `OpenProcessToken` 相关的整组 FFI。
 pub fn is_elevated() -> bool {
     RegKey::predef(HKEY_LOCAL_MACHINE)
         .open_subkey_with_flags(FONTS_SUBKEY, KEY_READ | KEY_WRITE | KEY_WOW64_64KEY)

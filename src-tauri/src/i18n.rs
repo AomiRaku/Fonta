@@ -1,20 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 界面语言包：外挂 `.ini`，源文件在项目根目录 `langBuild/`，构建时复制到 exe 同级 `lang/`。
-//!
-//! 语言文件位于可执行文件同级的 `lang/<name>.ini`。
-//!
-//! 文件结构：
-//! ```ini
-//! [meta]
-//! LanguageName=简体中文
-//! LanguageCode=zh-CN
-//! Translator=羽梦千景 Raku Inkyetta
-//!
-//! [ui]
-//! app.name=FontFox
-//! ```
+//! 外挂语言包的扫描、解析与读取。
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -153,10 +140,7 @@ fn candidates(name: &str) -> Vec<PathBuf> {
     paths
 }
 
-/// 读取语言包。
-///
-/// 不做任何回退：语言文件缺失或某个键缺失时，界面直接显示键名（例如
-/// `ctx.removeFromCollection`），方便一眼看出漏翻的地方。
+/// 读取语言包；缺失文件或键时返回空值，由界面显示键名。
 pub fn load(name: &str) -> LanguagePack {
     let trimmed = name.trim();
     let id = if trimmed.is_empty() {

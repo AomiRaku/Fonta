@@ -1,15 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 通过文件所有权判断「这个字体是不是系统自带的」。
-//!
-//! Windows 没有「系统字体」标志位，但随系统分发的字体文件有一个稳定特征：
-//! 所有者是 `NT SERVICE\TrustedInstaller`（或 SYSTEM），由 Windows 资源保护
-//! 托管，普通管理员也删不掉。第三方字体即使装进 `C:\Windows\Fonts`，所有者
-//! 也是 `Administrators` 或当前用户。
-//!
-//! 探测失败的极端情况下退回 `SfcIsFileProtected`（Windows 资源保护自己的判定），
-//! 再失败就当作「不是系统字体」，交给静态清单兜底。
+//! 通过文件所有者判断字体是否由系统保护。
 
 use std::collections::HashMap;
 use std::path::Path;

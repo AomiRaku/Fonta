@@ -59,7 +59,6 @@ pub fn run() {
             commands::set_fonts_hidden,
             commands::delete_fonts,
             commands::clean_missing,
-            commands::retry_pending_deletes,
             commands::get_settings,
             commands::save_settings,
             commands::load_library,
@@ -237,12 +236,7 @@ fn copy_quarantined_to_desktop() -> (String, usize) {
     }
     (target_dir.to_string_lossy().to_string(), copied)
 }
-/// 卸载前调用：把两种停用模式下的字体全部恢复。
-///
-/// - 动态模式：把 `disabled\` 里的隔离文件迁回用户字体目录并重新注册；
-/// - Windows 模式：删除 `Inactive Fonts` 值。
-///
-/// 返回恢复的隔离字体数量；失败时返回错误描述（卸载流程只记录日志，不阻塞）。
+/// 卸载前恢复停用字体；失败时返回错误描述。
 pub fn restore_fonts_for_uninstall() -> Result<usize, String> {
     let restored = crate::mode::restore_all()?;
     let mut errors: Vec<String> = Vec::new();

@@ -14,7 +14,7 @@
     "third-party": "pwsh -NoProfile -File tools/gen-third-party.ps1",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build",
+    "tauri:build": "tauri build && node tools/rename-installer.mjs",
     "tauri:build:exe": "tauri build --no-bundle"
   },
   "dependencies": {

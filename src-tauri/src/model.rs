@@ -104,8 +104,6 @@ pub struct FontEntry {
     pub protection: Protection,
     /// 是否被列在 `Font Management\Inactive Fonts` 中。
     pub hidden: bool,
-    /// 是否允许删除（受保护 / 系统作用域 / 共享系统文件都不允许）。
-    pub deletable: bool,
     /// 删除是否需要管理员权限。
     pub requires_elevation: bool,
     /// 字体 `name` 表中的版本号。
@@ -114,13 +112,12 @@ pub struct FontEntry {
     pub copyright: String,
 }
 
-/// `list_fonts` 的返回体，附带一次扫描的耗时用于状态栏展示。
+/// `list_fonts` 的返回体。
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FontListPayload {
     pub fonts: Vec<FontEntry>,
-    pub scanned_ms: u64,
-    pub locked_files: Vec<String>,
+      pub locked_files: Vec<String>,
 }
 
 /// 隐藏 / 显示操作的结果。

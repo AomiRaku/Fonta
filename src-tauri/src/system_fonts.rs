@@ -1,16 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 保护判定。
-//!
-//! 判定完全离线，依赖两份独立维护的内置清单：
-//!
-//! 1. `data/system_fonts.json` —— Windows 系统字体兼容清单，仅包含字体
-//!    家族名与文件名，按文件名 + 家族名匹配；
-//! 2. `data/core_fonts.json` —— 手工维护的补充清单，覆盖主清单遗漏的
-//!    随系统分发字体（光栅字体、语言包字体、Noto CJK 等）。
-//!
-//! 只有 HKLM 作用域的字体可能被判定为“受保护”；HKCU 字体永远可删除。
+//! 系统字体保护清单与判定。
 
 use std::collections::HashSet;
 use std::sync::OnceLock;
@@ -112,11 +103,7 @@ pub fn normalize(input: &str) -> String {
     out.trim_end().to_string()
 }
 
-/// 判定字体是否受保护：优先看文件所有权，无法判断时用系统字体清单兜底。
-///
-/// * `file_name` —— 注册表 Data 指向的文件名；
-/// * `family_names` —— 字体文件内的全部家族名（TTC 可能有多个）以及完整名；
-/// * `is_raster` —— 是否为 `.fon` / `.fnt` 光栅字体。
+/// 判定字体是否受保护：优先看所有权，否则查系统字体清单。
 pub fn evaluate(
     scope: Scope,
     system_owned: bool,

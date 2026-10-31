@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 系统「应用模式」主题读取与变更推送。
-//!
-//! Windows 有两套独立设置：
-//! - `SystemUsesLightTheme`：窗口边框、任务栏等系统元素的明暗；
-//! - `AppsUseLightTheme`：应用（UWP / WinUI / WebView2）应遵循的明暗。
-//!
-//! WebView2 的 `prefers-color-scheme` 与 Tauri 的 `Window::theme()` 未必都跟随
-//! **应用模式**，所以这里直接读注册表，并在变化时通过事件推给前端。
+//! 读取系统应用明暗，并在变化时通知前端。
 
 use std::time::Duration;
 

@@ -5,7 +5,6 @@
 
 use std::collections::HashSet;
 use std::path::PathBuf;
-use std::time::Instant;
 
 use rayon::prelude::*;
 
@@ -53,7 +52,6 @@ fn collect_scope(scope: Scope, out: &mut Vec<RawEntry>) -> Vec<String> {
 ///
 /// 性能目标：500+ 字体在 1–2 秒内完成（解析在 rayon 线程池上并行）。
 pub fn scan() -> FontListPayload {
-    let started = Instant::now();
 
     let mut raw: Vec<RawEntry> = Vec::new();
     let mut errors = collect_scope(Scope::System, &mut raw);
@@ -195,7 +193,6 @@ pub fn scan() -> FontListPayload {
                 protected: protection.is_protected(),
                 protection,
                 hidden: false,
-                deletable: !protection.is_protected(),
                 requires_elevation: raw.scope == Scope::System,
                 version: meta.as_ref().map(|m| m.version.clone()).unwrap_or_default(),
                 copyright: meta
@@ -218,7 +215,6 @@ pub fn scan() -> FontListPayload {
 
     FontListPayload {
         fonts,
-        scanned_ms: started.elapsed().as_millis() as u64,
         locked_files: errors,
     }
 }

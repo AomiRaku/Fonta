@@ -72,7 +72,6 @@ export interface FontEntry {
   protected: boolean;
   protection: Protection;
   hidden: boolean;
-  deletable: boolean;
   requiresElevation: boolean;
   version: string;
   copyright: string;
@@ -80,7 +79,6 @@ export interface FontEntry {
 
 export interface FontListPayload {
   fonts: FontEntry[];
-  scannedMs: number;
   lockedFiles: string[];
 }
 
@@ -144,7 +142,6 @@ export type UpdateSource = "github" | "mirror";
 export interface UpdateInfo {
   latestVersion: string;
   notes: string;
-  downloadUrl: string;
 }
 
 export interface UpdateProgress {
@@ -160,8 +157,6 @@ export interface AboutPayload {
   licenseText: string;
   noticeText: string;
   thirdPartyText: string;
-  configPath: string;
-  pendingPath: string;
 }
 
 /** 预览文本为空时使用的默认文案（输入框留空 ≠ 没有预览文字）。 */

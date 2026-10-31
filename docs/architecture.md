@@ -64,16 +64,15 @@
 
 | 命令 | 入参 | 返回 |
 | --- | --- | --- |
-| `list_fonts` | — | `{ fonts, scannedMs, lockedFiles }`（详情字段 `families/version/copyright` 置空，按需取） |
+| `list_fonts` | — | `{ fonts, lockedFiles }`（详情字段 `families/version/copyright` 置空，按需取） |
 | `font_extras` | `ids` | `[{ id, families, version, copyright }]` |
 | `render_preview` | `path, text, size, color, dpr, maxWidth?, weight?, fresh?, fallback?` | PNG data URL；缺字且不允许回退时抛 `NO_GLYPHS` |
 | `set_fonts_hidden` | `ids, hidden` | `{ changed, errors }` |
 | `delete_fonts` | `ids` | `{ items, elevationRequired, cancelled, removedCount, lockedCount, errors }` |
 | `clean_missing` | `ids` | 同上 |
-| `retry_pending_deletes` | — | 清理成功的数量 |
 | `get_settings` / `save_settings` | `settings` | 设置结构 |
 | `load_library` / `save_library` | `library` | 收藏与字体单 |
-| `about` | — | 版本、许可证名称与全文、NOTICE 全文、第三方许可证全文、配置与待清理路径 |
+| `about` | — | 版本、许可证名称与全文、NOTICE 全文、第三方许可证全文 |
 | `app_info` | — | 诊断用：版本、提权状态、待清理清单、受保护字体统计、字体目录 |
 | `reveal_path` | `path` | 在资源管理器中定位（系统字体目录走 `shell:Fonts`） |
 | `registry_location` | `scope` | 注册表路径（详情面板展示） |
@@ -81,9 +80,9 @@
 | `load_language` | `id` | 解析后的语言包（含 `[meta] LanguageCode`） |
 | `list_languages` | — | exe 同级 `lang/*.ini` 的 `{ id, name, code }` 列表 |
 | `system_locale` | — | 当前 Windows 用户区域设置（BCP 47，如 `zh-CN`） |
-| `check_update` | `source` | `UpdateInfo \| null`：最新版本、原始 release 正文、资产下载地址 |
+| `check_update` | `source` | `UpdateInfo \| null`：最新版本、原始 release 正文 |
 | `release_notes` | `source`, `version` | 指定版本 Release 的原始正文 |
-| `download_update` | `source`, `version`, `url` | 下载完成后的临时安装包路径 |
+| `download_update` | `source`, `version` | 下载完成后的临时安装包路径 |
 | `cancel_update_download` | — | 取消当前下载并删除临时文件 |
 | `install_update` | `path` | 启动安装包并退出应用 |
 | `open_devtools` | — | 打开当前窗口 DevTools（需要 tauri `devtools` feature） |
@@ -134,12 +133,12 @@
 
 ## 语言包
 
-- 唯一源文件在 `langBuild/<id>.ini`，`[section]` + `key=value`，`{name}` 为插值占位；`[meta] LanguageCode` 为 BCP 47 代码，用于系统语言匹配。
+- 语言包源目录为 `langBuild/<id>.ini`，`[section]` + `key=value`，`{name}` 为插值占位；`[meta] LanguageCode` 为 BCP 47 代码，用于系统语言匹配。
 - 构建期复制到 `target/<profile>/lang/` 并随 `bundle.resources` 打进安装目录。
 - 文案中的字面 `\n` 由前端 `t()` 转成换行；只有对话框正文、设置项描述 / 提示等段落元素启用 `white-space: pre-line`，其余单行控件不换行。
 - 运行时由 Rust 解析成 `{ "section.key": "文本" }` 交给前端；**没有内置回退**，缺失键会直接
   显示键名，便于发现漏翻。
-- 设置默认「使用系统语言」；先精确匹配 `LanguageCode`，`zh-*` 未匹配回退 `zh-HK`，其他语言未匹配时优先同主语言，再回退 `en-US`，最后 `zh-CN`。
+- 设置默认「使用系统语言」；先精确匹配 `LanguageCode`，简体中文区域回退 `zh-CN`，繁体区域回退 `zh-TW`，其余 `zh-*` 回退 `zh-HK`，其他语言优先同主语言，再回退 `en-US`，最后 `zh-CN`。
 
 ## 构建
 

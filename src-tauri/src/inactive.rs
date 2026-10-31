@@ -184,8 +184,7 @@ mod tests {
             protected: false,
             protection: Protection::None,
             hidden: false,
-            deletable: true,
-            requires_elevation: false,
+                requires_elevation: false,
             version: String::new(),
             copyright: String::new(),
         }

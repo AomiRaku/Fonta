@@ -22,8 +22,6 @@ export const api = {
 
   cleanMissing: (ids: string[]) => invoke<DeleteReport>("clean_missing", { ids }),
 
-  retryPending: () => invoke<number>("retry_pending_deletes"),
-
   getSettings: () => invoke<Settings>("get_settings"),
 
   loadLibrary: () => invoke<import("./types").Library>("load_library"),
@@ -117,8 +115,8 @@ export const api = {
     invoke<string>("release_notes", { source, version }),
 
   /** 下载更新，返回临时安装包路径。 */
-  downloadUpdate: (source: string, version: string, url: string) =>
-    invoke<string>("download_update", { source, version, url }),
+  downloadUpdate: (source: string, version: string) =>
+    invoke<string>("download_update", { source, version }),
 
   /** 取消当前更新下载。 */
   cancelUpdateDownload: () => invoke<void>("cancel_update_download"),

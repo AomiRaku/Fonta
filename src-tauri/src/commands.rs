@@ -5,6 +5,8 @@
 
 use std::sync::Mutex;
 
+static HIDDEN_LOCK: Mutex<()> = Mutex::new(());
+
 use serde::Serialize;
 use tauri::Manager;
 
@@ -90,8 +92,6 @@ pub struct AboutPayload {
     pub license_text: String,
     pub notice_text: String,
     pub third_party_text: String,
-    pub config_path: String,
-    pub pending_path: String,
 }
 
 #[tauri::command]
@@ -141,6 +141,9 @@ pub async fn set_fonts_hidden(
         let ids_for_enable = ids.clone();
         let entries_for_disable = entries.clone();
         let result = tauri::async_runtime::spawn_blocking(move || {
+            let _guard = HIDDEN_LOCK
+                .lock()
+                .map_err(|_| "字体状态锁不可用。".to_string())?;
             if hidden {
                 crate::mode::disable(&entries_for_disable)
             } else {
@@ -162,8 +165,18 @@ pub async fn set_fonts_hidden(
         return Ok(report);
     }
 
-    let report = tauri::async_runtime::spawn_blocking(move || inactive::set_hidden(&entries, hidden))
-        .await
+    let report = tauri::async_runtime::spawn_blocking(move || {
+        let _guard = match HIDDEN_LOCK.lock() {
+            Ok(guard) => guard,
+            Err(_) => {
+                let mut report = HiddenReport::default();
+                report.errors.push("字体状态锁不可用。".to_string());
+                return report;
+            }
+        };
+        inactive::set_hidden(&entries, hidden)
+    })
+    .await
         .map_err(|e| format!("隐藏状态写入失败：{}", e))?;
     if report.errors.is_empty() {
         state.set_hidden_flags(&ids, hidden);
@@ -279,13 +292,6 @@ pub async fn clean_missing(
 }
 
 #[tauri::command]
-pub async fn retry_pending_deletes() -> Result<usize, String> {
-    tauri::async_runtime::spawn_blocking(delete::retry_pending)
-        .await
-        .map_err(|e| format!("重试清理失败：{}", e))
-}
-
-#[tauri::command]
 pub fn get_settings() -> Settings {
     settings_store::load()
 }
@@ -342,8 +348,6 @@ pub fn about(app: tauri::AppHandle) -> AboutPayload {
         license_text: include_str!("../../LICENSE").to_string(),
         notice_text: include_str!("../../NOTICE").to_string(),
         third_party_text: include_str!("../../THIRD_PARTY_LICENSES.txt").to_string(),
-        config_path: crate::config::config_file().to_string_lossy().to_string(),
-        pending_path: delete::pending_file().to_string_lossy().to_string(),
     }
 }
 

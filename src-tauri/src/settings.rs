@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 用户偏好：`%USERPROFILE%\.FontFox\config.ini`。
-//!
-//! 该文件是应用设置的唯一归属，卸载时删掉整个 `.FontFox` 目录即可。
-//! 字体隐藏状态不在这里，因为那是用户对字体的功能状态，不属于应用设置。
+//! 用户偏好读写与取值校验。
 
 use crate::config;
 use crate::model::Settings;

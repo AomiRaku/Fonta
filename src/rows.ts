@@ -4,7 +4,7 @@
 /** 列表行 / 分组头的 DOM 构造。 */
 
 import { icon } from "./icons";
-import { t } from "./i18n";
+import { languageLabel, t } from "./i18n";
 import {
   defaultPreviewText,
   PREVIEW_FONT_SIZE,
@@ -175,7 +175,7 @@ export function buildCompactRow(
   if (style) nameCell.appendChild(el("span", "name__style", style));
   row.appendChild(nameCell);
 
-  row.appendChild(el("div", "cell cell--lang", entry.language || t("language.unknown")));
+  row.appendChild(el("div", "cell cell--lang", languageLabel(entry.language)));
 
   row.appendChild(
     el("div", "cell cell--size", entry.exists ? formatBytes(entry.size) : "—"),
@@ -458,7 +458,7 @@ export function buildFamilyRow(
         // 折叠时补充语言与总大小；展开时这两格留空，只保留总控开关。
         // 展开动画期间保留旧内容并渐隐下移，结束后再清空
         const keepMeta = !options.expanded || options.animateMeta === "expand";
-        const lang = el("div", "cell cell--lang", keepMeta ? options.language : "");
+        const lang = el("div", "cell cell--lang", keepMeta ? languageLabel(options.language) : "");
         const size = el("div", "cell cell--size", keepMeta ? options.totalSize : "");
         row.appendChild(lang);
         row.appendChild(size);

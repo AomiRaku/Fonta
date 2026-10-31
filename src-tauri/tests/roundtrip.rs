@@ -58,7 +58,6 @@ fn make_entry(path: &std::path::Path) -> FontEntry {
         protected: false,
         protection: Protection::None,
         hidden: false,
-        deletable: true,
         requires_elevation: false,
         version: String::new(),
         copyright: String::new(),

@@ -13,7 +13,7 @@ import logoUrl from "../docs/img/Logo.svg?url";
 import wordmarkLightUrl from "../docs/img/Text_L.svg?url";
 import wordmarkDarkUrl from "../docs/img/Text_D.svg?url";
 import { icon, mountIcons, type IconName } from "./icons";
-import { applyStaticTranslations, languageCode, setLanguagePack, t } from "./i18n";
+import { applyStaticTranslations, languageCode, languageLabel, setLanguagePack, t } from "./i18n";
 import { renderDetail, renderFamilyDetail } from "./detail";
 import { protectionLabel } from "./types";
 import {
@@ -559,6 +559,7 @@ function toggleFilterMenu(): void {  if (isFilterMenuOpen()) {
   openFilterMenu(dom.filter, {
     filters: state.filters,
     languages: availableLanguages(),
+    languageLabel,
     onChange: () => {
       applyFilter();
       rebuild();
@@ -1788,6 +1789,7 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
   if (targets.length === 0) return;
   // 只要还有显示的，就整体隐藏；全隐藏时整体显示
   const nextHidden = targets.some((e) => !e.hidden);
+  const previousHidden = new Map(targets.map((entry) => [entry.id, entry.hidden]));
   // 后台写入通常只要几毫秒；保留一个最短禁用窗口，避免“看起来没禁用”而被连续点击
   const startedAt = performance.now();
   const minPendingMs = 800;
@@ -1816,7 +1818,7 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
       return;
     }
     if (report.errors.length > 0) {
-      applyHiddenState(targets, !nextHidden);
+      restoreHiddenStates(previousHidden);
       outcome = "error";
       message = report.errors.join("；");
     } else {
@@ -1832,7 +1834,7 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
   } catch (err) {
     // 写入失败时把界面回滚到原状态；已被更新的点击覆盖则交给新请求处理
     if (!superseded()) {
-      applyHiddenState(targets, !nextHidden);
+      restoreHiddenStates(previousHidden);
       outcome = "error";
       message = errorText(err);
     } else {
@@ -1855,6 +1857,15 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
 }
 
 /** 把隐藏状态落到模型并就地刷新界面（不重建整表，保留开关动画）。 */
+function restoreHiddenStates(previous: Map<string, boolean>): void {
+  for (const entry of state.fonts) {
+    const hidden = previous.get(entry.id);
+    if (hidden !== undefined) entry.hidden = hidden;
+  }
+  applyFilter();
+  renderAll();
+}
+
 function applyHiddenState(targets: FontEntry[], hidden: boolean): void {
   for (const entry of targets) entry.hidden = hidden;
 
@@ -2376,11 +2387,7 @@ async function openDownloadDialog(update: UpdateInfo): Promise<void> {
   }
 
   try {
-    const path = await api.downloadUpdate(
-      state.settings.updateSource,
-      update.latestVersion,
-      update.downloadUrl,
-    );
+    const path = await api.downloadUpdate(state.settings.updateSource, update.latestVersion);
     finished = true;
     if (cancelled) return;
     close();
@@ -2616,8 +2623,20 @@ async function resolveLanguageId(
 
   const primary = normalized.split("-")[0];
   if (primary === "zh") {
-    const traditional = list.find((item) => normalizeLocale(item.code) === "zh-hk");
-    if (traditional) return traditional.id;
+    const simplified =
+      normalized.includes("hans") ||
+      normalized === "zh-sg" ||
+      normalized === "zh-my" ||
+      normalized === "zh-cn";
+    const preferred = simplified
+      ? ["zh-cn"]
+      : normalized.includes("hant")
+        ? ["zh-tw", "zh-hk"]
+        : ["zh-hk"];
+    for (const code of preferred) {
+      const match = list.find((item) => normalizeLocale(item.code) === code);
+      if (match) return match.id;
+    }
   } else {
     const sameLanguage = list.find(
       (item) => normalizeLocale(item.code).split("-")[0] === primary,
@@ -2747,7 +2766,10 @@ function openSettings(): void {
       state.settings.language = id;
       scheduleSave();
       applyStaticTranslations();
+      document.documentElement.lang = languageCode() || "zh-CN";
       document.title = t("app.name");
+      applyDetailOpen(state.settings.detailOpen);
+      void syncMaximizeLabel();
       renderSidebar();
       syncToolbar();
       renderAll();
@@ -3504,6 +3526,18 @@ function switchViewMode(mode: Settings["viewMode"]): void {
   }
 }
 /** 展开 / 收起右侧详情面板（持久化到设置）。 */
+async function syncMaximizeLabel(): Promise<void> {
+  try {
+    const maximized = await appWindow.isMaximized();
+    document.documentElement.dataset.maximized = String(maximized);
+    const label = t(maximized ? "window.restore" : "window.maximize");
+    dom.winMax.title = label;
+    dom.winMax.setAttribute("aria-label", label);
+  } catch {
+    /* 查询失败时保持现状 */
+  }
+}
+
 function applyDetailOpen(open: boolean): void {
   state.settings.detailOpen = open;
   document.documentElement.dataset.detail = open ? "open" : "closed";
@@ -3867,7 +3901,7 @@ function rowMenuItems(entries: FontEntry[]): MenuItem[] {
       label: t("ctx.unfavorite"),
       run: () => toggleFavorites(entries),
     });
-  } else {
+  } else if (state.view.kind === "collection") {
     items.push({
       label: t("ctx.removeFromCollection"),
       run: () => removeEntriesFromCollection(entries),
@@ -3954,20 +3988,9 @@ function bindWindowControls(): void {
     void appWindow.toggleMaximize();
   });
 
-  const syncMaximized = async (): Promise<void> => {
-    try {
-      const maximized = await appWindow.isMaximized();
-      document.documentElement.dataset.maximized = String(maximized);
-      const label = t(maximized ? "window.restore" : "window.maximize");
-      dom.winMax.title = label;
-      dom.winMax.setAttribute("aria-label", label);
-    } catch {
-      /* 查询失败时保持现状 */
-    }
-  };
-  void syncMaximized();
+  void syncMaximizeLabel();
   void appWindow.onResized(() => {
-    void syncMaximized();
+    void syncMaximizeLabel();
   });
 }
 
@@ -4147,10 +4170,23 @@ async function boot(): Promise<void> {
 
   try {
     const choices = await languageChoices();
+    if (
+      choices.length > 0 &&
+      state.settings.language !== SYSTEM_LANGUAGE &&
+      !choices.some((choice) => choice.id === state.settings.language)
+    ) {
+      state.settings.language = SYSTEM_LANGUAGE;
+      void api.saveSettings(state.settings).catch(() => undefined);
+    }
     const languageId = await resolveLanguageId(state.settings.language, choices);
-    setLanguagePack(await api.loadLanguage(languageId));
+    let pack = await api.loadLanguage(languageId);
+    if (Object.keys(pack.entries).length === 0 && languageId !== "zh-cn") {
+      pack = await api.loadLanguage("zh-cn");
+    }
+    setLanguagePack(pack);
+    document.documentElement.lang = pack.code || "zh-CN";
   } catch {
-    /* 语言包读取失败时沿用内置默认文案 */
+    /* 语言包读取失败时保留键名，便于发现安装问题 */
   }
   applyStaticTranslations();
   mountIcons();

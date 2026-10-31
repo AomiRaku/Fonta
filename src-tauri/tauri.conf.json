@@ -47,6 +47,7 @@
     "license": "Apache-2.0",
     "licenseFile": "../LICENSE",
     "windows": {
+      "minimumWebview2Version": "110.0.1587.0",
       "nsis": {
         "displayLanguageSelector": false,
         "installerIcon": "icons/icon_ins.ico",

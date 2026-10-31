@@ -4,7 +4,7 @@
 /** 右侧详情面板：单选详情 / 多选摘要 / 空态。 */
 
 import { icon } from "./icons";
-import { t } from "./i18n";
+import { languageList, t } from "./i18n";
 import {
   defaultPreviewText,
   PREVIEW_FONT_SIZE,
@@ -373,7 +373,7 @@ export function renderDetail(
   fontRows.push(
     kv(
       t("detail.language"),
-      entry.languages?.length ? entry.languages.join("、") : t("language.unknown"),
+      entry.languages?.length ? languageList(entry.languages) : t("language.unknown"),
     ),
   );
   if (entry.version) fontRows.push(kv(t("detail.version"), entry.version));

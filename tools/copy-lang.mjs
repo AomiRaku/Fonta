@@ -19,7 +19,7 @@ const targetRoot = join(root, "src-tauri", "target");
 
 if (!existsSync(source)) {
   console.error(`[lang] 找不到语言目录：${source}`);
-  process.exit(0);
+  process.exit(1);
 }
 
 const arg = (process.argv[2] ?? "debug").toLowerCase();
@@ -27,7 +27,8 @@ const profiles = arg === "both" ? ["debug", "release"] : [arg];
 
 const files = readdirSync(source).filter((name) => name.toLowerCase().endsWith(".ini"));
 if (files.length === 0) {
-  console.warn("[lang] langBuild 里没有 .ini 文件");
+  console.error("[lang] langBuild 里没有 .ini 文件");
+  process.exit(1);
 }
 
 for (const profile of profiles) {

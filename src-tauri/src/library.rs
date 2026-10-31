@@ -18,7 +18,7 @@ const LIBRARY_FILE: &str = "library.json";
 pub struct Collection {
     pub id: String,
     pub name: String,
-    /// 标记颜色（十六进制，不含 #）。旧文件没有这个字段时为空。
+    /// 标记颜色（十六进制，不含 #）；字段缺失时为空。
     #[serde(default)]
     pub color: String,
     /// 字体 id 列表（`{scope}:{valueName 小写}`）。

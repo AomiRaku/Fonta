@@ -102,10 +102,8 @@ fn try_remove_file(path: &Path) -> FileDeleteOutcome {
     }
 }
 
-/// 删除一批字体。
-///
-/// `elevated` 表示当前进程是否已提权；删除 HKLM 字体必须提权。
-/// 受保护字体与「HKCU 但文件在系统字体目录」的条目一律拒绝。
+/// 删除一批字体；`elevated` 表示当前进程已提权。
+/// 受保护字体与系统目录中的 HKCU 条目一律拒绝。
 pub fn delete_entries(entries: &[FontEntry], elevated: bool) -> DeleteReport {
     let mut report = DeleteReport::default();
     let mut to_purge: Vec<FontEntry> = Vec::new();

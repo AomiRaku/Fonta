@@ -149,11 +149,7 @@ fn resolve_text(path: &str, raw: &str, fallback: bool) -> Result<String, String>
     Ok(resolved)
 }
 
-/// 取最多 24 个「字体里真的有字形」的字符。
-///
-/// 候选来自字体 cmap 的**全部子表**（含 Windows symbol 编码）：
-/// 例如 Wingdings 只把 ASCII 码位映射到图标，ttf-parser 的 unicode 查询会全部落空。
-/// 优先取 ASCII，其次按码位顺序。
+/// 从 cmap 全部子表取最多 24 个有字形的字符，优先 ASCII。
 fn cmap_sample(glyphs: &HashMap<u32, u16>) -> Option<String> {
     let mut candidates: Vec<u32> = (0x21..=0x7E).filter(|code| glyphs.contains_key(code)).collect();
     let mut rest: Vec<u32> = glyphs.keys().copied().collect();

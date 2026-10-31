@@ -51,6 +51,7 @@ export interface FilterMenuOptions {
   filters: FilterState;
   /** 设备上出现过的语言（去重后按首字母/拼音排序）。 */
   languages: string[];
+  languageLabel: (language: string) => string;
   onChange: () => void;
   onClose: () => void;
 }
@@ -236,7 +237,7 @@ function optionsFor(tab: TabKey, options: FilterMenuOptions): MenuOption[] {
       return [{ label: t("filters.noLanguage"), checked: false, toggle: () => undefined }];
     }
     return options.languages.map((language) => ({
-      label: language,
+      label: options.languageLabel(language),
       checked: filters.languages.has(language),
       toggle: () => {
         if (filters.languages.has(language)) filters.languages.delete(language);

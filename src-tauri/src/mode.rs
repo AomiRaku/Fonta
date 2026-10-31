@@ -1,14 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 动态安装 / 卸载模式：把字体从系统字体表里真正摘掉。
-//!
-//! 与 `inactive` 的区别：这里的「禁用」会删除 `HKCU\...\Fonts` 下的注册表值，
-//! 并把字体文件移到 `%USERPROFILE%\.FontFox\disabled\`。应用重启后（Adobe 系尤其）
-//! 就看不到这些字体了；启用时再把文件移回、注册表值写回。
-//!
-//! 只处理用户作用域（HKCU）的字体：系统作用域的注册与文件都在 `C:\Windows\Fonts`，
-//! 需要提权才能改动，风险也更大，因此动态模式下直接拒绝，由调用方提示用户。
+//! 动态卸载模式：注销用户字体并把文件移入隔离目录。
+//! 只处理 HKCU 用户字体。
 
 use std::path::{Path, PathBuf};
 
@@ -51,14 +45,13 @@ pub fn records() -> Vec<DisabledRecord> {
     serde_json::from_str(&text).unwrap_or_default()
 }
 
-fn save(records: &[DisabledRecord]) {
+fn save(records: &[DisabledRecord]) -> Result<(), String> {
     let dir = quarantine_dir();
-    if std::fs::create_dir_all(&dir).is_err() {
-        return;
-    }
-    if let Ok(text) = serde_json::to_string_pretty(records) {
-        let _ = std::fs::write(dir.join("disabled.json"), text);
-    }
+    std::fs::create_dir_all(&dir).map_err(|err| format!("无法创建禁用目录：{err}"))?;
+    let text = serde_json::to_string_pretty(records)
+        .map_err(|err| format!("无法序列化禁用清单：{err}"))?;
+    std::fs::write(dir.join("disabled.json"), text)
+        .map_err(|err| format!("无法写入禁用清单：{err}"))
 }
 
 fn unique_target(file_name: &str) -> PathBuf {
@@ -142,7 +135,10 @@ pub fn disable(entries: &[FontEntry]) -> Result<usize, String> {
     }
 
     records.extend(applied.iter().cloned());
-    save(&records);
+    if let Err(err) = save(&records) {
+        rollback_disable(&applied);
+        return Err(err);
+    }
     Ok(applied.len())
 }
 
@@ -195,7 +191,10 @@ pub fn enable(ids: &[String]) -> Result<usize, String> {
         records.remove(position);
     }
 
-    save(&records);
+    if let Err(err) = save(&records) {
+        rollback_enable(&applied);
+        return Err(err);
+    }
     Ok(applied.len())
 }
 
@@ -267,8 +266,7 @@ pub fn merged_entries(fonts: &mut Vec<FontEntry>) {
             protected: false,
             protection: crate::model::Protection::None,
             hidden: true,
-            deletable: true,
-            requires_elevation: false,
+                requires_elevation: false,
             version: String::new(),
             copyright: String::new(),
         });
@@ -400,7 +398,7 @@ pub fn adopt(paths: &[String]) -> usize {
         });
         added += 1;
     }
-    save(&records);
+    let _ = save(&records);
     added
 }
 
@@ -410,6 +408,6 @@ pub fn drop_missing(ids: &[String]) -> usize {
     let before = records.len();
     records.retain(|record| !ids.iter().any(|id| id == &record.id));
     let removed = before - records.len();
-    save(&records);
+    let _ = save(&records);
     removed
 }

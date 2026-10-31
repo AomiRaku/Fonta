@@ -27,7 +27,6 @@ static DOWNLOAD_ACTIVE: AtomicBool = AtomicBool::new(false);
 pub struct UpdateInfo {
     pub latest_version: String,
     pub notes: String,
-    pub download_url: String,
 }
 
 #[derive(Serialize, Clone)]
@@ -42,14 +41,6 @@ struct DownloadProgress {
 struct ReleaseResponse {
     tag_name: String,
     body: Option<String>,
-    #[serde(default)]
-    assets: Vec<ReleaseAsset>,
-}
-
-#[derive(Deserialize)]
-struct ReleaseAsset {
-    name: String,
-    browser_download_url: String,
 }
 
 fn current_version() -> String {
@@ -117,43 +108,6 @@ fn download_url(source: &str, version: &str) -> String {
     }
 }
 
-fn release_asset_url(source: &str, release: &ReleaseResponse, version: &str) -> String {
-    let asset = release
-        .assets
-        .iter()
-        .find(|asset| {
-            let name = asset.name.to_ascii_lowercase();
-            name.ends_with(".exe") && name.contains("x64")
-        })
-        .or_else(|| {
-            release
-                .assets
-                .iter()
-                .find(|asset| asset.name.to_ascii_lowercase().ends_with(".exe"))
-        });
-    match asset {
-        Some(asset) if source == "mirror" => {
-            format!("{MIRROR_PREFIX}{}", asset.browser_download_url)
-        }
-        Some(asset) => asset.browser_download_url.clone(),
-        None => download_url(source, version),
-    }
-}
-
-fn normalize_download_url(source: &str, url: &str, version: &str) -> Result<String, String> {
-    let url = url.trim();
-    if url.is_empty() {
-        return Ok(download_url(source, version));
-    }
-    if url.starts_with("https://github.com/")
-        || url.starts_with("https://gh-proxy.org/https://github.com/")
-    {
-        Ok(url.to_string())
-    } else {
-        Err("更新地址无效".to_string())
-    }
-}
-
 fn client() -> Result<reqwest::blocking::Client, String> {
     reqwest::blocking::Client::builder()
         .user_agent(format!("FontFox/{}", current_version()))
@@ -185,11 +139,9 @@ fn check_update_sync(source: &str) -> Result<Option<UpdateInfo>, String> {
     if !is_newer(&latest, &current) {
         return Ok(None);
     }
-    let download_url = release_asset_url(source, &release, &latest);
     Ok(Some(UpdateInfo {
         latest_version: latest,
         notes: release.body.unwrap_or_default(),
-        download_url,
     }))
 }
 
@@ -242,14 +194,9 @@ fn emit_progress(app: &AppHandle, downloaded: u64, total: u64, speed_kbps: f64) 
     );
 }
 
-fn download_sync(
-    app: &AppHandle,
-    source: &str,
-    version: &str,
-    url: &str,
-) -> Result<String, String> {
+fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String, String> {
     let version = normalize_version(version)?;
-    let url = normalize_download_url(source, url, &version)?;
+    let url = download_url(source, &version);
     let dir = update_dir();
     std::fs::create_dir_all(&dir).map_err(|err| format!("无法创建下载目录：{err}"))?;
     let path = download_path(&version);
@@ -257,6 +204,7 @@ fn download_sync(
 
     let mut response = client()?
         .get(url)
+        .timeout(Duration::from_secs(300))
         .send()
         .map_err(|err| format!("下载更新失败：{err}"))?;
     if !response.status().is_success() {
@@ -309,6 +257,20 @@ fn download_sync(
         return Err(format!("写入安装包失败：{err}"));
     }
     drop(file);
+    if total > 0 && downloaded != total {
+        let _ = std::fs::remove_file(&path);
+        return Err("下载的安装包不完整".to_string());
+    }
+    let valid = File::open(&path)
+        .and_then(|mut file| {
+            let mut magic = [0u8; 2];
+            file.read_exact(&mut magic).map(|_| &magic == b"MZ")
+        })
+        .unwrap_or(false);
+    if !valid {
+        let _ = std::fs::remove_file(&path);
+        return Err("下载的安装包格式无效".to_string());
+    }
     if let Ok(metadata) = std::fs::metadata(&path) {
         emit_progress(app, downloaded, total.max(metadata.len()), 0.0);
     }
@@ -320,7 +282,6 @@ pub async fn download_update(
     app: AppHandle,
     source: String,
     version: String,
-    url: String,
 ) -> Result<String, String> {
     if DOWNLOAD_ACTIVE.swap(true, AtomicOrdering::SeqCst) {
         return Err("已有更新正在下载".to_string());
@@ -328,10 +289,8 @@ pub async fn download_update(
     DOWNLOAD_CANCEL.store(false, AtomicOrdering::SeqCst);
     let app_for_task = app.clone();
     let result =
-        tauri::async_runtime::spawn_blocking(move || {
-            download_sync(&app_for_task, &source, &version, &url)
-        })
-        .await;
+        tauri::async_runtime::spawn_blocking(move || download_sync(&app_for_task, &source, &version))
+            .await;
     DOWNLOAD_ACTIVE.store(false, AtomicOrdering::SeqCst);
     result.map_err(|err| format!("下载更新失败：{err}"))?
 }
@@ -339,6 +298,43 @@ pub async fn download_update(
 #[tauri::command]
 pub fn cancel_update_download() {
     DOWNLOAD_CANCEL.store(true, AtomicOrdering::SeqCst);
+}
+
+fn launch_installer(path: &Path) -> Result<(), String> {
+    use windows_sys::Win32::Foundation::{CloseHandle, GetLastError};
+    use windows_sys::Win32::UI::Shell::{ShellExecuteExW, SHELLEXECUTEINFOW};
+
+    const ERROR_CANCELLED: u32 = 1223;
+    const SW_SHOWNORMAL: i32 = 1;
+
+    let verb: Vec<u16> = "runas\0".encode_utf16().collect();
+    let file: Vec<u16> = path
+        .as_os_str()
+        .to_string_lossy()
+        .encode_utf16()
+        .chain(std::iter::once(0))
+        .collect();
+    let params: Vec<u16> = "/UPDATE\0".encode_utf16().collect();
+    let mut info: SHELLEXECUTEINFOW = unsafe { std::mem::zeroed() };
+    info.cbSize = std::mem::size_of::<SHELLEXECUTEINFOW>() as u32;
+    info.lpVerb = verb.as_ptr();
+    info.lpFile = file.as_ptr();
+    info.lpParameters = params.as_ptr();
+    info.nShow = SW_SHOWNORMAL;
+
+    let ok = unsafe { ShellExecuteExW(&mut info) };
+    if ok == 0 {
+        let code = unsafe { GetLastError() };
+        return Err(if code == ERROR_CANCELLED {
+            "已取消管理员授权，未启动安装程序。".to_string()
+        } else {
+            format!("无法启动安装程序（错误码 {}）。", code)
+        });
+    }
+    if !info.hProcess.is_null() {
+        unsafe { CloseHandle(info.hProcess) };
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -353,10 +349,7 @@ pub fn install_update(app: AppHandle, path: String) -> Result<(), String> {
     if !canonical_path.starts_with(&canonical_dir) {
         return Err("安装包路径无效".to_string());
     }
-    std::process::Command::new(&canonical_path)
-        .arg("/UPDATE")
-        .spawn()
-        .map_err(|err| format!("无法启动安装程序：{err}"))?;
+    launch_installer(&canonical_path)?;
     app.exit(0);
     Ok(())
 }

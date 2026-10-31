@@ -5,7 +5,9 @@
 //!
 //! 用 `ttf-parser` 做纯解析，不写回、不修改任何字体文件。
 
+use std::fs::File;
 use std::path::Path;
+use memmap2::Mmap;
 
 use ttf_parser::{name_id, Face, PlatformId};
 
@@ -248,12 +250,10 @@ fn has_gsub_feature(face: &Face, wanted: &[&[u8; 4]]) -> bool {
     false
 }
 
-/// 解析字体文件。
-///
-/// `hint` 是用来挑选 TTC 内 face 的注册表展示名（已去掉 `(TrueType)` 后缀）：
-/// 一个 `.ttc` 里可能有多个家族，取与注册表条目最接近的那个 face 展示。
+/// 解析字体文件；`hint` 用于选择 TTC 中最接近注册表名称的 face。
 pub fn read_meta(path: &Path, hint: &str) -> Option<FontMeta> {
-    let data = std::fs::read(path).ok()?;
+    let file = File::open(path).ok()?;
+    let data = unsafe { Mmap::map(&file).ok()? };
     if data.len() < 12 {
         return None;
     }

@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
-//! 依据字形覆盖判断字体支持哪些语言。
-//!
-//! 思路和 macOS 的 Font Book 一致：给每种语言定义一组「必需字符」，
-//! 字体必须把这些字都画得出来，才算支持该语言。这里的表是按常见语言手工整理的
-//! 近似值（每种语言取 4–40 个区分度高的字符），不追求覆盖全部语言。
+//! 依据字形覆盖判断字体支持的语言。
 
 use ttf_parser::cmap::Subtable;
 use ttf_parser::Face;

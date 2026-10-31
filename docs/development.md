@@ -16,7 +16,7 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 ## 系统要求
 
 - **Windows 10 1809（build 17763）及以上，仅 64 位**；推荐 Windows 11。更低版本未验证（WebView2 与用户级字体机制都要求 1809 以上）
-- 需要 WebView2 运行时：Windows 11 与已更新的 Windows 10 自带；缺失时由安装器联网安装
+- 需要 WebView2 运行时 110.0.1587.0 或更高：Windows 11 与已更新的 Windows 10 自带；缺失或过旧时由安装器联网安装
 - 窗口圆角由 DWM 提供：Windows 11 使用系统默认圆角，Windows 10 上是直角
 
 ## 功能
@@ -66,7 +66,7 @@ Vite 固定使用 **1420** 端口。若上一次 `tauri dev` 的进程没退干�
 npm install
 npm run tauri dev        # 开发（Vite + 热更新）
 npm run tauri:build:exe  # 只出可执行文件，不打包安装器
-npm run tauri build      # 出安装包（src-tauri/target/release/bundle/nsis）
+npm run tauri:build      # 出安装包并重命名为 FontFox_[major.minor]_x64.exe（src-tauri/target/release/bundle/nsis）
 ```
 
 检查与测试：
@@ -97,7 +97,7 @@ src-tauri/src/      Rust：枚举、解析、保护判定、停用 / 删除、�
 src-tauri/src/data/ 内置字体清单（system_fonts.json / core_fonts.json）
 langBuild/          语言包唯一源文件（构建时复制到 exe 同级 lang/）
 docs/               UI 规范、架构说明、开发文档、截图
-tools/              语言包复制、第三方许可证生成脚本
+tools/              语言包复制、第三方许可证生成、设计稿解析脚本
 ```
 
 ## 内存
@@ -168,6 +168,8 @@ tools/              语言包复制、第三方许可证生成脚本
   取消即放弃删除，主程序不受影响。
 - `Inactive Fonts` 的系统语义是「隐藏」，不是内核级禁用。部分缓存了字体表的旧应用可能仍能枚举到，
   通常需要重启或重新登录才完全生效。
+- 卸载器以提升权限运行；若使用与原用户不同的管理员账户执行卸载，`$PROFILE` 指向该管理员账户，可能无法恢复或清理原用户数据。
+- 更新包校验 HTTP 长度与 `MZ` 头，未验证 Authenticode 签名。
 - 删除时若字体文件被当前会话的 GDI 锁定，注册表会先清理（重启后不再加载），文件登记到待清理清单，
   下次启动重试；提权子进程会直接完成删除，不经过清单。
 - 预览由 Rust 直接读取字体文件（mmap）；若文件被权限或安全软件拦截，行与详情会显示加载失败。
@@ -184,7 +186,7 @@ tools/              语言包复制、第三方许可证生成脚本
   `build.rs` 在编译期再兜底一次，打包时按 `bundle.resources` 映射进安装目录。复制时目标目录里
   存在、但 `langBuild` 已没有的 `.ini` 会被删除。改文案编辑 `langBuild/zh-cn.ini`，重新构建后会复制到 exe 同级 `lang/`。
 - 每个语言包在 `[meta]` 中提供 `LanguageCode`（BCP 47，如 `zh-CN`）。设置默认值为「使用系统语言」：
-  通过 `GetUserDefaultLocaleName` 读取系统 locale，先精确匹配代码；`zh-*` 未命中回退 `zh-HK`，其他语言未命中时优先同主语言，再回退 `en-US`，仍缺失再回退 `zh-CN`（`zh-cn.ini`）。回退时设置仍保持「使用系统语言」。
+  通过 `GetUserDefaultLocaleName` 读取系统 locale，先精确匹配代码；简体中文区域（`zh-Hans` / `zh-SG` / `zh-MY` / `zh-CN`）未命中回退 `zh-CN`，繁体区域（`zh-Hant` / `zh-TW`）回退 `zh-TW`，其余 `zh-*` 回退 `zh-HK`；其他语言未命中时优先同主语言，再回退 `en-US`，仍缺失再回退 `zh-CN`（`zh-cn.ini`）。回退时设置仍保持「使用系统语言」。
 
 ## 软件更新
 
@@ -193,11 +195,11 @@ tools/              语言包复制、第三方许可证生成脚本
 - 启动后静默检查（仅「检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
 - 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。
 - Release 正文只取第一个 `***` 之前的内容，再按 `---` 分为中文 / 英文；当前语言代码为 `zh-*` 时取中文，否则取英文，空段回退另一段。按纯文本展示，不渲染 Markdown。
-- 下载地址优先取 Release assets 中的 x64 exe，缺失时回退 `https://github.com/AomiRaku/font-fox/releases/download/v[版本号]/FontFox_[版本号]_x64.exe`；安装包写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
+- 下载地址为 `https://github.com/AomiRaku/font-fox/releases/download/v[版本号]/FontFox_[版本号]_x64.exe`；`npm run tauri:build` 会在打包后自动重命名为该格式；安装包写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
 ## 安装器外观
 
 - 欢迎页 / 完成页左侧插图：`docs/img/install.bmp`（164×314 BMP），由 `bundle.windows.nsis.sidebarImage` 引用。
-- 安装界面字体：自定义模板 `src-tauri/nsis/installer.nsi` 把语言加载改为 `MUI_LANGUAGEEX`，指向 `src-tauri/nsis-lang/mui/` 下的 `SimpChinese.*` / `English.*`；这两个 NLF 的字体设为 `Microsoft YaHei` 9 号。
+- 安装界面字体：自定义模板 `src-tauri/nsis/installer.nsi` 使用 `MUI_LANGUAGEEX`，指向 `src-tauri/nsis-lang/mui/` 下的 `SimpChinese.*` / `English.*`；这两个 NLF 的字体设为 `Microsoft YaHei` 9 号。
 - `src-tauri/nsis-lang/*.nsh` 是 Tauri 安装器的自定义文案，在语言加载后追加，修改时保留原有 `LangString`。
 - NSIS 模板有变化时，需同步 `src-tauri/nsis/installer.nsi` 并保留语言加载段。
 
