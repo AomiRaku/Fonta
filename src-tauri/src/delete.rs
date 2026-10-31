@@ -120,7 +120,7 @@ pub fn delete_entries(entries: &[FontEntry], elevated: bool) -> DeleteReport {
 
         if entry.protection != Protection::None {
             item.error = Some(format!(
-                "“{}”是受保护字体（{}），已跳过。",
+                "Skipped protected font “{}” ({}).",
                 entry.family,
                 crate::system_fonts::describe(entry.protection)
             ));
@@ -131,7 +131,7 @@ pub fn delete_entries(entries: &[FontEntry], elevated: bool) -> DeleteReport {
 
         if entry.scope == Scope::System && !elevated {
             report.elevation_required = true;
-            item.error = Some("删除系统作用域字体需要管理员权限。".to_string());
+            item.error = Some("Administrator privileges are required to delete system-scope fonts.".to_string());
             report.items.push(item);
             continue;
         }
@@ -219,7 +219,7 @@ pub fn clean_missing(entries: &[FontEntry]) -> DeleteReport {
     report
 }
 
-/// 启动时重试待清理清单，返回成功删除的数量。
+/// 启动时Retry待清理清单，返回成功删除的数量。
 pub fn retry_pending() -> usize {
     let items = load_pending();
     if items.is_empty() {
@@ -262,9 +262,9 @@ pub fn run_elevated_request(request_path: &Path) -> i32 {
     let response_path = elevation_response_path(request_path);
     let result = (|| -> Result<DeleteReport, String> {
         let text =
-            std::fs::read_to_string(request_path).map_err(|e| format!("读取提权请求失败：{}", e))?;
+            std::fs::read_to_string(request_path).map_err(|e| format!("Failed to read elevation request: {}", e))?;
         let request: ElevationRequest =
-            serde_json::from_str(&text).map_err(|e| format!("提权请求格式错误：{}", e))?;
+            serde_json::from_str(&text).map_err(|e| format!("Invalid elevation request format: {}", e))?;
         let payload = crate::enumerate::scan();
         let wanted: std::collections::HashSet<String> = request.ids.into_iter().collect();
         let entries: Vec<FontEntry> = payload
@@ -273,7 +273,7 @@ pub fn run_elevated_request(request_path: &Path) -> i32 {
             .filter(|f| wanted.contains(&f.id))
             .collect();
         if entries.is_empty() {
-            return Err("未找到待删除的字体条目。".to_string());
+            return Err("No font entries to delete were found.".to_string());
         }
         Ok(delete_entries(&entries, true))
     })();
@@ -300,12 +300,12 @@ pub fn elevation_response_path(request_path: &Path) -> std::path::PathBuf {
 }
 
 pub fn read_elevation_response(path: &Path) -> Result<DeleteReport, String> {
-    let text = std::fs::read_to_string(path).map_err(|e| format!("提权进程未返回结果：{}", e))?;
+    let text = std::fs::read_to_string(path).map_err(|e| format!("Elevated process returned no result: {}", e))?;
     let parsed: ElevationResponse =
-        serde_json::from_str(&text).map_err(|e| format!("提权结果格式错误：{}", e))?;
+        serde_json::from_str(&text).map_err(|e| format!("Invalid elevation result format: {}", e))?;
     match (parsed.report, parsed.error) {
         (Some(report), _) => Ok(report),
         (None, Some(err)) => Err(err),
-        _ => Err("提权进程返回了空结果。".to_string()),
+        _ => Err("Elevated process returned an empty result.".to_string()),
     }
 }

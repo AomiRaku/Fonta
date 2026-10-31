@@ -44,7 +44,7 @@ pub fn run() {
         .manage(AppState::default())
 
         .setup(|app| {
-            // 上次会话中被 GDI 锁定的字体文件，在这里重试清理。
+            // 上次会话中被 GDI 锁定的字体文件，在这里Retry清理。
             std::thread::spawn(delete::retry_pending);
 
             // 跟随系统「应用模式」：注册表变化时推给前端。
@@ -92,10 +92,10 @@ pub fn run() {
             commands::drop_missing_disabled,
         ])
         .run(tauri::generate_context!())
-        .expect("FontFox 启动失败");
+        .expect("FontFox failed to start");
 }
-/// 卸载恢复：失败时弹原生「重试」对话框（只有重试，关闭窗口也重试），
-/// 连续重试 4 次仍失败则把隔离字体复制到桌面文件夹，并提示手动重新安装。
+/// 卸载恢复：失败时弹原生「Retry」对话框（只有Retry，关闭窗口也Retry），
+/// 连续Retry 4 次仍失败则把隔离字体复制到桌面文件夹，并提示手动重新安装。
 pub fn restore_fonts_for_uninstall_with_retry() -> Result<usize, String> {
     const MAX_RETRIES: usize = 4;
     let mut retries = 0usize;
@@ -155,10 +155,10 @@ fn unique_destination(dir: &std::path::Path, src: &std::path::Path) -> std::path
 
 /// 把指定文件移动到 `桌面\FontFox Uninstalled Fonts`，返回 (目录, 成功数量)。
 pub fn move_files_to_desktop(paths: &[String]) -> Result<(String, usize), String> {
-    let desktop = desktop_folder().ok_or_else(|| "无法定位桌面目录".to_string())?;
+    let desktop = desktop_folder().ok_or_else(|| "Unable to locate the desktop folder".to_string())?;
     let target_dir = desktop.join("FontFox Uninstalled Fonts");
     std::fs::create_dir_all(&target_dir)
-        .map_err(|err| format!("无法创建桌面文件夹：{err}"))?;
+        .map_err(|err| format!("Unable to create desktop folder: {err}"))?;
 
     let mut moved = 0usize;
     let mut errors: Vec<String> = Vec::new();

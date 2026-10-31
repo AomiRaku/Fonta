@@ -149,10 +149,10 @@ pub fn evaluate(
 pub fn describe(protection: Protection) -> &'static str {
     match protection {
         Protection::None => "",
-        Protection::System => "系统自带字体",
-        Protection::Core => "系统字体",
-        Protection::Raster => "系统点阵字体",
-        Protection::SharedSystemFile => "字体文件位于系统字体目录",
+        Protection::System => "Built-in system font",
+        Protection::Core => "System font",
+        Protection::Raster => "System bitmap font",
+        Protection::SharedSystemFile => "Font file is in the system font folder",
     }
 }
 

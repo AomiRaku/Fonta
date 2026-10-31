@@ -63,12 +63,12 @@ pub fn load() -> Library {
 
 /// 写入：先写临时文件再替换，避免中途崩溃留下半个文件。
 pub fn save(library: &Library) -> Result<(), String> {
-    ensure_dir().map_err(|err| format!("无法创建配置目录：{err}"))?;
-    let text = serde_json::to_string_pretty(library).map_err(|err| format!("序列化失败：{err}"))?;
+    ensure_dir().map_err(|err| format!("Unable to create config directory: {err}"))?;
+    let text = serde_json::to_string_pretty(library).map_err(|err| format!("Serialization failed: {err}"))?;
     let path = library_file();
     let tmp = path.with_extension("json.tmp");
-    std::fs::write(&tmp, text).map_err(|err| format!("写入临时文件失败：{err}"))?;
-    std::fs::rename(&tmp, &path).map_err(|err| format!("替换文件失败：{err}"))
+    std::fs::write(&tmp, text).map_err(|err| format!("Failed to write temporary file: {err}"))?;
+    std::fs::rename(&tmp, &path).map_err(|err| format!("Failed to replace file: {err}"))
 }
 
 #[cfg(test)]

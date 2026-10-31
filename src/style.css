@@ -1520,6 +1520,11 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   padding: var(--sp-4);
   background: var(--bg);
   /* 展开 / 收起：整块平移 + 淡出，内容宽度始终固定，不被挤压重排 */
+  transition: none;
+}
+
+/* 首屏定位完成后再启用动画，避免启动时播放收起过程 */
+html[data-detail-ready="true"] .pane--detail {
   transition:
     margin-right 160ms cubic-bezier(0.2, 0, 0, 1),
     opacity 160ms ease-out;

@@ -1545,8 +1545,8 @@ function toggleMoreMenu(): void {
   menu.setAttribute("role", "menu");
 
   const items: Array<{ label: string; icon: IconName; disabled?: boolean; run?: () => void }> = [
-    { label: t("more.refresh"), icon: "refresh", run: () => void rescanWithToast() },
     { label: t("more.settings"), icon: "cogwheel", run: () => openSettings() },
+    { label: t("more.refresh"), icon: "refresh", run: () => void rescanWithToast() },
     { label: t("more.about"), icon: "about", run: () => void openAbout() },
   ];
 
@@ -4285,6 +4285,11 @@ async function boot(): Promise<void> {
   } finally {
     dom.viewport.focus();
     hideSplash();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.documentElement.dataset.detailReady = "true";
+      });
+    });
   }
   // 对账禁用清单与隔离目录（不阻塞首屏）
   void checkDisabledFiles();

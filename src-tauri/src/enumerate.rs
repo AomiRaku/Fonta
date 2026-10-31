@@ -43,7 +43,7 @@ fn collect_scope(scope: Scope, out: &mut Vec<RawEntry>) -> Vec<String> {
                 });
             }
         }
-        Err(err) => errors.push(format!("读取 {} 字体注册表失败：{}", scope.as_str(), err)),
+        Err(err) => errors.push(format!("Failed to read {} font registry: {}", scope.as_str(), err)),
     }
     errors
 }

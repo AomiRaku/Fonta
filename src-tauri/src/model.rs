@@ -220,7 +220,7 @@ impl Default for Settings {
     }
 }
 
-/// 删除时文件被锁定、等待下次启动重试的条目。
+/// 删除时文件被锁定、等待下次启动Retry的条目。
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PendingDelete {

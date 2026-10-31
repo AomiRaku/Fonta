@@ -46,9 +46,9 @@ fn run_as_admin(exe: &Path, parameters: &str) -> Result<(), String> {
     if ok == 0 {
         let code = unsafe { GetLastError() };
         return Err(if code == ERROR_CANCELLED {
-            "已取消管理员授权，未执行任何删除。".to_string()
+            "Administrator authorization was canceled; no fonts were deleted.".to_string()
         } else {
-            format!("无法启动管理员进程（错误码 {}）。", code)
+            format!("Unable to start elevated process (error code {}).", code)
         });
     }
 
@@ -74,14 +74,14 @@ pub fn delete_with_elevation(ids: Vec<String>) -> Result<DeleteReport, String> {
     ));
 
     let request = ElevationRequest { ids };
-    let text = serde_json::to_string(&request).map_err(|e| format!("序列化请求失败：{}", e))?;
-    std::fs::write(&request_path, text).map_err(|e| format!("写入提权请求失败：{}", e))?;
+    let text = serde_json::to_string(&request).map_err(|e| format!("Failed to serialize request: {}", e))?;
+    std::fs::write(&request_path, text).map_err(|e| format!("Failed to write elevation request: {}", e))?;
 
     let exe = match std::env::current_exe() {
         Ok(p) => p,
         Err(err) => {
             let _ = std::fs::remove_file(&request_path);
-            return Err(format!("无法定位程序自身路径：{}", err));
+            return Err(format!("Unable to locate executable path: {}", err));
         }
     };
     let parameters = format!("{} {}", ELEVATED_FLAG, quote(&request_path));

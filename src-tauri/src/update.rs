@@ -81,7 +81,7 @@ fn is_newer(latest: &str, current: &str) -> bool {
 fn normalize_version(raw: &str) -> Result<String, String> {
     let text = raw.trim().trim_start_matches(['v', 'V']);
     if parse_version(text).is_none() {
-        return Err(format!("无法解析版本号：{raw}"));
+        return Err(format!("Unable to parse version: {raw}"));
     }
     Ok(text.to_string())
 }
@@ -113,7 +113,7 @@ fn client() -> Result<reqwest::blocking::Client, String> {
         .user_agent(format!("FontFox/{}", current_version()))
         .connect_timeout(Duration::from_secs(15))
         .build()
-        .map_err(|err| format!("创建网络客户端失败：{err}"))
+        .map_err(|err| format!("Failed to create HTTP client: {err}"))
 }
 
 fn fetch_release(source: &str, tag: Option<&str>) -> Result<ReleaseResponse, String> {
@@ -123,13 +123,13 @@ fn fetch_release(source: &str, tag: Option<&str>) -> Result<ReleaseResponse, Str
         .timeout(Duration::from_secs(20))
         .header("Accept", "application/vnd.github+json")
         .send()
-        .map_err(|err| format!("请求更新信息失败：{err}"))?;
+        .map_err(|err| format!("Failed to request update information: {err}"))?;
     if !response.status().is_success() {
-        return Err(format!("更新源返回 HTTP {}", response.status()));
+        return Err(format!("Update source returned HTTP {}", response.status()));
     }
     response
         .json::<ReleaseResponse>()
-        .map_err(|err| format!("解析更新信息失败：{err}"))
+        .map_err(|err| format!("Failed to parse update information: {err}"))
 }
 
 fn check_update_sync(source: &str) -> Result<Option<UpdateInfo>, String> {
@@ -149,7 +149,7 @@ fn check_update_sync(source: &str) -> Result<Option<UpdateInfo>, String> {
 pub async fn check_update(source: String) -> Result<Option<UpdateInfo>, String> {
     tauri::async_runtime::spawn_blocking(move || check_update_sync(&source))
         .await
-        .map_err(|err| format!("检查更新失败：{err}"))?
+        .map_err(|err| format!("Update check failed: {err}"))?
 }
 
 #[tauri::command]
@@ -162,7 +162,7 @@ pub async fn release_notes(source: String, version: String) -> Result<String, St
             .map(|release| release.body.unwrap_or_default())
     })
     .await
-    .map_err(|err| format!("读取更新日志失败：{err}"))?
+    .map_err(|err| format!("Failed to read release notes: {err}"))?
 }
 
 /// 删除上次更新遗留的安装包。启动时调用；正在被安装器占用的文件会跳过。
@@ -201,7 +201,7 @@ fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String,
     let version = normalize_version(version)?;
     let url = download_url(source, &version);
     let dir = update_dir();
-    std::fs::create_dir_all(&dir).map_err(|err| format!("无法创建下载目录：{err}"))?;
+    std::fs::create_dir_all(&dir).map_err(|err| format!("Unable to create download directory: {err}"))?;
     let path = download_path(&version);
     let _ = std::fs::remove_file(&path);
 
@@ -209,12 +209,12 @@ fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String,
         .get(url)
         .timeout(Duration::from_secs(300))
         .send()
-        .map_err(|err| format!("下载更新失败：{err}"))?;
+        .map_err(|err| format!("Update download failed: {err}"))?;
     if !response.status().is_success() {
-        return Err(format!("下载更新失败：HTTP {}", response.status()));
+        return Err(format!("Update download failed: HTTP {}", response.status()));
     }
     let total = response.content_length().unwrap_or(0);
-    let mut file = File::create(&path).map_err(|err| format!("无法创建安装包：{err}"))?;
+    let mut file = File::create(&path).map_err(|err| format!("Unable to create installer package: {err}"))?;
 
     let mut buffer = vec![0u8; 64 * 1024];
     let mut downloaded = 0u64;
@@ -227,7 +227,7 @@ fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String,
         if DOWNLOAD_CANCEL.load(AtomicOrdering::SeqCst) {
             drop(file);
             let _ = std::fs::remove_file(&path);
-            return Err("已取消下载".to_string());
+            return Err("Download canceled".to_string());
         }
         let read = match response.read(&mut buffer) {
             Ok(0) => break,
@@ -235,13 +235,13 @@ fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String,
             Err(err) => {
                 drop(file);
                 let _ = std::fs::remove_file(&path);
-                return Err(format!("下载更新失败：{err}"));
+                return Err(format!("Update download failed: {err}"));
             }
         };
         if let Err(err) = file.write_all(&buffer[..read]) {
             drop(file);
             let _ = std::fs::remove_file(&path);
-            return Err(format!("写入安装包失败：{err}"));
+            return Err(format!("Failed to write installer package: {err}"));
         }
         downloaded += read as u64;
 
@@ -257,12 +257,12 @@ fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String,
     if let Err(err) = file.flush() {
         drop(file);
         let _ = std::fs::remove_file(&path);
-        return Err(format!("写入安装包失败：{err}"));
+        return Err(format!("Failed to write installer package: {err}"));
     }
     drop(file);
     if total > 0 && downloaded != total {
         let _ = std::fs::remove_file(&path);
-        return Err("下载的安装包不完整".to_string());
+        return Err("Downloaded installer is incomplete".to_string());
     }
     let valid = File::open(&path)
         .and_then(|mut file| {
@@ -272,7 +272,7 @@ fn download_sync(app: &AppHandle, source: &str, version: &str) -> Result<String,
         .unwrap_or(false);
     if !valid {
         let _ = std::fs::remove_file(&path);
-        return Err("下载的安装包格式无效".to_string());
+        return Err("Downloaded installer format is invalid".to_string());
     }
     if let Ok(metadata) = std::fs::metadata(&path) {
         emit_progress(app, downloaded, total.max(metadata.len()), 0.0);
@@ -287,7 +287,7 @@ pub async fn download_update(
     version: String,
 ) -> Result<String, String> {
     if DOWNLOAD_ACTIVE.swap(true, AtomicOrdering::SeqCst) {
-        return Err("已有更新正在下载".to_string());
+        return Err("An update is already being downloaded".to_string());
     }
     DOWNLOAD_CANCEL.store(false, AtomicOrdering::SeqCst);
     let app_for_task = app.clone();
@@ -295,7 +295,7 @@ pub async fn download_update(
         tauri::async_runtime::spawn_blocking(move || download_sync(&app_for_task, &source, &version))
             .await;
     DOWNLOAD_ACTIVE.store(false, AtomicOrdering::SeqCst);
-    result.map_err(|err| format!("下载更新失败：{err}"))?
+    result.map_err(|err| format!("Update download failed: {err}"))?
 }
 
 #[tauri::command]
@@ -329,9 +329,9 @@ fn launch_installer(path: &Path) -> Result<(), String> {
     if ok == 0 {
         let code = unsafe { GetLastError() };
         return Err(if code == ERROR_CANCELLED {
-            "已取消管理员授权，未启动安装程序。".to_string()
+            "Administrator authorization was canceled; the installer was not started.".to_string()
         } else {
-            format!("无法启动安装程序（错误码 {}）。", code)
+            format!("Unable to start installer (error code {}).", code)
         });
     }
     if !info.hProcess.is_null() {
@@ -345,12 +345,12 @@ pub fn install_update(app: AppHandle, path: String) -> Result<(), String> {
     let dir = update_dir();
     let canonical_dir = dir
         .canonicalize()
-        .map_err(|err| format!("更新目录不存在：{err}"))?;
+        .map_err(|err| format!("Update directory does not exist: {err}"))?;
     let canonical_path = Path::new(&path)
         .canonicalize()
-        .map_err(|err| format!("安装包不存在：{err}"))?;
+        .map_err(|err| format!("Installer package does not exist: {err}"))?;
     if !canonical_path.starts_with(&canonical_dir) {
-        return Err("安装包路径无效".to_string());
+        return Err("Invalid installer path".to_string());
     }
     launch_installer(&canonical_path)?;
     app.exit(0);

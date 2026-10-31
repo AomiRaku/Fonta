@@ -107,7 +107,7 @@ fn one_line(value: &str) -> String {
 }
 
 pub fn save(settings: &Settings) -> Result<(), String> {
-    let dir = ensure_dir().map_err(|e| format!("无法创建配置目录：{}", e))?;
+    let dir = ensure_dir().map_err(|e| format!("Unable to create config directory: {}", e))?;
     let path = dir.join(CONFIG_FILE);
     let text = format!(
         "; FontFox 配置\r\n\
@@ -135,7 +135,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
         one_line(&settings.update_source),
         one_line(&settings.ignored_update_version),
     );
-    write_atomic(&path, &text).map_err(|e| format!("无法写入配置：{}", e))
+    write_atomic(&path, &text).map_err(|e| format!("Unable to write config: {}", e))
 }
 
 /// 先写临时文件再替换，避免写一半断电留下半个配置。

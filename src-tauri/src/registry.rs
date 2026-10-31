@@ -191,7 +191,7 @@ pub fn read_font_values(scope: Scope) -> std::io::Result<Vec<FontValue>> {
 pub fn delete_font_value(scope: Scope, value_name: &str) -> Result<bool, String> {
     let key = open_fonts_key_writable(scope).map_err(|e| {
         format!(
-            "无权限写入 {}\\{}：{}",
+            "No permission to write {}\\{}: {}",
             match scope {
                 Scope::System => "HKLM",
                 Scope::User => "HKCU",
@@ -203,7 +203,7 @@ pub fn delete_font_value(scope: Scope, value_name: &str) -> Result<bool, String>
     match key.delete_value(value_name) {
         Ok(()) => Ok(true),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(false),
-        Err(err) => Err(format!("删除注册表值 “{}” 失败：{}", value_name, err)),
+        Err(err) => Err(format!("Failed to delete registry value “{}”: {}", value_name, err)),
     }
 }
 
@@ -211,7 +211,7 @@ pub fn delete_font_value(scope: Scope, value_name: &str) -> Result<bool, String>
 pub fn write_font_value(scope: Scope, value_name: &str, data: &str) -> Result<(), String> {
     let key = open_fonts_key_writable(scope).map_err(|e| {
         format!(
-            "无权限写入 {}\\{}：{}",
+            "No permission to write {}\\{}: {}",
             match scope {
                 Scope::System => "HKLM",
                 Scope::User => "HKCU",
@@ -221,7 +221,7 @@ pub fn write_font_value(scope: Scope, value_name: &str, data: &str) -> Result<()
         )
     })?;
     key.set_value(value_name, &data)
-        .map_err(|e| format!("写入注册表值 “{}” 失败：{}", value_name, e))
+        .map_err(|e| format!("Failed to write registry value “{}”: {}", value_name, e))
 }
 
 /// 读取 `Inactive Fonts`（REG_MULTI_SZ）。
@@ -233,7 +233,7 @@ pub fn read_inactive_fonts() -> Result<Vec<String>, String> {
     ) {
         Ok(k) => k,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
-        Err(err) => return Err(format!("读取 Font Management 键失败：{}", err)),
+        Err(err) => return Err(format!("Failed to read Font Management key: {}", err)),
     };
     match key.get_raw_value(INACTIVE_FONTS_VALUE) {
         Ok(raw) => Ok(decode_utf16_strings(&raw.bytes)
@@ -242,7 +242,7 @@ pub fn read_inactive_fonts() -> Result<Vec<String>, String> {
             .filter(|s| !s.is_empty())
             .collect()),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(Vec::new()),
-        Err(err) => Err(format!("读取 Inactive Fonts 失败：{}", err)),
+        Err(err) => Err(format!("Failed to read Inactive Fonts: {}", err)),
     }
 }
 
@@ -251,7 +251,7 @@ pub fn write_inactive_fonts(items: &[String]) -> Result<(), String> {
     let hive = RegKey::predef(HKEY_CURRENT_USER);
     let (key, _) = hive
         .create_subkey_with_flags(FONT_MANAGEMENT_SUBKEY, KEY_READ | KEY_WRITE | KEY_WOW64_64KEY)
-        .map_err(|e| format!("无法打开 Font Management 键：{}", e))?;
+        .map_err(|e| format!("Unable to open Font Management key: {}", e))?;
 
     let mut bytes: Vec<u8> = Vec::new();
     for item in items {
@@ -268,7 +268,7 @@ pub fn write_inactive_fonts(items: &[String]) -> Result<(), String> {
         vtype: REG_MULTI_SZ,
     };
     key.set_raw_value(INACTIVE_FONTS_VALUE, &value)
-        .map_err(|e| format!("写入 Inactive Fonts 失败：{}", e))
+        .map_err(|e| format!("Failed to write Inactive Fonts: {}", e))
 }
 
 
@@ -281,12 +281,12 @@ pub fn clear_inactive_fonts() -> Result<(), String> {
     ) {
         Ok(k) => k,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(()),
-        Err(err) => return Err(format!("打开 Font Management 键失败：{}", err)),
+        Err(err) => return Err(format!("Failed to open Font Management key: {}", err)),
     };
     match key.delete_value(INACTIVE_FONTS_VALUE) {
         Ok(()) => Ok(()),
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(err) => Err(format!("删除 Inactive Fonts 失败：{}", err)),
+        Err(err) => Err(format!("Failed to delete Inactive Fonts: {}", err)),
     }
 }
 

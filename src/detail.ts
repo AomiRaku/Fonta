@@ -496,6 +496,17 @@ export function renderFamilyDetail(
   }
 
   const info: HTMLElement[] = [kv(t("detail.family"), family)];
+  const languages = [
+    ...new Set(
+      entries.flatMap((entry) => entry.languages ?? []),
+    ),
+  ];
+  info.push(
+    kv(
+      t("detail.language"),
+      languages.length ? languageList(languages) : t("language.unknown"),
+    ),
+  );
   const version = entries.find((entry) => entry.version)?.version;
   if (version) info.push(kv(t("detail.version"), version));
   const copyright = entries.find((entry) => entry.copyright)?.copyright;

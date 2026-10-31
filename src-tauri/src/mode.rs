@@ -47,11 +47,11 @@ pub fn records() -> Vec<DisabledRecord> {
 
 fn save(records: &[DisabledRecord]) -> Result<(), String> {
     let dir = quarantine_dir();
-    std::fs::create_dir_all(&dir).map_err(|err| format!("无法创建禁用目录：{err}"))?;
+    std::fs::create_dir_all(&dir).map_err(|err| format!("Unable to create disabled directory: {err}"))?;
     let text = serde_json::to_string_pretty(records)
-        .map_err(|err| format!("无法序列化禁用清单：{err}"))?;
+        .map_err(|err| format!("Unable to serialize disabled list: {err}"))?;
     std::fs::write(dir.join("disabled.json"), text)
-        .map_err(|err| format!("无法写入禁用清单：{err}"))
+        .map_err(|err| format!("Unable to write disabled list: {err}"))
 }
 
 fn unique_target(file_name: &str) -> PathBuf {
@@ -93,11 +93,11 @@ pub fn disable(entries: &[FontEntry]) -> Result<usize, String> {
     let mut preflight: Vec<String> = Vec::new();
     for entry in entries {
         if entry.scope != Scope::User {
-            preflight.push(format!("“{}”位于系统作用域，动态模式暂不支持", entry.family));
+            preflight.push(format!("“{}” is in system scope; dynamic mode does not support it", entry.family));
             continue;
         }
         if !PathBuf::from(&entry.path).is_file() {
-            preflight.push(format!("“{}”的字体文件不存在", entry.family));
+            preflight.push(format!("Font file for “{}” does not exist", entry.family));
         }
     }
     if !preflight.is_empty() {
@@ -113,14 +113,14 @@ pub fn disable(entries: &[FontEntry]) -> Result<usize, String> {
         if let Err(err) = move_file(&source, &target) {
             rollback_disable(&applied);
             return Err(format!(
-                "移动 “{}” 失败：{}；本次操作已回滚",
+                "Failed to move “{}”: {}; changes were rolled back",
                 entry.family, err
             ));
         }
         if let Err(err) = registry::delete_font_value(entry.scope, &entry.value_name) {
             let _ = move_file(&target, &source);
             rollback_disable(&applied);
-            return Err(format!("{}；本次操作已回滚", err));
+            return Err(format!("{}; changes were rolled back", err));
         }
         applied.push(DisabledRecord {
             id: entry.id.clone(),
@@ -161,7 +161,7 @@ pub fn enable(ids: &[String]) -> Result<usize, String> {
         .cloned()
         .collect();
     if !missing.is_empty() {
-        return Err(format!("以下字体不在隔离清单中：{}", missing.join("、")));
+        return Err(format!("The following fonts are not in the isolation list: {}", missing.join("、")));
     }
 
     let mut applied: Vec<DisabledRecord> = Vec::new();
@@ -176,7 +176,7 @@ pub fn enable(ids: &[String]) -> Result<usize, String> {
         if let Err(err) = move_file(&quarantine, &source) {
             rollback_enable(&applied);
             return Err(format!(
-                "恢复 “{}” 失败：{}；本次操作已回滚",
+                "Failed to restore “{}”: {}; changes were rolled back",
                 record.family, err
             ));
         }
@@ -185,7 +185,7 @@ pub fn enable(ids: &[String]) -> Result<usize, String> {
         {
             let _ = move_file(&source, &quarantine);
             rollback_enable(&applied);
-            return Err(format!("{}；本次操作已回滚", err));
+            return Err(format!("{}; changes were rolled back", err));
         }
         applied.push(record);
         records.remove(position);

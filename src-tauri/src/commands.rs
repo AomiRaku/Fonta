@@ -98,7 +98,7 @@ pub struct AboutPayload {
 pub async fn list_fonts(app: tauri::AppHandle) -> Result<FontListPayload, String> {
     let mut payload = tauri::async_runtime::spawn_blocking(enumerate::scan)
         .await
-        .map_err(|e| format!("扫描字体失败：{}", e))?;
+        .map_err(|e| format!("Failed to scan fonts: {}", e))?;
     // 动态模式下被隔离的字体不在注册表里，补进列表才能重新启用
     crate::mode::merged_entries(&mut payload.fonts);
     let state = app.state::<AppState>();
@@ -124,7 +124,7 @@ pub async fn set_fonts_hidden(
     if entries.len() != ids.len() {
         let payload = tauri::async_runtime::spawn_blocking(enumerate::scan)
             .await
-            .map_err(|e| format!("扫描字体失败：{}", e))?;
+            .map_err(|e| format!("Failed to scan fonts: {}", e))?;
         state.replace(payload.fonts.clone());
         entries = payload
             .fonts
@@ -133,7 +133,7 @@ pub async fn set_fonts_hidden(
             .collect();
     }
     if entries.is_empty() {
-        return Err("未找到对应字体。".to_string());
+        return Err("Font not found.".to_string());
     }
 
     let dynamic = crate::settings::load().disable_mode == "dynamic";
@@ -143,7 +143,7 @@ pub async fn set_fonts_hidden(
         let result = tauri::async_runtime::spawn_blocking(move || {
             let _guard = HIDDEN_LOCK
                 .lock()
-                .map_err(|_| "字体状态锁不可用。".to_string())?;
+                .map_err(|_| "Font state lock is unavailable.".to_string())?;
             if hidden {
                 crate::mode::disable(&entries_for_disable)
             } else {
@@ -151,7 +151,7 @@ pub async fn set_fonts_hidden(
             }
         })
         .await
-        .map_err(|e| format!("字体文件操作失败：{}", e))?;
+        .map_err(|e| format!("Font file operation failed: {}", e))?;
 
         let mut report = HiddenReport::default();
         match result {
@@ -170,14 +170,14 @@ pub async fn set_fonts_hidden(
             Ok(guard) => guard,
             Err(_) => {
                 let mut report = HiddenReport::default();
-                report.errors.push("字体状态锁不可用。".to_string());
+                report.errors.push("Font state lock is unavailable.".to_string());
                 return report;
             }
         };
         inactive::set_hidden(&entries, hidden)
     })
     .await
-        .map_err(|e| format!("隐藏状态写入失败：{}", e))?;
+        .map_err(|e| format!("Failed to write hidden state: {}", e))?;
     if report.errors.is_empty() {
         state.set_hidden_flags(&ids, hidden);
         // 广播要等所有顶层窗口应答（最长 1s），放到后台线程，别拖住这次 IPC
@@ -194,7 +194,7 @@ pub async fn delete_fonts(
     let state = app.state::<AppState>();
     let mut entries = state.cached(&ids);
     if entries.len() != ids.len() {
-        return Err("字体列表已过期，请刷新后重试。".to_string());
+        return Err("Font list is out of date. Refresh and try again.".to_string());
     }
     // 动态模式下请求删除的可能是隔离中的字体：用隔离目录里的真实路径
     let quarantine = crate::mode::quarantine_paths(&ids);
@@ -218,7 +218,7 @@ pub async fn delete_fonts(
             delete::delete_entries(&user_entries, elevated)
         })
         .await
-        .map_err(|e| format!("删除失败：{}", e))?;
+        .map_err(|e| format!("Failed to delete: {}", e))?;
         merge(&mut report, result);
     }
 
@@ -228,7 +228,7 @@ pub async fn delete_fonts(
                 delete::delete_entries(&system_entries, true)
             })
             .await
-            .map_err(|e| format!("删除失败：{}", e))?;
+            .map_err(|e| format!("Failed to delete: {}", e))?;
             merge(&mut report, result);
         } else {
             let system_ids: Vec<String> = system_entries.iter().map(|e| e.id.clone()).collect();
@@ -243,7 +243,7 @@ pub async fn delete_fonts(
                     report.errors.push(err);
                 }
                 Err(err) => {
-                    report.errors.push(format!("提权进程调度失败：{}", err));
+                    report.errors.push(format!("Failed to start elevated process: {}", err));
                 }
             }
         }
@@ -279,11 +279,11 @@ pub async fn clean_missing(
     let state = app.state::<AppState>();
     let entries = state.cached(&ids);
     if entries.is_empty() {
-        return Err("未找到对应字体。".to_string());
+        return Err("Font not found.".to_string());
     }
     let report = tauri::async_runtime::spawn_blocking(move || delete::clean_missing(&entries))
         .await
-        .map_err(|e| format!("清理失败：{}", e))?;
+        .map_err(|e| format!("Cleanup failed: {}", e))?;
 
     if let Ok(payload) = tauri::async_runtime::spawn_blocking(enumerate::scan).await {
         state.replace(payload.fonts);
@@ -355,7 +355,7 @@ pub fn about(app: tauri::AppHandle) -> AboutPayload {
 pub fn reveal_path(path: String) -> Result<(), String> {
     let target = std::path::Path::new(&path);
     if !target.exists() {
-        return Err(format!("路径不存在：{}", path));
+        return Err(format!("Path does not exist: {}", path));
     }
 
     // C:\Windows\Fonts 是 Shell 虚拟文件夹：
@@ -365,7 +365,7 @@ pub fn reveal_path(path: String) -> Result<(), String> {
         std::process::Command::new("explorer")
             .arg("shell:Fonts")
             .spawn()
-            .map_err(|e| format!("无法打开字体文件夹：{}", e))?;
+            .map_err(|e| format!("Unable to open the Fonts folder: {}", e))?;
         return Ok(());
     }
 
@@ -384,7 +384,7 @@ pub fn reveal_path(path: String) -> Result<(), String> {
             std::process::Command::new("explorer")
                 .arg(parent)
                 .spawn()
-                .map_err(|e| format!("无法打开资源管理器：{}", e))?;
+                .map_err(|e| format!("Unable to open File Explorer: {}", e))?;
         }
     }
     Ok(())
@@ -407,7 +407,7 @@ fn select_in_explorer(path: &str) -> Result<(), String> {
     let path = path.to_owned();
     std::thread::spawn(move || unsafe { select_in_explorer_sta(&path) })
         .join()
-        .map_err(|_| "线程异常".to_string())?
+        .map_err(|_| "Thread error".to_string())?
 }
 
 unsafe fn select_in_explorer_sta(path: &str) -> Result<(), String> {
@@ -417,7 +417,7 @@ unsafe fn select_in_explorer_sta(path: &str) -> Result<(), String> {
     // 新线程里第一次初始化必定返回 S_OK；S_FALSE 表示已初始化过
     let hr = CoInitializeEx(std::ptr::null(), COINIT_APARTMENTTHREADED as u32);
     if hr < 0 {
-        return Err(format!("COM 初始化失败：{hr:#x}"));
+        return Err(format!("COM initialization failed: {hr:#x}"));
     }
     let own_com = hr == 0;
 
@@ -427,7 +427,7 @@ unsafe fn select_in_explorer_sta(path: &str) -> Result<(), String> {
         if own_com {
             CoUninitialize();
         }
-        return Err("无法解析路径".to_string());
+        return Err("Unable to resolve path".to_string());
     }
 
     let result = SHOpenFolderAndSelectItems(pidl, 0, std::ptr::null(), 0);
@@ -438,7 +438,7 @@ unsafe fn select_in_explorer_sta(path: &str) -> Result<(), String> {
     if result >= 0 {
         Ok(())
     } else {
-        Err(format!("打开失败：{result:#x}"))
+        Err(format!("Failed to open: {result:#x}"))
     }
 }
 /// 系统「应用模式」当前解析结果：`"light"` 或 `"dark"`。
@@ -452,7 +452,7 @@ pub fn system_theme() -> &'static str {
 pub async fn load_language(id: String) -> Result<crate::i18n::LanguagePack, String> {
     tauri::async_runtime::spawn_blocking(move || crate::i18n::load(&id))
         .await
-        .map_err(|e| format!("读取语言包失败：{}", e))
+        .map_err(|e| format!("Failed to read language pack: {}", e))
 }
 
 /// 供前端在调试 / 支持场景中直接查看某个字体的原始注册表键。
@@ -511,7 +511,7 @@ pub fn system_locale() -> String {
 #[tauri::command]
 pub fn open_url(url: String) -> Result<(), String> {
     if !url.starts_with("https://github.com/") {
-        return Err("不支持的外部链接".to_string());
+        return Err("Unsupported external link".to_string());
     }
     let operation: Vec<u16> = "open\0".encode_utf16().collect();
     let target: Vec<u16> = format!("{url}\0").encode_utf16().collect();
@@ -526,7 +526,7 @@ pub fn open_url(url: String) -> Result<(), String> {
         )
     };
     if (result as isize) <= 32 {
-        Err(format!("无法打开链接：{url}"))
+        Err(format!("Unable to open link: {url}"))
     } else {
         Ok(())
     }
@@ -565,7 +565,7 @@ pub async fn set_disable_mode(
 
     let payload = tauri::async_runtime::spawn_blocking(enumerate::scan)
         .await
-        .map_err(|e| format!("扫描字体失败：{}", e))?;
+        .map_err(|e| format!("Failed to scan fonts: {}", e))?;
 
     // 当前模式下处于禁用状态的字体
     let disabled_ids: Vec<String> = if current == "dynamic" {
@@ -584,7 +584,7 @@ pub async fn set_disable_mode(
 
     // 1. 在旧模式下恢复启用；失败则中止切换，保持原模式不变
     if current == "dynamic" {
-        crate::mode::restore_all().map_err(|err| format!("恢复隔离字体失败：{}", err))?;
+        crate::mode::restore_all().map_err(|err| format!("Failed to restore isolated fonts: {}", err))?;
     } else {
         let hidden: Vec<FontEntry> = payload
             .fonts
@@ -595,7 +595,7 @@ pub async fn set_disable_mode(
         let report = inactive::set_hidden(&hidden, false);
         if !report.errors.is_empty() {
             return Err(format!(
-                "恢复 Inactive Fonts 失败：{}",
+                "Failed to restore Inactive Fonts: {}",
                 report.errors.join("；")
             ));
         }
@@ -604,7 +604,7 @@ pub async fn set_disable_mode(
     // 2. 重新扫描（动态恢复后字体回到注册表），按原集合在新模式下停用
     let payload = tauri::async_runtime::spawn_blocking(enumerate::scan)
         .await
-        .map_err(|e| format!("扫描字体失败：{}", e))?;
+        .map_err(|e| format!("Failed to scan fonts: {}", e))?;
     let targets: Vec<FontEntry> = payload
         .fonts
         .into_iter()
@@ -623,7 +623,7 @@ pub async fn set_disable_mode(
             if !report.errors.is_empty() {
                 reapply_hidden(&current, &targets).await;
                 return Err(format!(
-                    "迁移系统作用域字体失败：{}",
+                    "Failed to migrate system-scope fonts: {}",
                     report.errors.join("；")
                 ));
             }
@@ -636,7 +636,7 @@ pub async fn set_disable_mode(
                     let _ = inactive::set_hidden(&systems, false);
                 }
                 reapply_hidden(&current, &targets).await;
-                return Err(format!("切换禁用方式失败：{}", err));
+                return Err(format!("Failed to switch disable mode: {}", err));
             }
         }
     } else {
@@ -644,7 +644,7 @@ pub async fn set_disable_mode(
         if !report.errors.is_empty() {
             reapply_hidden(&current, &targets).await;
             return Err(format!(
-                "写入 Inactive Fonts 失败：{}",
+                "Failed to write Inactive Fonts: {}",
                 report.errors.join("；")
             ));
         }
@@ -666,7 +666,7 @@ pub async fn set_disable_mode(
             let _ = inactive::set_hidden(&targets, false);
         }
         reapply_hidden(&current, &targets).await;
-        return Err(format!("写入设置失败：{}", err));
+        return Err(format!("Failed to write settings: {}", err));
     }
 
     std::thread::spawn(crate::fontchange::broadcast);
@@ -701,7 +701,7 @@ pub async fn reconcile_disabled(force: Option<bool>) -> crate::mode::ReconcileRe
 pub async fn restore_all_fonts() -> Result<usize, String> {
     tauri::async_runtime::spawn_blocking(crate::restore_fonts_for_uninstall)
         .await
-        .map_err(|err| format!("恢复字体失败：{err}"))?
+        .map_err(|err| format!("Failed to restore fonts: {err}"))?
 }
 
 /// 把指定的隔离字体文件移动到桌面 FontFox Uninstalled Fonts。
@@ -709,7 +709,7 @@ pub async fn restore_all_fonts() -> Result<usize, String> {
 pub async fn move_disabled_to_desktop(paths: Vec<String>) -> Result<usize, String> {
     tauri::async_runtime::spawn_blocking(move || crate::move_files_to_desktop(&paths))
         .await
-        .map_err(|err| format!("移动字体失败：{err}"))?
+        .map_err(|err| format!("Failed to move fonts: {err}"))?
         .map(|(_, count)| count)
 }
 
@@ -718,7 +718,7 @@ pub async fn move_disabled_to_desktop(paths: Vec<String>) -> Result<usize, Strin
 pub async fn move_quarantined_to_desktop() -> Result<usize, String> {
     tauri::async_runtime::spawn_blocking(crate::move_quarantined_to_desktop)
         .await
-        .map_err(|err| format!("移动字体失败：{err}"))?
+        .map_err(|err| format!("Failed to move fonts: {err}"))?
         .map(|(_, count)| count)
 }
 
@@ -728,12 +728,12 @@ pub async fn reset_user_data() -> Result<(), String> {
     tauri::async_runtime::spawn_blocking(|| {
         let dir = crate::config::app_dir();
         if dir.exists() {
-            std::fs::remove_dir_all(&dir).map_err(|err| format!("删除配置目录失败：{err}"))?;
+            std::fs::remove_dir_all(&dir).map_err(|err| format!("Failed to delete config directory: {err}"))?;
         }
         Ok(())
     })
     .await
-    .map_err(|err| format!("删除配置目录失败：{err}"))?
+    .map_err(|err| format!("Failed to delete config directory: {err}"))?
 }
 
 /// 重启应用。

@@ -188,6 +188,8 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 - 每个语言包在 `[meta]` 中提供 `LanguageCode`（BCP 47，如 `zh-CN`）。设置默认值为「使用系统语言」：
   通过 `GetUserDefaultLocaleName` 读取系统 locale，先精确匹配代码；简体中文区域（`zh-Hans` / `zh-SG` / `zh-MY` / `zh-CN`）未命中回退 `zh-CN`，繁体区域（`zh-Hant` / `zh-TW`）回退 `zh-TW`，其余 `zh-*` 回退 `zh-HK`；其他语言未命中时优先同主语言，再回退 `en-US`，仍缺失再回退 `zh-CN`（`zh-cn.ini`）。回退时设置仍保持「使用系统语言」。
 
+- 后端返回的错误字符串为英文，前端只翻译外层提示模板；系统调用返回的文本可能跟随 Windows 显示语言。
+
 ## 软件更新
 
 - 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`，镜像源加 `https://gh-proxy.org/` 前缀。网络请求跟随 Windows 系统代理，并支持 `HTTP(S)_PROXY` / `NO_PROXY` 环境变量。

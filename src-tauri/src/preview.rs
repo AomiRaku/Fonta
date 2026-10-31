@@ -96,7 +96,7 @@ pub fn render(
     let mapped = font_map(path)?;
     let glyphs = glyph_map(path)?;
     let mut font = FontRef::try_from_slice(&mapped[..])
-        .map_err(|error| format!("解析字体失败：{error}"))?;
+        .map_err(|error| format!("Failed to parse font: {error}"))?;
     if weight > 0.0 {
         // 可变字体：按调用方给的字重实例化（Regular 或可变范围的中点）
         font.set_variation(b"wght", weight);
@@ -200,7 +200,7 @@ fn glyph_map(path: &str) -> Result<Arc<HashMap<u32, u16>>, String> {
 
     let mapped = font_map(path)?;
     let face = ttf_parser::Face::parse(&mapped[..], 0)
-        .map_err(|error| format!("解析字体失败：{error}"))?;
+        .map_err(|error| format!("Failed to parse font: {error}"))?;
     let mut map: HashMap<u32, u16> = HashMap::new();
     if let Some(cmap) = face.tables().cmap {
         for table in cmap.subtables {
@@ -240,8 +240,8 @@ fn font_map(path: &str) -> Result<Arc<Mmap>, String> {
         }
     }
 
-    let file = File::open(path).map_err(|error| format!("打开字体失败：{error}"))?;
-    let map = unsafe { Mmap::map(&file) }.map_err(|error| format!("映射字体失败：{error}"))?;
+    let file = File::open(path).map_err(|error| format!("Failed to open font: {error}"))?;
+    let map = unsafe { Mmap::map(&file) }.map_err(|error| format!("Failed to map font: {error}"))?;
     let map = Arc::new(map);
     if let Ok(mut list) = cache.lock() {
         list.push((path.to_string(), stamp, map.clone()));
@@ -323,10 +323,10 @@ fn rasterize(
         encoder.set_depth(png::BitDepth::Eight);
         let mut writer = encoder
             .write_header()
-            .map_err(|error| format!("编码失败：{error}"))?;
+            .map_err(|error| format!("Encoding failed: {error}"))?;
         writer
             .write_image_data(&pixels)
-            .map_err(|error| format!("编码失败：{error}"))?;
+            .map_err(|error| format!("Encoding failed: {error}"))?;
     }
     let encoded = base64::engine::general_purpose::STANDARD.encode(&png_bytes);
     Ok(format!("data:image/png;base64,{encoded}"))
