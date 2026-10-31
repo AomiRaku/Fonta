@@ -1,6 +1,3 @@
-> [!IMPORTANT]
-> 当前项目处于早期开发阶段，暂无 Release。
-
 <div align="center">
 
 <img src="docs/img/FontFox_Logo.webp"  width="144" height="144" style="display: block; margin: 0 auto;" alt="icon" />
@@ -14,9 +11,9 @@ Made with ❤️ by [羽梦千景 Raku Inkyetta](https://github.com/AomiRaku)
 
 ## 快速开始
 
-当前尚未发布 Release，暂无可下载的安装包。
+下载请点击 [此处](https://github.com/AomiRaku/font-fox/releases/latest) 访问最新发布版页面。
 
-可从仓库源码自行构建。
+也可从仓库源码自行编译构建。
 
 
 
@@ -75,8 +72,6 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 ## 多语言
 
 内置简体中文、English (US)、Français、Русский、日本語、한국어、繁體中文（香港 / 台灣 / 澳門 / 文言）；默认跟随系统语言。语言包存放于软件运行目录 `lang` 文件夹内，可继续添加翻译。
-
-目前暂不接受 PR 提交。
 
 
 
