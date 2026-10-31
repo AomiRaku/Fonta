@@ -3245,7 +3245,8 @@ html[data-theme="dark"] .about__wordmark--dark {
   white-space: pre-line;
 }
 
-.update__skip {
+.update__skip,
+.update__browser {
   margin-right: auto;
 }
 

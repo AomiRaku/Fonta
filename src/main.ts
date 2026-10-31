@@ -2132,6 +2132,7 @@ function openDeleteDialog(entries: FontEntry[]): void {
 const GITHUB_PROFILE = "https://github.com/AomiRaku";
 const GITHUB_REPO = "https://github.com/AomiRaku/font-fox";
 const GITHUB_CONTRIBUTORS = "https://github.com/AomiRaku/font-fox/graphs/contributors";
+const GITHUB_RELEASES = "https://github.com/AomiRaku/font-fox/releases/latest";
 
 function openExternal(url: string): void {
   void api.openUrl(url).catch((err) => toast(errorText(err), true));
@@ -2342,9 +2343,18 @@ async function openDownloadDialog(update: UpdateInfo): Promise<void> {
   const { overlay, body, footer } = shell;
   const progress = el("p", "modal__lead update__progress");
   body.appendChild(progress);
+  const browser = el("a", "link update__link update__browser") as HTMLAnchorElement;
+  browser.href = GITHUB_RELEASES;
+  browser.target = "_blank";
+  browser.rel = "noreferrer";
+  browser.textContent = t("update.latestRelease");
+  browser.addEventListener("click", (event) => {
+    event.preventDefault();
+    openExternal(GITHUB_RELEASES);
+  });
   const cancel = el("button", "btn btn--soft", t("update.cancel")) as HTMLButtonElement;
   cancel.type = "button";
-  footer.appendChild(cancel);
+  footer.append(browser, cancel);
 
   let cancelled = false;
   let finished = false;
