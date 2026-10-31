@@ -402,16 +402,23 @@ export function buildFamilyRow(
   count: number,
   options: FamilyRowOptions,
 ): VirtualRow {
+  let animateMeta = options.animateMeta;
+  let animateChevron = options.animateChevron;
   return {
     key: options.rowKey ?? `family:${family}`,
     height: options.preview ? PREVIEW_ROW_H : ROW_H,
     render: () => {
+      // 展开/收起动画只在切换后的首次渲染播放，滚动重建不重播
+      const meta = animateMeta;
+      const chevronAnim = animateChevron;
+      animateMeta = null;
+      animateChevron = null;
       const classes = ["row", "row--family-head"];
       classes.push(options.preview ? "row--preview" : "row--compact");
       if (options.alternate) classes.push("row--alt");
       if (options.expanded) classes.push("row--expanded");
-      if (options.animateMeta === "expand") classes.push("row--meta-out");
-      if (options.animateMeta === "collapse") classes.push("row--meta-in");
+      if (meta === "expand") classes.push("row--meta-out");
+      if (meta === "collapse") classes.push("row--meta-in");
       if (options.isSelected?.()) classes.push("row--selected");
       const row = el("div", classes.join(" "));
       row.dataset.family = family;
@@ -429,8 +436,8 @@ export function buildFamilyRow(
         chip.title = options.expanded ? t("list.collapseGroup") : t("list.expandGroup");
         chip.appendChild(el("span", "family__expand-label", t("list.styleCount", { count })));
         const chevron = icon("chevron-down", "family__expand-chevron");
-        if (options.animateChevron === "expand") chevron.classList.add("is-spin-open");
-        if (options.animateChevron === "collapse") chevron.classList.add("is-spin-close");
+        if (chevronAnim === "expand") chevron.classList.add("is-spin-open");
+        if (chevronAnim === "collapse") chevron.classList.add("is-spin-close");
         chip.appendChild(chevron);
         chip.addEventListener("click", (event) => {
           event.stopPropagation();
@@ -444,11 +451,11 @@ export function buildFamilyRow(
         // 预览模式：折叠时显示首个字重的示例，展开后这一格让给族内各行；
         // 展开动画期间保留旧示例，以便渐隐下移
         const slot = el("div", "row__preview-slot");
-        if (!options.expanded || options.animateMeta === "expand") {
+        if (!options.expanded || meta === "expand") {
           const sample = options.sample?.();
           if (sample) {
             slot.appendChild(sample);
-            if (options.animateMeta === "expand") {
+            if (meta === "expand") {
               sample.addEventListener("animationend", () => sample.remove(), { once: true });
             }
           }
@@ -457,12 +464,12 @@ export function buildFamilyRow(
       } else {
         // 折叠时补充语言与总大小；展开时这两格留空，只保留总控开关。
         // 展开动画期间保留旧内容并渐隐下移，结束后再清空
-        const keepMeta = !options.expanded || options.animateMeta === "expand";
+        const keepMeta = !options.expanded || meta === "expand";
         const lang = el("div", "cell cell--lang", keepMeta ? languageLabel(options.language) : "");
         const size = el("div", "cell cell--size", keepMeta ? options.totalSize : "");
         row.appendChild(lang);
         row.appendChild(size);
-        if (options.animateMeta === "expand") {
+        if (meta === "expand") {
           for (const cell of [lang, size]) {
             cell.addEventListener("animationend", () => { cell.textContent = ""; }, { once: true });
           }

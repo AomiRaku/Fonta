@@ -745,7 +745,8 @@ function applyRange(targetKey: string): boolean {
     if (unit.key.startsWith("family:") && skippedFamilies.has(unit.key)) continue;
     for (const id of unit.ids) ids.add(id);
   }
-  state.selectedIds = ids;
+  state.selectedIds.clear();
+  for (const id of ids) state.selectedIds.add(id);
   return true;
 }
 
@@ -800,7 +801,6 @@ function selectFamily(
   if (members.length === 0) return;
 
   if (event?.shiftKey && applyRange(key)) {
-    revealDetailForMultiSelection();
     syncRowSelection();
     renderDetailPane();
     return;
@@ -813,10 +813,10 @@ function selectFamily(
   } else if (additive) {
     for (const member of members) state.selectedIds.add(member.id);
   } else {
-    state.selectedIds = new Set(members.map((member) => member.id));
+    state.selectedIds.clear();
+    for (const member of members) state.selectedIds.add(member.id);
   }
   state.anchorId = key;
-  revealDetailForMultiSelection();
   syncRowSelection();
   renderDetailPane();
 }
@@ -3555,7 +3555,7 @@ async function syncMaximizeLabel(): Promise<void> {
   }
 }
 
-/** 多选字体时展开详情面板。 */
+/** 手动多选字体时展开详情面板；字族选择不算多选。 */
 function revealDetailForMultiSelection(): void {
   if (state.selectedIds.size > 1 && !state.settings.detailOpen) {
     applyDetailOpen(true);
