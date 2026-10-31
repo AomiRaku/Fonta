@@ -1505,7 +1505,7 @@ function toggleMoreMenu(): void {
   menu.setAttribute("role", "menu");
 
   const items: Array<{ label: string; disabled?: boolean; run?: () => void }> = [
-    { label: t("more.refresh"), run: () => void refresh() },
+    { label: t("more.refresh"), run: () => void rescanWithToast() },
     { label: t("more.settings"), run: () => openSettings() },
     { label: t("more.about"), run: () => void openAbout() },
   ];
@@ -1657,7 +1657,7 @@ function renderAll(): void {
 
 /* ───────────────────────────── 数据操作 ───────────────────────────── */
 
-async function refresh(): Promise<void> {
+async function refresh(): Promise<boolean> {
   state.scanning = true;
   if (state.fonts.length === 0) {
     updateEmptyState(true);
@@ -1679,11 +1679,27 @@ async function refresh(): Promise<void> {
 
     if (state.anchorId && !ids.has(state.anchorId)) state.anchorId = null;
     renderAll();
+    return true;
   } catch (err) {
     toast(t("toast.scanFailed", { error: errorText(err) }), true);
+    return false;
   } finally {
     state.scanning = false;
     updateEmptyState(state.visible.length === 0);
+  }
+}
+
+/** 手动重新扫描字体，完成后提示数量变化。 */
+async function rescanWithToast(): Promise<void> {
+  const before = state.fonts.length;
+  if (!(await refresh())) return;
+  const delta = state.fonts.length - before;
+  if (delta === 0) {
+    toast(t("toast.noFontChanges"));
+  } else if (delta > 0) {
+    toast(t("toast.fontsAdded", { count: delta }));
+  } else {
+    toast(t("toast.fontsRemoved", { count: -delta }));
   }
 }
 
