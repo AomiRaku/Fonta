@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 import { t } from "./i18n";
 
@@ -7,7 +7,7 @@ export type Scope = "system" | "user";
 
 export type Protection =
   | "none"
-  | "official"
+  | "system"
   | "core"
   | "raster"
   | "shared-system-file";
@@ -137,6 +137,7 @@ export interface AboutPayload {
   licenseName: string;
   licenseText: string;
   noticeText: string;
+  thirdPartyText: string;
   configPath: string;
   pendingPath: string;
 }
@@ -158,7 +159,7 @@ export const DEFAULT_SETTINGS: Settings = {
 
 const PROTECTION_KEYS: Record<Protection, string> = {
   none: "",
-  official: "protection.official",
+  system: "protection.system",
   core: "protection.core",
   raster: "protection.raster",
   "shared-system-file": "protection.sharedSystemFile",

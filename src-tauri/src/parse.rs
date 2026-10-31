@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 字体文件解析：只读 `name` 表，提取家族名 / 样式 / 版本 / 版权。
 //!
@@ -261,7 +261,7 @@ pub fn read_meta(path: &Path, hint: &str) -> Option<FontMeta> {
     let count = ttf_parser::fonts_in_collection(&data).unwrap_or(1).max(1);
     let ui_lang = system_ui_language();
 
-    let hint_key = crate::official::normalize(hint);
+    let hint_key = crate::system_fonts::normalize(hint);
     let mut families_all: Vec<String> = Vec::new();
     let mut best: Option<(i32, FontMeta)> = None;
 
@@ -287,7 +287,7 @@ pub fn read_meta(path: &Path, hint: &str) -> Option<FontMeta> {
 
         let mut score = 0i32;
         for candidate in [&family, &full] {
-            let key = crate::official::normalize(candidate);
+            let key = crate::system_fonts::normalize(candidate);
             if key.is_empty() {
                 continue;
             }

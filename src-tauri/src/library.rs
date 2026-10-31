@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 用户收藏与「字体单」。存成 `%USERPROFILE%\.FontFox\library.json`，
 //! 和配置分离：配置是偏好，这里是用户攒下来的数据。

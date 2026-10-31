@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 界面语言包：外挂 `.ini`，源文件在项目根目录 `langBuild/`，构建时复制到 exe 同级 `lang/`。
 //!
@@ -12,7 +12,7 @@
 //! ```ini
 //! [meta]
 //! LanguageName=简体中文
-//! Translator=Raku Inkyetta 羽梦千景
+//! Translator=羽梦千景 Raku Inkyetta
 //!
 //! [ui]
 //! app.name=FontFox
@@ -176,7 +176,7 @@ pub fn load(name: &str) -> LanguagePack {
         translator: meta
             .get("translator")
             .cloned()
-            .unwrap_or_else(|| "Raku Inkyetta 羽梦千景".to_string()),
+            .unwrap_or_else(|| "羽梦千景 Raku Inkyetta".to_string()),
         entries,
     }
 }

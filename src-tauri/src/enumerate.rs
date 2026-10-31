@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 字体枚举：注册表双源 + 文件系统 + `name` 表解析。
 
@@ -11,7 +11,7 @@ use rayon::prelude::*;
 
 use crate::inactive::InactiveSet;
 use crate::model::{FontEntry, FontListPayload, Protection, Scope};
-use crate::official;
+use crate::system_fonts;
 use crate::ownership;
 use crate::parse;
 use crate::registry;
@@ -146,7 +146,7 @@ pub fn scan() -> FontListPayload {
                 // 只有系统作用域才值得去查文件所有权（用户字体永远可删）
                 let system_owned =
                     exists && raw.scope == Scope::System && ownership::is_system_owned(&raw.path);
-                official::evaluate(raw.scope, system_owned, &file_name, &family_names, raster)
+                system_fonts::evaluate(raw.scope, system_owned, &file_name, &family_names, raster)
             };
             if !exists {
                 // 文件都不在了，删除只剩清理注册表，不算危险操作。

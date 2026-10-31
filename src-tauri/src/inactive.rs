@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! `Inactive Fonts` 的读写与匹配。
 //!
@@ -14,7 +14,7 @@
 use std::collections::HashSet;
 
 use crate::model::{FontEntry, HiddenReport};
-use crate::official::normalize;
+use crate::system_fonts::normalize;
 use crate::registry::{read_inactive_fonts, write_inactive_fonts};
 
 /// `Inactive Fonts` 的当前内容 + 归一化后的查找集合。

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-# Copyright (c) 2026 Raku Inkyetta 羽梦千景
+# Copyright (c) 2026 羽梦千景 Raku Inkyetta
 #
 # FontFox —— 开发模式启动器（由 dev.cmd 双击调用）。
 #

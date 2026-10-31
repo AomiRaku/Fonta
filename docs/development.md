@@ -32,7 +32,7 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 | 停用 / 启用 | 两种模式：**Windows 基础模式**读写 `HKCU\...\Font Management\Inactive Fonts`（`REG_MULTI_SZ`，即时生效；按单个样式写入展示名 / 文件名，同族样式可分别停用）；**动态安装卸载模式**删除 `HKCU\...\Fonts` 值并把文件移入隔离目录，仅用户作用域。任一字体失败时整批回滚并返回错误 |
 | 删除字体 | 用户字体直接删除；系统作用域字体运行时提权（一次 UAC）；文件锁定则登记待清理 |
 | 注册表残留清理 | 文件已缺失的条目可只清注册表 |
-| 保护判定 | 文件所有权（TrustedInstaller / SYSTEM）为主判据，微软官方清单与内置补充清单兜底，另有光栅字体、共享系统文件判定 |
+| 保护判定 | 文件所有权（TrustedInstaller / SYSTEM）为主判据，内置系统字体保护清单与补充清单兜底，另有光栅字体、共享系统文件判定 |
 | 收藏 / 字体单 | 收藏字体、自建字体单（最多 20 个，各有标记色），右键「添加到字体单」 |
 | 详情面板 | 可折叠；完整名称、语言、版本、版权、路径、文件大小，支持复制与「打开文件位置」；可变字体带字重滑块 |
 | 外观 | 浅色 / 深色 / 跟随系统；自绘标题栏与窗口按钮，窗口圆角 / 描边 / 阴影由 DWM 提供 |
@@ -79,12 +79,12 @@ cargo test --manifest-path src-tauri/Cargo.toml --lib    # Rust 单元测试
 更新内置数据 / 图标：
 
 ```powershell
-python tools/parse_official.py --refresh   # 拉取 Microsoft Learn 的 Win10/11 字体列表
 npx tauri icon path/to/icon.png            # 重新生成 src-tauri/icons/（应用图标）
 ```
 
-`tools/parse_official.py` 只处理微软官方列表。Learn 的列表**不覆盖**全部随系统分发的字体
-（`.fon` 光栅字体、语言包字体、24H2 起的 Noto CJK 等），这部分由手工维护的
+`src-tauri/src/data/system_fonts.json` 是独立维护的 Windows 系统字体兼容清单，只保存字体
+家族名与文件名；仓库和构建流程不包含网页抓取脚本，也不在构建时访问网络。主清单**不覆盖**
+全部随系统分发的字体（`.fon` 光栅字体、语言包字体、24H2 起的 Noto CJK 等），这部分由手工维护的
 `src-tauri/src/data/core_fonts.json` 补充，避免把真实系统字体误判为「可删除的第三方字体」。
 
 ## 目录结构
@@ -93,10 +93,10 @@ npx tauri icon path/to/icon.png            # 重新生成 src-tauri/icons/（应
 src/                前端：入口 main.ts、虚拟列表、行渲染、详情、菜单、i18n、悬浮滚动条
 src/assets/icons/   自绘 SVG 图标
 src-tauri/src/      Rust：枚举、解析、保护判定、停用 / 删除、提权、设置、字体单、预览栅格化
-src-tauri/src/data/ 内置字体清单（official_fonts.json / core_fonts.json）
+src-tauri/src/data/ 内置字体清单（system_fonts.json / core_fonts.json）
 langBuild/          语言包唯一源文件（构建时复制到 exe 同级 lang/）
 docs/               UI 规范、架构说明、开发文档、截图
-tools/              官方清单抓取、语言包复制脚本
+tools/              语言包复制、第三方许可证生成脚本
 ```
 
 ## 内存
@@ -126,8 +126,8 @@ tools/              官方清单抓取、语言包复制脚本
 只有 `HKLM` 作用域的字体可能被标记为受保护；`HKCU` 作用域直接视为可操作。判定顺序：
 
 1. 文件位于 `%WINDIR%\Fonts` 但注册在 `HKCU` → `shared-system-file`
-2. 文件所有权为 TrustedInstaller / SYSTEM → `official`
-3. 命中微软 Windows 10 / 11 官方字体列表（文件名或家族名）→ `official`
+2. 文件所有权为 TrustedInstaller / SYSTEM → `system`
+3. 命中内置 Windows 系统字体保护清单（文件名或家族名）→ `system`
 4. `.fon` / `.fnt` 光栅字体 → `raster`
 5. 命中内置补充清单（`core_fonts.json`）→ `core`
 
@@ -164,7 +164,7 @@ tools/              官方清单抓取、语言包复制脚本
 
 - **默认以普通用户运行**：只有删除系统作用域字体时才用 `runas` 拉起删除子进程，仅那一步弹一次 UAC；
   取消即放弃删除，主程序不受影响。
-- `Inactive Fonts` 的官方语义是「隐藏」，不是内核级禁用。部分缓存了字体表的旧应用可能仍能枚举到，
+- `Inactive Fonts` 的系统语义是「隐藏」，不是内核级禁用。部分缓存了字体表的旧应用可能仍能枚举到，
   通常需要重启或重新登录才完全生效。
 - 删除时若字体文件被当前会话的 GDI 锁定，注册表会先清理（重启后不再加载），文件登记到待清理清单，
   下次启动重试；提权子进程会直接完成删除，不经过清单。
@@ -189,6 +189,12 @@ tools/              官方清单抓取、语言包复制脚本
 - `src-tauri/nsis-lang/*.nsh` 是 Tauri 安装器的自定义文案，在语言加载后追加，修改时保留原有 `LangString`。
 - 升级 Tauri 后若 NSIS 模板有变化，需重新同步 `src-tauri/nsis/installer.nsi` 并保留语言加载段的改动。
 
+## 第三方许可证
+
+- `THIRD_PARTY_LICENSES.txt` 由 `npm run third-party` 生成；数据来源为 `cargo metadata`、Windows 目标的 `cargo tree` 与前端运行时依赖。
+- 生成器按包名和版本列出依赖，许可证全文去重后编号；构建工具与未进入 Windows 构建的依赖不列出。
+- 文件作为安装包资源分发，并在「开源许可 → 第三方组件」显示；新增或升级依赖后需重新生成。
+
 ## 版本号
 
 - 对外版本使用 `major.minor`，不补前导零：当前 **1000.0**，后续例如 `1021.0`、`1220.0`、`2200.13`。
@@ -197,7 +203,7 @@ tools/              官方清单抓取、语言包复制脚本
 
 ## 许可证
 
-Copyright © 2026 Raku Inkyetta 羽梦千景。以 Apache License 2.0 授权，见 [LICENSE](../LICENSE)；
+Copyright © 2026 羽梦千景 Raku Inkyetta。以 Apache License 2.0 授权，见 [LICENSE](../LICENSE)；
 第三方组件与数据来源见 [NOTICE](../NOTICE)。应用内「关于 / 许可」可查看完整文本。
 
 ## 相关链接

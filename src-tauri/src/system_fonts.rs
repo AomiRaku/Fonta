@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 保护判定。
 //!
-//! 判定完全离线，依赖两份内置快照：
+//! 判定完全离线，依赖两份独立维护的内置清单：
 //!
-//! 1. `data/official_fonts.json` —— 由微软 Learn 的 Windows 10 / 11 字体列表
-//!    生成（`tools/parse_official.py`），按文件名 + 家族名匹配；
-//! 2. `data/core_fonts.json` —— 手工维护的补充清单，覆盖 Learn 列表遗漏的
+//! 1. `data/system_fonts.json` —— Windows 系统字体兼容清单，仅包含字体
+//!    家族名与文件名，按文件名 + 家族名匹配；
+//! 2. `data/core_fonts.json` —— 手工维护的补充清单，覆盖主清单遗漏的
 //!    随系统分发字体（光栅字体、语言包字体、Noto CJK 等）。
 //!
 //! 只有 HKLM 作用域的字体可能被判定为“受保护”；HKCU 字体永远可删除。
@@ -19,11 +19,11 @@ use serde::Deserialize;
 
 use crate::model::{Protection, Scope};
 
-const OFFICIAL_JSON: &str = include_str!("data/official_fonts.json");
+const SYSTEM_JSON: &str = include_str!("data/system_fonts.json");
 const CORE_JSON: &str = include_str!("data/core_fonts.json");
 
 #[derive(Deserialize)]
-struct OfficialRow {
+struct SystemFontRow {
     family: String,
     file: String,
     #[serde(default)]
@@ -39,38 +39,38 @@ struct CoreList {
 }
 
 pub struct ProtectionIndex {
-    official_files: HashSet<String>,
-    official_families: HashSet<String>,
+    system_files: HashSet<String>,
+    system_families: HashSet<String>,
     core_files: HashSet<String>,
     core_families: HashSet<String>,
 }
 
 impl ProtectionIndex {
     fn load() -> Self {
-        let rows: Vec<OfficialRow> =
-            serde_json::from_str(OFFICIAL_JSON).expect("official_fonts.json 结构损坏");
+        let rows: Vec<SystemFontRow> =
+            serde_json::from_str(SYSTEM_JSON).expect("system_fonts.json 结构损坏");
         let core: CoreList = serde_json::from_str(CORE_JSON).expect("core_fonts.json 结构损坏");
 
-        let mut official_files = HashSet::with_capacity(rows.len());
-        let mut official_families = HashSet::with_capacity(rows.len() * 2);
+        let mut system_files = HashSet::with_capacity(rows.len());
+        let mut system_families = HashSet::with_capacity(rows.len() * 2);
         for row in &rows {
-            official_files.insert(normalize(&row.file));
-            official_families.insert(normalize(&row.family));
+            system_files.insert(normalize(&row.file));
+            system_families.insert(normalize(&row.family));
             for name in &row.names {
-                official_families.insert(normalize(name));
+                system_families.insert(normalize(name));
             }
         }
 
         Self {
-            official_files,
-            official_families,
+            system_files,
+            system_families,
             core_files: core.files.iter().map(|f| normalize(f)).collect(),
             core_families: core.families.iter().map(|f| normalize(f)).collect(),
         }
     }
 
     pub fn counts(&self) -> (usize, usize) {
-        (self.official_files.len(), self.core_files.len())
+        (self.system_files.len(), self.core_files.len())
     }
 }
 
@@ -132,17 +132,17 @@ pub fn evaluate(
     // 第三方字体（哪怕装进 C:\Windows\Fonts）不会。这个判断不依赖任何清单，
     // 所以系统升级新增的字体也能自动识别。
     if system_owned {
-        return Protection::Official;
+        return Protection::System;
     }
 
     let idx = index();
     let file_key = normalize(file_name);
     let family_keys: Vec<String> = family_names.iter().map(|f| normalize(f)).collect();
 
-    if idx.official_files.contains(&file_key)
-        || family_keys.iter().any(|f| idx.official_families.contains(f))
+    if idx.system_files.contains(&file_key)
+        || family_keys.iter().any(|f| idx.system_families.contains(f))
     {
-        return Protection::Official;
+        return Protection::System;
     }
 
     if is_raster || file_key.ends_with(".fon") || file_key.ends_with(".fnt") {
@@ -162,7 +162,7 @@ pub fn evaluate(
 pub fn describe(protection: Protection) -> &'static str {
     match protection {
         Protection::None => "",
-        Protection::Official => "系统自带字体",
+        Protection::System => "系统自带字体",
         Protection::Core => "系统字体",
         Protection::Raster => "系统点阵字体",
         Protection::SharedSystemFile => "字体文件位于系统字体目录",
@@ -180,21 +180,21 @@ mod tests {
     }
 
     #[test]
-    fn official_list_is_loaded() {
-        let (official, core) = index().counts();
-        assert!(official > 100, "官方清单为空");
+    fn system_list_is_loaded() {
+        let (system, core) = index().counts();
+        assert!(system > 100, "系统字体清单为空");
         assert!(core > 10, "补充清单为空");
     }
 
     #[test]
     fn protects_arial() {
         let p = evaluate(Scope::System, false, "Arial.ttf", &["Arial".to_string()], false);
-        assert_eq!(p, Protection::Official);
+        assert_eq!(p, Protection::System);
     }
 
     #[test]
-    fn protects_fonts_missing_from_learn_list() {
-        // MT Extra 是随 Office / Windows 分发的数学符号字体，Learn 列表里没有，
+    fn protects_supplementary_system_fonts() {
+        // MT Extra 是随 Office / Windows 分发的数学符号字体，主清单未覆盖，
         // 只能靠内置补充清单保护。
         let extra = evaluate(
             Scope::System,
@@ -213,7 +213,7 @@ mod tests {
             false,
         );
         assert!(
-            matches!(nirmala, Protection::Official | Protection::Core),
+            matches!(nirmala, Protection::System | Protection::Core),
             "Nirmala UI 必须被保护，实际为 {:?}",
             nirmala
         );
@@ -229,7 +229,7 @@ mod tests {
             &["Some New OS Font".to_string()],
             false,
         );
-        assert_eq!(p, Protection::Official);
+        assert_eq!(p, Protection::System);
     }
 
     #[test]

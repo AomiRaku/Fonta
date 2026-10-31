@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 // 发布构建不弹出控制台窗口。
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]

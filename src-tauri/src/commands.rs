@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 暴露给前端的 Tauri 命令。
 //!
@@ -19,7 +19,7 @@ use crate::library;
 use crate::model::{
     DeleteReport, FontEntry, FontListPayload, HiddenReport, PendingDelete, Scope, Settings,
 };
-use crate::official;
+use crate::system_fonts;
 use crate::registry;
 use crate::settings as settings_store;
 
@@ -75,7 +75,7 @@ pub struct AppInfo {
     pub version: String,
     pub elevated: bool,
     pub pending: Vec<PendingDelete>,
-    pub official_count: usize,
+    pub system_count: usize,
     pub core_count: usize,
     pub system_font_dir: String,
     pub user_font_dir: String,
@@ -92,6 +92,7 @@ pub struct AboutPayload {
     pub license_name: String,
     pub license_text: String,
     pub notice_text: String,
+    pub third_party_text: String,
     pub config_path: String,
     pub pending_path: String,
 }
@@ -325,12 +326,12 @@ fn display_version(version: &str) -> String {
 /// 删除前请先确认没有外部工具依赖。
 #[tauri::command]
 pub fn app_info(app: tauri::AppHandle) -> AppInfo {
-    let (official_count, core_count) = official::index().counts();
+    let (system_count, core_count) = system_fonts::index().counts();
     AppInfo {
         version: display_version(&app.package_info().version.to_string()),
         elevated: registry::is_elevated(),
         pending: delete::pending_items(),
-        official_count,
+        system_count,
         core_count,
         system_font_dir: registry::system_font_dir().to_string_lossy().to_string(),
         user_font_dir: registry::user_font_dir().to_string_lossy().to_string(),
@@ -346,6 +347,7 @@ pub fn about(app: tauri::AppHandle) -> AboutPayload {
         license_name: "Apache License 2.0".to_string(),
         license_text: include_str!("../../LICENSE").to_string(),
         notice_text: include_str!("../../NOTICE").to_string(),
+        third_party_text: include_str!("../../THIRD_PARTY_LICENSES.txt").to_string(),
         config_path: crate::config::config_file().to_string_lossy().to_string(),
         pending_path: delete::pending_file().to_string_lossy().to_string(),
     }

@@ -12,6 +12,7 @@
 /_scratch/
 /todo/
 /tools/.fontlist-cache/
+/tools/parse_official.py
 *.log
 *.tmp
 

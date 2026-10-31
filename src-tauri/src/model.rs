@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 前后端共享的数据模型。
 
@@ -30,8 +30,8 @@ impl Scope {
 pub enum Protection {
     /// 未受保护，可以删除。
     None,
-    /// 命中微软官方 Windows 10 / 11 字体列表。
-    Official,
+    /// 命中内置的 Windows 系统字体保护清单。
+    System,
     /// 命中内置的“Windows 内置字体补充清单”。
     Core,
     /// `.fon` / `.fnt` 光栅字体，删除会破坏系统界面。
@@ -44,7 +44,7 @@ impl Protection {
     pub fn as_str(self) -> &'static str {
         match self {
             Protection::None => "none",
-            Protection::Official => "official",
+            Protection::System => "system",
             Protection::Core => "core",
             Protection::Raster => "raster",
             Protection::SharedSystemFile => "shared-system-file",

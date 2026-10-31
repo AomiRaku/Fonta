@@ -65,10 +65,10 @@ FontFox 包含以下功能：
 src/                前端：入口 main.ts、虚拟列表、行渲染、详情、菜单、i18n等
 src/assets/icons/   自绘 SVG 图标
 src-tauri/src/      Rust：枚举、解析、保护判定、隐藏/删除、提权、设置与字体单存储
-src-tauri/src/data/ 系统内置字体补充清单（official_fonts.json / core_fonts.json）
+src-tauri/src/data/ 系统内置字体清单（system_fonts.json / core_fonts.json）
 langBuild/          语言包编辑目录（构建时会复制到 exe 同级 lang/）
 docs/               UI 规范、架构说明、开发文档、截图
-tools/              图标生成、官方清单抓取、语言包复制脚本
+tools/              图标生成、语言包复制脚本
 ```
 
 

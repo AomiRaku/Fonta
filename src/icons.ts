@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 /**
  * 图标：全部来自 Siemens iX 图标库（MIT），构建时按需内联，不额外请求网络。

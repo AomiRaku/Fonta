@@ -39,9 +39,9 @@
       "icons/128x128@2x.png",
       "icons/icon.ico"
     ],
-    "resources": { "../LICENSE": "./", "../NOTICE": "./", "../langBuild/*.ini": "lang/" },
+    "resources": { "../LICENSE": "./", "../NOTICE": "./", "../THIRD_PARTY_LICENSES.txt": "./", "../langBuild/*.ini": "lang/" },
     "shortDescription": "FontFox font manager.",
-    "copyright": "Copyright (c) 2026 Raku Inkyetta 羽梦千景",
+    "copyright": "Copyright (c) 2026 羽梦千景 Raku Inkyetta",
     "license": "Apache-2.0",
     "windows": {
       "nsis": {

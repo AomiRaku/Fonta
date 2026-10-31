@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 /** 设置里的自定义下拉：按钮外观与菜单一致，展开层复用 `.ctx` 的描边 / 圆角 / 阴影 / 淡入。 */
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 端到端往返测试：会真的写入 HKCU 字体键与 `Inactive Fonts`，并在结束时还原。
 //!

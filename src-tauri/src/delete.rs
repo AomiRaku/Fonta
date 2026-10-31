@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! 删除：注册表 Value + 字体文件，处理 GDI 文件锁定。
 //!
@@ -127,7 +127,7 @@ pub fn delete_entries(entries: &[FontEntry], elevated: bool) -> DeleteReport {
             item.error = Some(format!(
                 "“{}”是受保护字体（{}），已跳过。",
                 entry.family,
-                crate::official::describe(entry.protection)
+                crate::system_fonts::describe(entry.protection)
             ));
             report.errors.push(item.error.clone().unwrap_or_default());
             report.items.push(item);

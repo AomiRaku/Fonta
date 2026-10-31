@@ -41,7 +41,7 @@
 | `src-tauri/src/enumerate.rs` | 注册表枚举 → `FontEntry`，含文件元数据、保护判定与安装时间 |
 | `src-tauri/src/parse.rs` | `ttf-parser` 读取 `name` / `fvar` / `GSUB`，TTC face 匹配 |
 | `src-tauri/src/langs.rs` | 按字形覆盖判定语言 |
-| `src-tauri/src/official.rs` | 官方字体清单与 `core_fonts.json` 匹配 |
+| `src-tauri/src/system_fonts.rs` | 系统字体保护清单与 `core_fonts.json` 匹配 |
 | `src-tauri/src/ownership.rs` | 文件所有者判定（TrustedInstaller / SYSTEM） |
 | `src-tauri/src/registry.rs` | 注册表读写、字体目录、`Inactive Fonts`、提权检测 |
 | `src-tauri/src/inactive.rs` | `Inactive Fonts` 读写与比对（Windows 基础模式） |
@@ -71,7 +71,7 @@
 | `retry_pending_deletes` | — | 清理成功的数量 |
 | `get_settings` / `save_settings` | `settings` | 设置结构 |
 | `load_library` / `save_library` | `library` | 收藏与字体单 |
-| `about` | — | 版本、许可证名称与全文、NOTICE 全文、配置与待清理路径 |
+| `about` | — | 版本、许可证名称与全文、NOTICE 全文、第三方许可证全文、配置与待清理路径 |
 | `app_info` | — | 诊断用：版本、提权状态、待清理清单、受保护字体统计、字体目录 |
 | `reveal_path` | `path` | 在资源管理器中定位（系统字体目录走 `shell:Fonts`） |
 | `registry_location` | `scope` | 注册表路径（详情面板展示） |

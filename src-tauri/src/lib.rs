@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright (c) 2026 Raku Inkyetta 羽梦千景
+// Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
 //! FontFox —— Windows 字体管理器的应用入口。
 
@@ -19,7 +19,7 @@ pub mod model;
 mod preview;
 mod restore_dialog;
 pub mod ownership;
-pub mod official;
+pub mod system_fonts;
 pub mod parse;
 pub mod registry;
 pub mod settings;

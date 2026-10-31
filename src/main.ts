@@ -2069,9 +2069,9 @@ function openExternal(url: string): void {
   void api.openUrl(url).catch((err) => toast(errorText(err), true));
 }
 
-/** 叠在关于窗口上的独立窗口：开源许可（声明 / 许可证）。 */
+/** 独立窗口：开源许可（声明 / 许可证 / 第三方组件）。 */
 function openLicenseDialog(
-  payload: { noticeText: string; licenseText: string },
+  payload: { noticeText: string; licenseText: string; thirdPartyText: string },
   onClose?: () => void,
 ): void {
   const shell = buildModal({ title: t("about.licenseTitle"), wide: true });
@@ -2082,8 +2082,12 @@ function openLicenseDialog(
   const tabs = el("div", "modal__tabs");
   head.insertBefore(tabs, close);
   const pre = el("pre", "modal__pre");
-  const panes = [payload.noticeText, payload.licenseText];
-  const labels = [t("about.tabNotice"), t("about.tabLicense")];
+  const panes = [payload.noticeText, payload.licenseText, payload.thirdPartyText];
+  const labels = [
+    t("about.tabNotice"),
+    t("about.tabLicense"),
+    t("about.tabThirdParty"),
+  ];
   const tabButtons: HTMLButtonElement[] = [];
 
   const show = (index: number): void => {
