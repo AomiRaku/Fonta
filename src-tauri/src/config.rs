@@ -82,6 +82,12 @@ pub fn load() -> Settings {
     if let Some(v) = entry(&entries, "Language") {
         settings.language = v.to_string();
     }
+    if let Some(v) = entry(&entries, "UpdateSource") {
+        settings.update_source = v.to_string();
+    }
+    if let Some(v) = entry(&entries, "IgnoredUpdateVersion") {
+        settings.ignored_update_version = v.to_string();
+    }
     // 预览文字只存在于本次会话，启动时一律为空（旧配置里的 PreviewText 会被忽略）
     settings.preview_text = String::new();
     if let Some(v) = entry(&entries, "DetailOpen") {
@@ -114,13 +120,17 @@ pub fn save(settings: &Settings) -> Result<(), String> {
          Language={}\r\n\
          DetailOpen={}\r\n\
          DisableMode={}\r\n\
-         DisableModeNext={}\r\n",
+         DisableModeNext={}\r\n\
+         UpdateSource={}\r\n\
+         IgnoredUpdateVersion={}\r\n",
         one_line(&settings.view_mode),
         one_line(&settings.theme),
         one_line(&settings.language),
         settings.detail_open,
         one_line(&settings.disable_mode),
         one_line(&settings.disable_mode_next),
+        one_line(&settings.update_source),
+        one_line(&settings.ignored_update_version),
     );
     write_atomic(&path, &text).map_err(|e| format!("无法写入配置：{}", e))
 }

@@ -12,6 +12,7 @@ use crate::model::Settings;
 const VIEW_MODES: [&str; 2] = ["compact", "preview"];
 const THEMES: [&str; 3] = ["system", "dark", "light"];
 const DISABLE_MODES: [&str; 2] = ["windows", "dynamic"];
+const UPDATE_SOURCES: [&str; 2] = ["github", "mirror"];
 
 /// 待应用的禁用方式：只接受已知值，且不能与当前生效值相同。
 fn pick_optional_mode(value: &str, current: &str) -> String {
@@ -39,6 +40,7 @@ pub fn load() -> Settings {
     settings.theme = pick(&settings.theme, &THEMES, &defaults.theme);
     settings.disable_mode = pick(&settings.disable_mode, &DISABLE_MODES, &defaults.disable_mode);
     settings.disable_mode_next = pick_optional_mode(&settings.disable_mode_next, &settings.disable_mode);
+    settings.update_source = pick(&settings.update_source, &UPDATE_SOURCES, &defaults.update_source);
     if settings.language.trim().is_empty() {
         settings.language = defaults.language;
     }
@@ -53,6 +55,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
     normalized.disable_mode = pick(&settings.disable_mode, &DISABLE_MODES, &defaults.disable_mode);
     normalized.disable_mode_next =
         pick_optional_mode(&settings.disable_mode_next, &normalized.disable_mode);
+    normalized.update_source = pick(&settings.update_source, &UPDATE_SOURCES, &defaults.update_source);
     if normalized.language.trim().is_empty() {
         normalized.language = defaults.language;
     }

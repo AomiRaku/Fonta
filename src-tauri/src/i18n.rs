@@ -12,6 +12,7 @@
 //! ```ini
 //! [meta]
 //! LanguageName=简体中文
+//! LanguageCode=zh-CN
 //! Translator=羽梦千景 Raku Inkyetta
 //!
 //! [ui]
@@ -25,7 +26,7 @@ use serde::Serialize;
 
 /// 内置回退语言包。
 #[cfg(test)]
-const EMBEDDED: &str = include_str!("../../langBuild/schinese.ini");
+const EMBEDDED: &str = include_str!("../../langBuild/zh-cn.ini");
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -34,6 +35,8 @@ pub struct LanguagePack {
     pub id: String,
     /// `LanguageName` 字段。
     pub name: String,
+    /// BCP 47 语言代码，例如 `zh-CN`。
+    pub code: String,
     /// `Translator` 字段。
     pub translator: String,
     /// 扁平化的 `section.key` → 文本。
@@ -46,6 +49,8 @@ pub struct LanguagePack {
 pub struct LanguageInfo {
     pub id: String,
     pub name: String,
+    /// BCP 47 语言代码，例如 `zh-CN`。
+    pub code: String,
 }
 
 /// 扫描 exe 同级 `lang/*.ini`（以及旧版的 exe 同级 `*.ini`），返回可选语言。
@@ -89,11 +94,17 @@ pub fn available() -> Vec<LanguageInfo> {
                 .get("languagename")
                 .cloned()
                 .unwrap_or_else(|| id.to_string());
+            let code = meta
+                .get("languagecode")
+                .cloned()
+                .filter(|value| !value.trim().is_empty())
+                .unwrap_or_else(|| id.to_string());
             found.insert(
                 id.to_string(),
                 LanguageInfo {
                     id: id.to_string(),
                     name,
+                    code,
                 },
             );
         }
@@ -154,7 +165,7 @@ fn candidates(name: &str) -> Vec<PathBuf> {
 pub fn load(name: &str) -> LanguagePack {
     let trimmed = name.trim();
     let id = if trimmed.is_empty() {
-        "schinese".to_string()
+        "zh-cn".to_string()
     } else {
         trimmed.to_string()
     };
@@ -166,13 +177,20 @@ pub fn load(name: &str) -> LanguagePack {
     // 缺文件时用空内容，界面上所有文案都会退化成键名，而不是静默变回中文
     let source = text.unwrap_or_default();
     let (meta, entries) = parse(&source);
+    let code = meta
+        .get("languagecode")
+        .cloned()
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or_else(|| id.clone());
+    let name = meta
+        .get("languagename")
+        .cloned()
+        .unwrap_or_else(|| "简体中文".to_string());
 
     LanguagePack {
         id,
-        name: meta
-            .get("languagename")
-            .cloned()
-            .unwrap_or_else(|| "简体中文".to_string()),
+        name,
+        code,
         translator: meta
             .get("translator")
             .cloned()
@@ -190,6 +208,7 @@ mod tests {
         // 内置包不再作为运行时回退，只用来校验仓库里的语言文件本身完整
         let (meta, entries) = parse(EMBEDDED);
         assert_eq!(meta.get("languagename").map(String::as_str), Some("简体中文"));
+        assert_eq!(meta.get("languagecode").map(String::as_str), Some("zh-CN"));
         assert_eq!(entries.get("list.colName").map(String::as_str), Some("字体名称"));
         assert_eq!(entries.get("app.name").map(String::as_str), Some("FontFox"));
     }
@@ -208,6 +227,7 @@ mod tests {
         // 不做回退：缺文件时条目为空，界面会显示键名
         let pack = load("does-not-exist");
         assert_eq!(pack.id, "does-not-exist");
+        assert_eq!(pack.code, "does-not-exist");
         assert!(pack.entries.is_empty());
     }
 }

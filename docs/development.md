@@ -17,7 +17,7 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 
 - **Windows 10 1809（build 17763）及以上，仅 64 位**；推荐 Windows 11。更低版本未验证（WebView2 与用户级字体机制都要求 1809 以上）
 - 需要 WebView2 运行时：Windows 11 与已更新的 Windows 10 自带；缺失时由安装器联网安装
-- 4px 窗口圆角由 DWM 提供，只有 Windows 11 才有；Windows 10 上是直角，其余功能一致
+- 窗口圆角由 DWM 提供：Windows 11 使用系统默认圆角，Windows 10 上是直角
 
 ## 功能
 
@@ -37,7 +37,7 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 | 详情面板 | 可折叠；完整名称、语言、版本、版权、路径、文件大小，支持复制与「打开文件位置」；可变字体带字重滑块 |
 | 外观 | 浅色 / 深色 / 跟随系统；自绘标题栏与窗口按钮，窗口圆角 / 描边 / 阴影由 DWM 提供 |
 | 键盘 | ↑ / ↓ 移动选择，Ctrl+A 全选列表且任何位置都不选中界面文字（输入框内除外），Delete 等同删除按钮，Esc 取消选择、清空搜索；模态弹窗打开或输入框聚焦时不接管这些快捷键 |
-| 语言 | 外挂 `lang/<id>.ini`，当前提供简体中文；缺失键直接显示键名，便于发现漏翻；文案里的字面 `\n` 会转成换行 |
+| 语言 | 外挂 `lang/<id>.ini`，默认跟随系统语言；语言包 `[meta] LanguageCode` 提供 BCP 47 代码；缺失键直接显示键名，便于发现漏翻；文案里的字面 `\n` 会转成换行 |
 
 ## 技术栈
 
@@ -46,7 +46,8 @@ Windows 字体管理器：枚举本机全部字体，可就地停用 / 启用、
 - **前端**：Vite 7 + TypeScript（无框架，手写虚拟滚动与悬浮滚动条）
 - **图标**：`@siemens/ix-icons`（MIT）+ 少量自绘 SVG，构建时内联，不发起网络请求
 - **窗口**：不透明、无边框（`decorations: false`、`shadow: true`、`backgroundColor: #F7F7F8`）；
-  DWM 负责 4px 圆角（`DWMWCP_ROUNDSMALL`）、描边、阴影与窗口动画，页面不画窗口外壳
+  DWM 负责系统圆角、描边、阴影与窗口动画，页面不画窗口外壳。保持系统默认圆角，
+  不要覆盖 `DWMWA_WINDOW_CORNER_PREFERENCE`：Windows 11 上 `ROUNDSMALL` 或直角偏好会明显缩小 DWM 阴影
 - **打包**：NSIS，机器级安装（安装 / 卸载需要管理员权限；应用本身清单为 `asInvoker`）
 
 ## 开发环境
@@ -172,16 +173,26 @@ tools/              语言包复制、第三方许可证生成脚本
 - 不修改字体文件内容，不重命名、不编辑字体。
 - 自绘标题栏意味着 Win11「悬停最大化按钮弹出贴靠布局」不可用（该能力只随系统标题栏提供）。
 - 分组依据、筛选条件、预览文字为会话内状态，重启后回到默认（不分组、无筛选、预览框为空）；
-  视图模式、主题、详情面板开合、语言、禁用方式会写入配置；禁用方式变更先写入 `DisableModeNext`，重启启动时执行迁移后再清空。
+  视图模式、主题、详情面板开合、语言、更新源、忽略的更新版本、禁用方式会写入配置；禁用方式变更先写入 `DisableModeNext`，重启启动时执行迁移后再清空。
 - **禁用状态持久化**：退出应用不会自动恢复字体，`disabled.json` 里的记录下次启动继续有效；
   动态模式下改动隔离目录会触发启动对账弹窗（补充未登记文件 / 清理失效记录）。
 - 动态安装卸载模式只处理用户作用域字体：系统作用域字体需要提权改动 `C:\Windows\Fonts` 与 `HKLM`，
   切换模式时会自动沿用 Inactive Fonts（隐藏）；在日常开关里也会拒绝并提示。
 - 动态模式禁用正在被应用加载的字体时，移动文件会失败并提示；关闭占用字体的程序后重试即可。删除隔离中的字体时使用 `disabled.json` 里的真实路径，删除前会先释放预览 mmap。
 - 语言包是 exe 同级的 `lang/<id>.ini`：`predev` / `prebuild` 由 `tools/copy-lang.mjs` 复制，
-  `build.rs` 在编译期再兜底一次，打包时按 `bundle.resources` 映射进安装目录。改文案可直接编辑
-  exe 旁那份 `lang/schinese.ini`。
+  `build.rs` 在编译期再兜底一次，打包时按 `bundle.resources` 映射进安装目录。复制时目标目录里
+  存在、但 `langBuild` 已没有的 `.ini` 会被删除。改文案可直接编辑 exe 旁那份 `lang/zh-cn.ini`。
+- 每个语言包在 `[meta]` 中提供 `LanguageCode`（BCP 47，如 `zh-CN`）。设置默认值为「使用系统语言」：
+  通过 `GetUserDefaultLocaleName` 读取系统 locale，先精确匹配代码；`zh-*` 未命中回退 `zh-HK`，其他语言未命中回退 `en-US`，仍缺失再回退 `zh-CN`（`zh-cn.ini`）。回退时设置仍保持「使用系统语言」。
 
+## 软件更新
+
+- 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`，镜像源加 `https://gh-proxy.org/` 前缀。
+- 版本比较按 `tag` 去掉 `v` 后的数字段进行，只有高于当前 `major.minor` 才视为更新。
+- 启动后静默检查；关于窗口打开时也自动检查但不弹窗。手动检查才显示「已是最新版本」「更新失败」等结果。
+- 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。
+- Release 正文只取第一个 `***` 之前的内容，再按 `---` 分为中文 / 英文；当前语言代码为 `zh-*` 时取中文，否则取英文，空段回退另一段。按纯文本展示，不渲染 Markdown。
+- 下载地址为 `FontFox_[版本号]_x64.exe`，写入 `%TEMP%\FontFox\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。
 ## 安装器外观
 
 - 欢迎页 / 完成页左侧插图：`docs/img/install.bmp`（164×314 BMP），由 `bundle.windows.nsis.sidebarImage` 引用。

@@ -9,7 +9,7 @@
  * `npm run tauri:build:exe` 都会拿到最新的语言文件。
  */
 
-import { cpSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -36,5 +36,14 @@ for (const profile of profiles) {
   for (const file of files) {
     cpSync(join(source, file), join(dest, file));
   }
+
+  // 目标目录里存在、但 langBuild 已没有的语言文件要删掉，避免旧语言残留
+  const sourceNames = new Set(files.map((name) => name.toLowerCase()));
+  for (const file of readdirSync(dest)) {
+    if (!file.toLowerCase().endsWith(".ini")) continue;
+    if (sourceNames.has(file.toLowerCase())) continue;
+    unlinkSync(join(dest, file));
+  }
+
   console.log(`[lang] ${files.length} 个语言文件 → target/${profile}/lang`);
 }

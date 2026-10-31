@@ -3164,14 +3164,17 @@ html[data-theme="dark"] .about__wordmark--dark {
 }
 
 .about__github {
+  display: inline-flex;
+  align-items: center;
   gap: var(--sp-2);
   margin-right: auto;
   color: var(--ink);
   font-size: var(--fs-base);
 }
 
-.modal__footer .btn.about__github {
-  padding-left: var(--sp-3);
+.about__github svg {
+  width: 22px;
+  height: 22px;
 }
 
 
@@ -3179,6 +3182,51 @@ html[data-theme="dark"] .about__wordmark--dark {
 
 .about__check:disabled {
   opacity: 0.55;
+}
+
+.about__update-status {
+  display: inline-flex;
+  align-items: center;
+  margin-right: var(--sp-2);
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--muted);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.update__notes {
+  white-space: pre-line;
+  user-select: text;
+  -webkit-user-select: text;
+  color: var(--ink-soft);
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+}
+
+.update__progress {
+  white-space: pre-line;
+}
+
+.update__skip {
+  margin-right: auto;
+}
+
+.update__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: var(--fs-base);
+  cursor: pointer;
 }
 
 /* ── 设置窗口 ─────────────────────────────────────────────────────── */

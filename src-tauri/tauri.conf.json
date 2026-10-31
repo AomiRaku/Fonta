@@ -41,6 +41,7 @@
     ],
     "resources": { "../LICENSE": "./", "../NOTICE": "./", "../THIRD_PARTY_LICENSES.txt": "./", "../langBuild/*.ini": "lang/" },
     "shortDescription": "FontFox font manager.",
+    "publisher": "Raku Inkyetta",
     "copyright": "Copyright (c) 2026 羽梦千景 Raku Inkyetta",
     "license": "Apache-2.0",
     "windows": {

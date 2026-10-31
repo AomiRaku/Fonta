@@ -116,13 +116,17 @@ export type ResolvedTheme = "dark" | "light";
 export const PREVIEW_FONT_SIZE = 24;
 
 export interface Settings {
-  /** 界面语言 id（对应 lang/<id>.ini）。 */
+  /** 界面语言：`system` 表示跟随系统，其余为 `lang/<id>.ini` 的 id。 */
   language: string;
   viewMode: ViewMode;
   previewText: string;
   theme: ThemeMode;
   /** 右侧详情面板是否展开（持久化）。 */
   detailOpen: boolean;
+  /** 软件更新源。 */
+  updateSource: UpdateSource;
+  /** 已选择“不提醒此版本”的版本号。 */
+  ignoredUpdateVersion: string;
   /** 字体禁用方式：windows（Inactive Fonts）或 dynamic（注销 + 隔离文件）。 */
   disableMode: DisableMode;
   /** 下次启动时应用的禁用方式；空串表示没有待应用变更。 */
@@ -130,6 +134,22 @@ export interface Settings {
 }
 
 export type DisableMode = "windows" | "dynamic";
+
+export type UpdateSource = "github" | "mirror";
+
+export interface UpdateInfo {
+  currentVersion: string;
+  latestVersion: string;
+  tag: string;
+  notes: string;
+  downloadUrl: string;
+}
+
+export interface UpdateProgress {
+  downloaded: number;
+  total: number;
+  speedKbps: number;
+}
 
 
 export interface AboutPayload {
@@ -151,7 +171,9 @@ export const DEFAULT_SETTINGS: Settings = {
   viewMode: "compact",
   previewText: "",
   theme: "system",
-  language: "schinese",
+  language: "system",
+  updateSource: "github",
+  ignoredUpdateVersion: "",
   detailOpen: true,
   disableMode: "dynamic",
   disableModeNext: "",

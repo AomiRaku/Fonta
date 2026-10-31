@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 羽梦千景 Raku Inkyetta
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 /// 把根目录 `langBuild/*.ini` 复制到 `target/<profile>/lang/`。
 ///
 /// 这样 debug 运行与 release 构建拿到的语言文件都来自根目录的同一份，
-/// 手动改 `langBuild/schinese.ini` 后重新构建即可生效；
-/// 想不重新编译就生效，直接改 exe 旁边的 `lang/schinese.ini` 即可。
+/// 手动改 `langBuild/zh-cn.ini` 后重新构建即可生效；
+/// 想不重新编译就生效，直接改 exe 旁边的 `lang/zh-cn.ini` 即可。
 fn copy_langs() {
     let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") else {
         return;
@@ -36,17 +37,28 @@ fn copy_langs() {
     let Ok(entries) = std::fs::read_dir(&source) else {
         return;
     };
+    let mut source_names = HashSet::new();
     for entry in entries.flatten() {
         let path = entry.path();
-        let is_ini = path
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("ini"));
+        let name = entry.file_name().to_string_lossy().to_lowercase();
+        let is_ini = name.ends_with(".ini");
         if !is_ini {
             continue;
         }
+        source_names.insert(name);
         println!("cargo:rerun-if-changed={}", path.display());
         let _ = std::fs::copy(&path, dest.join(entry.file_name()));
+    }
+
+    // 目标目录里存在、但 langBuild 已没有的语言文件要删掉，避免旧语言残留
+    let Ok(dest_entries) = std::fs::read_dir(&dest) else {
+        return;
+    };
+    for entry in dest_entries.flatten() {
+        let name = entry.file_name().to_string_lossy().to_lowercase();
+        if name.ends_with(".ini") && !source_names.contains(&name) {
+            let _ = std::fs::remove_file(entry.path());
+        }
     }
 }
 

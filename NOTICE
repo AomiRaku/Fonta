@@ -31,6 +31,7 @@ Rust Dependencies
   memmap2                           MIT OR Apache-2.0   https://github.com/RazrFalcon/memmap2-rs
   png                               MIT OR Apache-2.0   https://github.com/image-rs/image-png
   rayon                             MIT OR Apache-2.0   https://github.com/rayon-rs/rayon
+  reqwest                           MIT OR Apache-2.0   https://github.com/seanmonstar/reqwest
   serde                             MIT OR Apache-2.0   https://github.com/serde-rs/serde
   serde_json                        MIT OR Apache-2.0   https://github.com/serde-rs/json
   tauri                             Apache-2.0 OR MIT   https://tauri.app

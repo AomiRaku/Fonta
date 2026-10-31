@@ -6,7 +6,6 @@
 pub mod commands;
 pub mod config;
 pub mod delete;
-mod frame;
 pub mod elevation;
 pub mod enumerate;
 pub mod fontchange;
@@ -24,9 +23,9 @@ pub mod parse;
 pub mod registry;
 pub mod settings;
 pub mod theme;
+pub mod update;
 
 use commands::AppState;
-use tauri::Manager;
 
 pub fn run() {
     // 提权子进程分支必须在 Tauri 初始化之前处理：它没有 WebView 窗口。
@@ -51,11 +50,6 @@ pub fn run() {
             // 跟随系统「应用模式」：注册表变化时推给前端。
             theme::spawn_watcher(app.handle().clone());
 
-            // 圆角交给 DWM：Windows 11 22H2+ 支持 4px 小圆角，
-            // 比自绘窗口区域更稳（阴影、最小化动画都保留）。
-            if let Some(window) = app.get_webview_window("main") {
-                frame::apply_corners(&window);
-            }
 
             Ok(())
         })
@@ -83,6 +77,12 @@ pub fn run() {
             commands::reconcile_disabled,
             commands::open_devtools,
             commands::open_url,
+            commands::system_locale,
+            update::check_update,
+            update::release_notes,
+            update::download_update,
+            update::cancel_update_download,
+            update::install_update,
             commands::restore_all_fonts,
             commands::move_disabled_to_desktop,
             commands::move_quarantined_to_desktop,

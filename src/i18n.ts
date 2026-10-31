@@ -6,14 +6,22 @@
 export interface LanguagePack {
   id: string;
   name: string;
+  code: string;
   translator: string;
   entries: Record<string, string>;
 }
 
 let entries: Record<string, string> = {};
+let currentCode = "";
 
 export function setLanguagePack(pack: LanguagePack): void {
   entries = pack.entries ?? {};
+  currentCode = pack.code ?? "";
+}
+
+/** 当前实际加载语言包的 BCP 47 代码。 */
+export function languageCode(): string {
+  return currentCode;
 }
 
 

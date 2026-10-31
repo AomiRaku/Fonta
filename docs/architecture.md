@@ -47,7 +47,6 @@
 | `src-tauri/src/inactive.rs` | `Inactive Fonts` 读写与比对（Windows 基础模式） |
 | `src-tauri/src/mode.rs` | 动态安装卸载模式：注销注册表值 + 隔离文件，维护 `disabled.json` |
 | `src-tauri/src/preview.rs` | 预览样字栅格化：cmap 映射、symbol 字体取样、PNG 编码与结果缓存 |
-| `src-tauri/src/frame.rs` | 窗口外观：通过 DWM 设置 4px 圆角 |
 | `src-tauri/src/delete.rs` | 删除、待清理清单、提权子进程入口 |
 | `src-tauri/src/elevation.rs` | 提权拉起自身子进程 |
 | `src-tauri/src/fontchange.rs` | `WM_FONTCHANGE` 广播（后台线程） |
@@ -56,7 +55,8 @@
 | `src-tauri/src/library.rs` | `library.json` 读写（收藏 / 字体单） |
 | `src-tauri/src/i18n.rs` | 外挂语言包解析（`section.key`） |
 | `src-tauri/src/theme.rs` | 读取系统应用明暗并在变化时推事件 |
-| `src-tauri/build.rs` | 编译期复制 `langBuild/*.ini` 到 `target/<profile>/lang/` |
+| `src-tauri/src/update.rs` | 版本检查、Release 日志、更新下载与取消 |
+| `src-tauri/build.rs` | 编译期复制 `langBuild/*.ini` 到 `target/<profile>/lang/`，并删除目标目录中的过期语言文件 |
 
 ## IPC 命令
 
@@ -76,8 +76,14 @@
 | `reveal_path` | `path` | 在资源管理器中定位（系统字体目录走 `shell:Fonts`） |
 | `registry_location` | `scope` | 注册表路径（详情面板展示） |
 | `system_theme` | — | `light` / `dark`（读 `AppsUseLightTheme`） |
-| `load_language` | `id` | 解析后的语言包 |
-| `list_languages` | — | exe 同级 `lang/*.ini` 的 `{ id, name }` 列表 |
+| `load_language` | `id` | 解析后的语言包（含 `[meta] LanguageCode`） |
+| `list_languages` | — | exe 同级 `lang/*.ini` 的 `{ id, name, code }` 列表 |
+| `system_locale` | — | 当前 Windows 用户区域设置（BCP 47，如 `zh-CN`） |
+| `check_update` | `source` | `UpdateInfo \| null`：最新版本、标签、原始 release 正文、下载地址 |
+| `release_notes` | `source`, `version` | 指定版本 Release 的原始正文 |
+| `download_update` | `source`, `version` | 下载完成后的临时安装包路径 |
+| `cancel_update_download` | — | 取消当前下载并删除临时文件 |
+| `install_update` | `path` | 启动安装包并退出应用 |
 | `open_devtools` | — | 打开当前窗口 DevTools（需要 tauri `devtools` feature） |
 | `open_url` | `url` | 用系统浏览器打开 GitHub HTTPS 链接 |
 | `restore_all_fonts` | — | 恢复全部已停用字体；失败返回错误 |
@@ -89,6 +95,8 @@
 | `reconcile_disabled` | — | `{ extra, missing }`：隔离目录多出的文件、清单里丢失的文件 |
 | `adopt_disabled_files` | `paths` | 收编为禁用记录的数量 |
 | `drop_missing_disabled` | `ids` | 移除失效记录的数量 |
+
+下载进度通过 Tauri 事件 `update-download` 推送 `{ downloaded, total, speedKbps }`。
 
 错误一律以字符串形式返回，前端 `errorText()` 统一转成可读文案。
 
@@ -124,11 +132,12 @@
 
 ## 语言包
 
-- 唯一源文件在 `langBuild/<id>.ini`，`[section]` + `key=value`，`{name}` 为插值占位。
+- 唯一源文件在 `langBuild/<id>.ini`，`[section]` + `key=value`，`{name}` 为插值占位；`[meta] LanguageCode` 为 BCP 47 代码，用于系统语言匹配。
 - 构建期复制到 `target/<profile>/lang/` 并随 `bundle.resources` 打进安装目录。
 - 文案中的字面 `\n` 由前端 `t()` 转成换行；只有对话框正文、设置项描述 / 提示等段落元素启用 `white-space: pre-line`，其余单行控件不换行。
 - 运行时由 Rust 解析成 `{ "section.key": "文本" }` 交给前端；**没有内置回退**，缺失键会直接
   显示键名，便于发现漏翻。
+- 设置默认「使用系统语言」；`zh-*` 未匹配回退 `zh-HK`，其他语言未匹配回退 `en-US`。
 
 ## 构建
 

@@ -500,6 +500,18 @@ async fn reapply_hidden(current: &str, targets: &[FontEntry]) {
     }
 }
 
+/// 当前 Windows 用户区域设置（BCP 47，例如 `zh-CN`）。
+#[tauri::command]
+pub fn system_locale() -> String {
+    use windows_sys::Win32::Globalization::GetUserDefaultLocaleName;
+
+    let mut buffer = [0u16; 85];
+    let len = unsafe { GetUserDefaultLocaleName(buffer.as_mut_ptr(), buffer.len() as i32) };
+    if len <= 0 {
+        return String::new();
+    }
+    String::from_utf16_lossy(&buffer[..(len as usize - 1)])
+}
 /// 用系统默认浏览器打开外部链接（只允许 GitHub HTTPS）。
 #[tauri::command]
 pub fn open_url(url: String) -> Result<(), String> {

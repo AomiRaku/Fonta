@@ -105,7 +105,28 @@ export const api = {
 
   /** 可用语言包列表（exe 同级 `lang/*.ini`）。 */
   listLanguages: () =>
-    invoke<Array<{ id: string; name: string }>>("list_languages"),
+    invoke<Array<{ id: string; name: string; code: string }>>("list_languages"),
+
+  /** 当前 Windows 用户区域设置（BCP 47，例如 `zh-CN`）。 */
+  systemLocale: () => invoke<string>("system_locale"),
+
+  /** 检查最新 Release；没有新版本时返回 null。 */
+  checkUpdate: (source: string) =>
+    invoke<import("./types").UpdateInfo | null>("check_update", { source }),
+
+  /** 读取指定版本的 release 正文。 */
+  releaseNotes: (source: string, version: string) =>
+    invoke<string>("release_notes", { source, version }),
+
+  /** 下载更新，返回临时安装包路径。 */
+  downloadUpdate: (source: string, version: string) =>
+    invoke<string>("download_update", { source, version }),
+
+  /** 取消当前更新下载。 */
+  cancelUpdateDownload: () => invoke<void>("cancel_update_download"),
+
+  /** 启动下载完成的安装包并退出应用。 */
+  installUpdate: (path: string) => invoke<void>("install_update", { path }),
 
   /** 读取外挂语言包（`lang/<id>.ini`）。 */
   loadLanguage: (id: string) =>

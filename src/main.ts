@@ -13,7 +13,7 @@ import logoUrl from "../docs/img/Logo.svg?url";
 import wordmarkLightUrl from "../docs/img/Text_L.svg?url";
 import wordmarkDarkUrl from "../docs/img/Text_D.svg?url";
 import { icon, mountIcons } from "./icons";
-import { applyStaticTranslations, setLanguagePack, t } from "./i18n";
+import { applyStaticTranslations, languageCode, setLanguagePack, t } from "./i18n";
 import { renderDetail, renderFamilyDetail } from "./detail";
 import { protectionLabel } from "./types";
 import {
@@ -48,6 +48,9 @@ import {
   type Settings,
   type ThemeMode,
   type DisableMode,
+  type UpdateInfo,
+  type UpdateProgress,
+  type UpdateSource,
 } from "./types";
 import {
   attachOverlayScrollbar,
@@ -1504,7 +1507,6 @@ function toggleMoreMenu(): void {
   const items: Array<{ label: string; disabled?: boolean; run?: () => void }> = [
     { label: t("more.refresh"), run: () => void refresh() },
     { label: t("more.settings"), run: () => openSettings() },
-    { label: t("more.checkUpdate"), disabled: true },
     { label: t("more.about"), run: () => void openAbout() },
   ];
 
@@ -2123,6 +2125,238 @@ function openLicenseDialog(
   presentModal(overlay);
 }
 
+function localizedUpdateNotes(raw: string): string {
+  const log = raw.split(/^\s*\*\*\*\s*$/m)[0] ?? "";
+  const parts = log.split(/^\s*---\s*$/m);
+  const zh = (parts[0] ?? "").replace(/^\s*中文\s*[:：]\s*/, "").trim();
+  const en = (parts[1] ?? "").replace(/^\s*English\s*[:：]\s*/i, "").trim();
+  return languageCode().toLowerCase().startsWith("zh") ? zh || en : en || zh;
+}
+
+function updateNotesBlock(raw: string): HTMLElement {
+  const wrap = el("div", "update__notes");
+  wrap.textContent = localizedUpdateNotes(raw) || t("update.emptyNotes");
+  return wrap;
+}
+
+function openUpdateFailure(): void {
+  const shell = buildModal({ title: t("update.failedTitle"), closable: false });
+  const { overlay, body, footer } = shell;
+  body.appendChild(el("p", "modal__lead", t("update.failedBody")));
+  const ok = el("button", "btn btn--primary", t("update.ok")) as HTMLButtonElement;
+  ok.type = "button";
+  footer.appendChild(ok);
+  const close = (): void => dismissModal(overlay, () => undefined);
+  ok.addEventListener("click", close);
+  presentModal(overlay);
+  ok.focus();
+}
+
+function openUpdateDialog1(update: UpdateInfo): void {
+  const shell = buildModal({
+    title: t("update.foundTitle", { version: update.latestVersion }),
+    closable: false,
+  });
+  const { overlay, body, footer } = shell;
+  body.appendChild(updateNotesBlock(update.notes));
+
+  const skip = el("button", "link update__link update__skip", t("update.skip")) as HTMLButtonElement;
+  skip.type = "button";
+  const download = el("button", "btn btn--primary", t("update.download")) as HTMLButtonElement;
+  download.type = "button";
+  const close = el("button", "btn btn--soft", t("update.close")) as HTMLButtonElement;
+  close.type = "button";
+  footer.classList.add("update__footer");
+  footer.append(skip, download, close);
+
+  const dismiss = (): void => dismissModal(overlay, () => undefined);
+  skip.addEventListener("click", () => {
+    state.settings.ignoredUpdateVersion = update.latestVersion;
+    scheduleSave();
+    dismiss();
+  });
+  download.addEventListener("click", () => {
+    dismiss();
+    void openDownloadDialog(update);
+  });
+  close.addEventListener("click", dismiss);
+  presentModal(overlay);
+  close.focus();
+}
+
+function openUpdateDialog2(update: UpdateInfo): void {
+  const shell = buildModal({
+    title: t("update.newTitle", { version: update.latestVersion }),
+    closable: false,
+  });
+  const { overlay, body, footer } = shell;
+  body.appendChild(updateNotesBlock(update.notes));
+
+  const download = el("button", "btn btn--primary", t("update.download")) as HTMLButtonElement;
+  download.type = "button";
+  const close = el("button", "btn btn--soft", t("update.close")) as HTMLButtonElement;
+  close.type = "button";
+  footer.append(download, close);
+
+  const dismiss = (): void => dismissModal(overlay, () => undefined);
+  download.addEventListener("click", () => {
+    dismiss();
+    void openDownloadDialog(update);
+  });
+  close.addEventListener("click", dismiss);
+  presentModal(overlay);
+  close.focus();
+}
+
+function openUpdateLatestDialog(currentVersion: string): void {
+  const shell = buildModal({ title: t("update.latestTitle"), closable: false });
+  const { overlay, body, footer } = shell;
+  body.appendChild(el("p", "modal__lead", t("update.latestBody")));
+
+  const changelog = el("button", "link update__link update__skip", t("update.changelog")) as HTMLButtonElement;
+  changelog.type = "button";
+  const ok = el("button", "btn btn--primary", t("update.ok")) as HTMLButtonElement;
+  ok.type = "button";
+  footer.classList.add("update__footer");
+  footer.append(changelog, ok);
+
+  const dismiss = (): void => dismissModal(overlay, () => undefined);
+  changelog.addEventListener("click", () => {
+    dismiss();
+    void openUpdateLog(currentVersion);
+  });
+  ok.addEventListener("click", dismiss);
+  presentModal(overlay);
+  ok.focus();
+}
+
+async function openUpdateLog(version: string): Promise<void> {
+  let notes = "";
+  try {
+    notes = await api.releaseNotes(state.settings.updateSource, version);
+  } catch {
+    openUpdateFailure();
+    return;
+  }
+  const shell = buildModal({ title: t("update.logTitle", { version }), closable: false });
+  const { overlay, body, footer } = shell;
+  body.appendChild(updateNotesBlock(notes));
+  const close = el("button", "btn btn--soft", t("update.close")) as HTMLButtonElement;
+  close.type = "button";
+  footer.appendChild(close);
+  const dismiss = (): void => dismissModal(overlay, () => undefined);
+  close.addEventListener("click", dismiss);
+  presentModal(overlay);
+  close.focus();
+}
+
+function askCancelDownload(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const shell = buildModal({ title: t("update.cancelTitle"), closable: false });
+    const { overlay, body, footer } = shell;
+    body.appendChild(el("p", "modal__lead", t("update.cancelBody")));
+    const keep = el("button", "btn btn--primary", t("update.keepDownloading")) as HTMLButtonElement;
+    keep.type = "button";
+    const stop = el("button", "btn btn--soft", t("update.cancelDownload")) as HTMLButtonElement;
+    stop.type = "button";
+    footer.append(keep, stop);
+    const finish = (result: boolean): void => {
+      dismissModal(overlay, () => undefined);
+      resolve(result);
+    };
+    keep.addEventListener("click", () => finish(false));
+    stop.addEventListener("click", () => finish(true));
+    presentModal(overlay);
+    keep.focus();
+  });
+}
+
+async function openDownloadDialog(update: UpdateInfo): Promise<void> {
+  const shell = buildModal({ title: t("update.downloadTitle"), closable: false });
+  const { overlay, body, footer } = shell;
+  const progress = el("p", "modal__lead update__progress");
+  body.appendChild(progress);
+  const cancel = el("button", "btn btn--soft", t("update.cancel")) as HTMLButtonElement;
+  cancel.type = "button";
+  footer.appendChild(cancel);
+
+  let cancelled = false;
+  let finished = false;
+  let unlisten: (() => void) | null = null;
+  const stopListening = (): void => {
+    if (unlisten) {
+      unlisten();
+      unlisten = null;
+    }
+  };
+  const dismiss = (): void => dismissModal(overlay, () => undefined);
+  const close = (): void => {
+    stopListening();
+    dismiss();
+  };
+  const renderProgress = (payload: UpdateProgress): void => {
+    const percent = payload.total > 0
+      ? Math.min(100, Math.round((payload.downloaded / payload.total) * 100))
+      : 0;
+    progress.textContent = t("update.downloadBody", {
+      version: update.latestVersion,
+      percent,
+      speed: Math.round(payload.speedKbps),
+    });
+  };
+  renderProgress({ downloaded: 0, total: 0, speedKbps: 0 });
+
+  cancel.addEventListener("click", () => {
+    void (async () => {
+      const confirmed = await askCancelDownload();
+      if (!confirmed || finished) return;
+      cancelled = true;
+      await api.cancelUpdateDownload();
+      close();
+    })();
+  });
+
+  presentModal(overlay);
+  cancel.focus();
+
+  try {
+    unlisten = await listen<UpdateProgress>("update-download", (event) => {
+      renderProgress(event.payload);
+    });
+  } catch {
+    unlisten = null;
+  }
+
+  try {
+    const path = await api.downloadUpdate(state.settings.updateSource, update.latestVersion);
+    finished = true;
+    if (cancelled) return;
+    close();
+    try {
+      await api.installUpdate(path);
+    } catch {
+      openUpdateFailure();
+    }
+  } catch {
+    if (!cancelled) {
+      finished = true;
+      close();
+      openUpdateFailure();
+    }
+  }
+}
+
+async function checkStartupUpdate(): Promise<void> {
+  try {
+    const update = await api.checkUpdate(state.settings.updateSource);
+    if (!update) return;
+    if (state.settings.ignoredUpdateVersion === update.latestVersion) return;
+    if (document.querySelector(".modal")) return;
+    openUpdateDialog1(update);
+  } catch {
+    /* 启动检查失败不提示 */
+  }
+}
 async function openAbout(): Promise<void> {
   let payload;
   try {
@@ -2185,17 +2419,72 @@ async function openAbout(): Promise<void> {
 
   body.replaceChildren(main);
 
-  const github = el("button", "btn about__github") as HTMLButtonElement;
-  github.type = "button";
+  const github = el("a", "about__github link") as HTMLAnchorElement;
+  github.href = GITHUB_REPO;
+  github.target = "_blank";
+  github.rel = "noreferrer";
   github.append(icon("github-logo"), document.createTextNode(t("about.github")));
-  github.addEventListener("click", () => openExternal(GITHUB_REPO));
+  github.addEventListener("click", (event) => {
+    event.preventDefault();
+    openExternal(GITHUB_REPO);
+  });
+  const updateStatus = el("span", "about__update-status");
   const check = el("button", "btn btn--soft about__check", t("about.checkUpdate")) as HTMLButtonElement;
   check.type = "button";
-  check.disabled = true;
   const close = el("button", "btn btn--soft", t("delete.close")) as HTMLButtonElement;
   close.type = "button";
+
+  let knownUpdate: UpdateInfo | null = null;
+  let updateState: "idle" | "checking" | "available" = "checking";
+  const applyUpdateState = (
+    state: "idle" | "checking" | "available",
+    info?: UpdateInfo,
+  ): void => {
+    updateState = state;
+    check.disabled = state === "checking";
+    check.className =
+      state === "available" ? "btn btn--primary about__check" : "btn btn--soft about__check";
+    updateStatus.replaceChildren();
+    if (state === "checking") {
+      updateStatus.appendChild(el("span", "spinner"));
+      check.textContent = t("about.checking");
+    } else if (state === "available" && info) {
+      updateStatus.textContent = t("about.newVersion", { version: info.latestVersion });
+      check.textContent = t("about.updateButton");
+    } else {
+      check.textContent = t("about.checkUpdate");
+    }
+  };
+  const performUpdateCheck = async (manual: boolean): Promise<void> => {
+    applyUpdateState("checking");
+    try {
+      const info = await api.checkUpdate(state.settings.updateSource);
+      if (!document.body.contains(panel)) return;
+      knownUpdate = info;
+      if (info) {
+        applyUpdateState("available", info);
+        if (manual) openUpdateDialog2(info);
+      } else {
+        applyUpdateState("idle");
+        if (manual) openUpdateLatestDialog(payload.version);
+      }
+    } catch {
+      if (!document.body.contains(panel)) return;
+      applyUpdateState("idle");
+      if (manual) openUpdateFailure();
+    }
+  };
+  check.addEventListener("click", () => {
+    if (updateState === "checking") return;
+    if (updateState === "available" && knownUpdate) {
+      openUpdateDialog2(knownUpdate);
+      return;
+    }
+    void performUpdateCheck(true);
+  });
+
   footer.classList.add("about__footer");
-  footer.append(github, check, close);
+  footer.append(github, updateStatus, check, close);
 
   const onKey = (event: KeyboardEvent): void => {
     if (event.key === "Escape") dismiss();
@@ -2210,8 +2499,67 @@ async function openAbout(): Promise<void> {
   });
   document.addEventListener("keydown", onKey);
 
+  applyUpdateState("checking");
   presentModal(overlay);
   close.focus();
+  void performUpdateCheck(false);
+}
+const SYSTEM_LANGUAGE = "system";
+
+interface LanguageChoice {
+  id: string;
+  name: string;
+  code: string;
+}
+
+function normalizeLocale(value: string): string {
+  return value.trim().toLowerCase().replace(/_/g, "-");
+}
+
+async function languageChoices(): Promise<LanguageChoice[]> {
+  try {
+    return await api.listLanguages();
+  } catch {
+    return [];
+  }
+}
+
+/** 把设置值解析成实际加载的语言文件 id。 */
+async function resolveLanguageId(
+  setting: string,
+  choices?: LanguageChoice[],
+): Promise<string> {
+  if (setting !== SYSTEM_LANGUAGE) return setting;
+  const list = choices ?? (await languageChoices());
+  if (list.length === 0) return "zh-cn";
+
+  let locale = "";
+  try {
+    locale = await api.systemLocale();
+  } catch {
+    locale = "";
+  }
+  if (!locale) locale = navigator.language;
+
+  const normalized = normalizeLocale(locale);
+  if (!normalized) return list[0].id;
+
+  const exact = list.find((item) => normalizeLocale(item.code) === normalized);
+  if (exact) return exact.id;
+
+  const primary = normalized.split("-")[0];
+  if (primary === "zh") {
+    const traditional = list.find((item) => normalizeLocale(item.code) === "zh-hk");
+    if (traditional) return traditional.id;
+  } else {
+    const sameLanguage = list.find(
+      (item) => normalizeLocale(item.code).split("-")[0] === primary,
+    );
+    if (sameLanguage) return sameLanguage.id;
+  }
+
+  const english = list.find((item) => normalizeLocale(item.code) === "en-us");
+  return (english ?? list.find((item) => normalizeLocale(item.code) === "zh-cn") ?? list[0]).id;
 }
 /* ───────────────────────────── 设置 ───────────────────────────── */
 
@@ -2249,7 +2597,7 @@ function openSettings(): void {
   list.appendChild(row(t("settings.theme"), themeSelect.el));
 
   const languageSelect = createDropdown(
-    [{ value: state.settings.language, label: state.settings.language }],
+    [{ value: SYSTEM_LANGUAGE, label: t("settings.systemLanguage") }],
     state.settings.language,
     (id) => {
       void changeLanguage(id);
@@ -2261,14 +2609,15 @@ function openSettings(): void {
   void api
     .listLanguages()
     .then((languages) => {
-      if (languages.length === 0) return;
       const current = state.settings.language;
-      const options = languages.some((item) => item.id === current)
-        ? languages
-        : [{ id: current, name: current }, ...languages];
-      languageSelect.setOptions(
-        options.map((item) => ({ value: item.id, label: item.name })),
-      );
+      const options = [
+        { value: SYSTEM_LANGUAGE, label: t("settings.systemLanguage") },
+        ...languages.map((item) => ({ value: item.id, label: item.name })),
+      ];
+      if (current !== SYSTEM_LANGUAGE && !languages.some((item) => item.id === current)) {
+        options.push({ value: current, label: current });
+      }
+      languageSelect.setOptions(options);
       languageSelect.setValue(current);
     })
     .catch(() => undefined);
@@ -2276,7 +2625,8 @@ function openSettings(): void {
   async function changeLanguage(id: string): Promise<void> {
     if (id === state.settings.language) return;
     try {
-      const pack = await api.loadLanguage(id);
+      const target = await resolveLanguageId(id);
+      const pack = await api.loadLanguage(target);
       setLanguagePack(pack);
       state.settings.language = id;
       scheduleSave();
@@ -2349,6 +2699,22 @@ function openSettings(): void {
   });
   advancedInner.appendChild(
     row(t("settings.devtools"), devSwitch, t("settings.devtoolsHint")),
+  );
+
+  const updateSourceSelect = createDropdown(
+    [
+      { value: "github", label: t("settings.updateSourceGithub") },
+      { value: "mirror", label: t("settings.updateSourceMirror") },
+    ],
+    state.settings.updateSource,
+    (value) => {
+      state.settings.updateSource = value as UpdateSource;
+      scheduleSave();
+    },
+  );
+  updateSourceSelect.el.classList.add("settings-row__control");
+  advancedInner.appendChild(
+    row(t("settings.updateSource"), updateSourceSelect.el),
   );
 
   const resetButton = el(
@@ -3666,7 +4032,9 @@ async function boot(): Promise<void> {
   }
 
   try {
-    setLanguagePack(await api.loadLanguage(state.settings.language));
+    const choices = await languageChoices();
+    const languageId = await resolveLanguageId(state.settings.language, choices);
+    setLanguagePack(await api.loadLanguage(languageId));
   } catch {
     /* 语言包读取失败时沿用内置默认文案 */
   }
@@ -3740,6 +4108,8 @@ async function boot(): Promise<void> {
   }
   // 对账禁用清单与隔离目录（不阻塞首屏）
   void checkDisabledFiles();
+  // 启动时静默检查更新；有新版本且未被忽略才弹窗
+  void checkStartupUpdate();
   // 兜底：万一首屏渲染出错也别一直白屏
   window.setTimeout(hideSplash, 8000);
 }

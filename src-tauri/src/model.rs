@@ -168,8 +168,14 @@ pub struct Settings {
     /// 预览文字：只存在于本次会话，不持久化（启动时为空）。
     pub preview_text: String,
     pub theme: String,
-    /// 界面语言文件名（不含扩展名），例如 `schinese`。
+    /// 界面语言：`system` 表示跟随系统，其余为语言文件名（如 `zh-cn`）。
     pub language: String,
+    /// 软件更新源：`github` 或 `mirror`。
+    #[serde(default = "default_update_source")]
+    pub update_source: String,
+    /// 已选择「不提醒此版本」的版本号；空串表示没有。
+    #[serde(default)]
+    pub ignored_update_version: String,
     /// 右侧详情面板是否展开。
     #[serde(default = "default_true")]
     pub detail_open: bool,
@@ -185,6 +191,10 @@ fn default_disable_mode() -> String {
     "dynamic".to_string()
 }
 
+fn default_update_source() -> String {
+    "github".to_string()
+}
+
 fn default_true() -> bool {
     true
 }
@@ -197,7 +207,9 @@ impl Default for Settings {
             theme: "system".to_string(),
             disable_mode: default_disable_mode(),
             disable_mode_next: String::new(),
-            language: "schinese".to_string(),
+            language: "system".to_string(),
+            update_source: default_update_source(),
+            ignored_update_version: String::new(),
             detail_open: true,
         }
     }
