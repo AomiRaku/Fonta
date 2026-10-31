@@ -12,7 +12,7 @@ import { createDropdown } from "./dropdown";
 import logoUrl from "../docs/img/Logo.svg?url";
 import wordmarkLightUrl from "../docs/img/Text_L.svg?url";
 import wordmarkDarkUrl from "../docs/img/Text_D.svg?url";
-import { icon, mountIcons } from "./icons";
+import { icon, mountIcons, type IconName } from "./icons";
 import { applyStaticTranslations, languageCode, setLanguagePack, t } from "./i18n";
 import { renderDetail, renderFamilyDetail } from "./detail";
 import { protectionLabel } from "./types";
@@ -1504,14 +1504,15 @@ function toggleMoreMenu(): void {
   const menu = el("div", "more-menu");
   menu.setAttribute("role", "menu");
 
-  const items: Array<{ label: string; disabled?: boolean; run?: () => void }> = [
-    { label: t("more.refresh"), run: () => void rescanWithToast() },
-    { label: t("more.settings"), run: () => openSettings() },
-    { label: t("more.about"), run: () => void openAbout() },
+  const items: Array<{ label: string; icon: IconName; disabled?: boolean; run?: () => void }> = [
+    { label: t("more.refresh"), icon: "refresh", run: () => void rescanWithToast() },
+    { label: t("more.settings"), icon: "cogwheel", run: () => openSettings() },
+    { label: t("more.about"), icon: "about", run: () => void openAbout() },
   ];
 
   for (const item of items) {
-    const button = el("button", "more-menu__item", item.label) as HTMLButtonElement;
+    const button = el("button", "more-menu__item") as HTMLButtonElement;
+    button.append(icon(item.icon, "more-menu__icon"), document.createTextNode(item.label));
     button.type = "button";
     button.setAttribute("role", "menuitem");
     if (item.disabled) {
@@ -1648,7 +1649,6 @@ function renderDetailPane(): void {
 }
 
 function renderAll(): void {
-
   rebuild();
   renderDetailPane();
   updateSearchCount();
@@ -2635,8 +2635,37 @@ function openSettings(): void {
     },
   );
   languageSelect.el.classList.add("settings-row__control");
-  list.appendChild(row(t("settings.language"), languageSelect.el));
+  const languageRow = row(t("settings.language"), languageSelect.el);
+  languageRow.querySelector(".settings-row__label")?.append(
+    icon("earth-filled", "settings-row__icon"),
+  );
+  list.appendChild(languageRow);
 
+  const autoCheckSwitch = el("button", "switch") as HTMLButtonElement;
+  autoCheckSwitch.type = "button";
+  autoCheckSwitch.setAttribute("role", "switch");
+  autoCheckSwitch.setAttribute(
+    "aria-checked",
+    String(state.settings.autoCheckUpdates),
+  );
+  autoCheckSwitch.setAttribute("aria-label", t("settings.autoCheckUpdates"));
+  autoCheckSwitch.title = t("settings.autoCheckUpdates");
+  autoCheckSwitch.appendChild(el("span", "switch__knob"));
+  autoCheckSwitch.addEventListener("click", () => {
+    state.settings.autoCheckUpdates = !state.settings.autoCheckUpdates;
+    autoCheckSwitch.setAttribute(
+      "aria-checked",
+      String(state.settings.autoCheckUpdates),
+    );
+    scheduleSave();
+  });
+  list.appendChild(
+    row(
+      t("settings.autoCheckUpdates"),
+      autoCheckSwitch,
+      t("settings.autoCheckHint"),
+    ),
+  );
   void api
     .listLanguages()
     .then((languages) => {
@@ -2688,31 +2717,6 @@ function openSettings(): void {
   const advancedBody = el("div", "settings-advanced__body");
   const advancedInner = el("div", "settings-advanced__inner");
 
-  const autoCheckSwitch = el("button", "switch") as HTMLButtonElement;
-  autoCheckSwitch.type = "button";
-  autoCheckSwitch.setAttribute("role", "switch");
-  autoCheckSwitch.setAttribute(
-    "aria-checked",
-    String(state.settings.autoCheckUpdates),
-  );
-  autoCheckSwitch.setAttribute("aria-label", t("settings.autoCheckUpdates"));
-  autoCheckSwitch.title = t("settings.autoCheckUpdates");
-  autoCheckSwitch.appendChild(el("span", "switch__knob"));
-  autoCheckSwitch.addEventListener("click", () => {
-    state.settings.autoCheckUpdates = !state.settings.autoCheckUpdates;
-    autoCheckSwitch.setAttribute(
-      "aria-checked",
-      String(state.settings.autoCheckUpdates),
-    );
-    scheduleSave();
-  });
-  advancedInner.appendChild(
-    row(
-      t("settings.autoCheckUpdates"),
-      autoCheckSwitch,
-      t("settings.autoCheckHint"),
-    ),
-  );
   const updateSourceSelect = createDropdown(
     [
       { value: "github", label: t("settings.updateSourceGithub") },

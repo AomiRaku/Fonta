@@ -37,6 +37,7 @@
   --detail-w: 300px;
   --sidebar-w: 220px;
   --indicator-w: 6px;
+  --indicator-h: 20px;
   --favorite: #ffd36b;
   --logo-mark: #b84845;
   --logo-paper: #ffffff;
@@ -842,7 +843,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   top: 50%;
   transform: translateY(-50%);
   width: var(--indicator-w);
-  height: 20px;
+  height: var(--indicator-h);
   background: var(--brand);
   /* 不拦截指针：点击标记本身会落到左侧选中槽，可切换选中 */
   pointer-events: none;
@@ -875,7 +876,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   top: 50%;
   transform: translateY(-50%);
   width: var(--indicator-w);
-  height: 20px;
+  height: var(--indicator-h);
   background: var(--brand);
   opacity: 0;
 }
@@ -890,11 +891,15 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   z-index: 1;
   left: calc(var(--indicator-center) - var(--indicator-w) / 2);
   top: 50%;
-  transform: translateY(-50%);
   width: var(--indicator-w);
   height: var(--indicator-w);
   background: var(--favorite);
   pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.row--selected .row__favorite {
+  transform: translateY(calc(var(--indicator-h) / 2 - var(--indicator-w) + 1px));
 }
 
 /* 展开的字族标题：收藏方块和选中竖块一样降到 25% */
@@ -1429,6 +1434,7 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 .more-menu__item {
   display: flex;
   align-items: center;
+  gap: var(--sp-2);
   width: 100%;
   height: 34px;
   padding: 0 10px;
@@ -1447,6 +1453,13 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
 }
 
 .more-menu__item:disabled {
+  color: var(--muted);
+}
+
+.more-menu__icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
   color: var(--muted);
 }
 
@@ -3271,10 +3284,21 @@ html[data-theme="dark"] .about__wordmark--dark {
 }
 
 .settings-row__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   font-family: var(--ui-font);
   font-size: var(--fs-base);
   color: var(--ink-soft);
   cursor: default;
+}
+
+.settings-row__icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  opacity: 0.55;
 }
 
 .settings-row__control {
