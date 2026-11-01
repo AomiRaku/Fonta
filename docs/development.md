@@ -213,8 +213,8 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 
 ## 版本号
 
-- 对外版本使用 `major.minor`，不补前导零：当前 **1008.0**，后续例如 `1021.0`、`1220.0`、`2200.13`。
-- 内部需要 semver 的工具（Cargo / Tauri / NSIS）使用 `major.minor.0`，例如 `1008.0.0`；`about` 与 `app_info` 对外显示 `major.minor`。
+- 对外版本使用 `major.minor`，不补前导零：当前 **1012.0**，后续例如 `1021.0`、`1220.0`、`2200.13`。
+- 内部需要 semver 的工具（Cargo / Tauri / NSIS）使用 `major.minor.0`，例如 `1012.0.0`；`about` 与 `app_info` 对外显示 `major.minor`。
 - 发版时同步：`package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock`（fontfox 条目）、`src-tauri/tauri.conf.json`。
 
 ## 许可证

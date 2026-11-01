@@ -1,7 +1,7 @@
 {
   "name": "fontfox",
   "private": true,
-  "version": "1008.0.0",
+  "version": "1012.0.0",
   "description": "FontFox — 快速流畅且易用的本地字体管理器",
   "license": "Apache-2.0",
   "type": "module",

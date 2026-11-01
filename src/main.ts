@@ -1626,6 +1626,7 @@ function renderDetailPane(): void {
           pool,
           registryKey: "—",
           detailsOpen: false,
+          isTogglePending,
         },
         {
           toggleDetails: () => undefined,
@@ -1662,6 +1663,7 @@ function renderDetailPane(): void {
       pool,
       registryKey,
       detailsOpen: state.detailsOpen,
+      isTogglePending,
     },
     {
       toggleDetails: () => {
@@ -1771,6 +1773,11 @@ const toggleVersions = new Map<string, number>();
 /** 正在等待后台写入完成的字体 id：对应行的开关保持禁用，防止重复点击。 */
 const pendingToggleIds = new Set<string>();
 
+/** 目标中是否有字体正在等待禁用 / 启用写入完成。 */
+function isTogglePending(entries: FontEntry[]): boolean {
+  return entries.some((entry) => pendingToggleIds.has(entry.id));
+}
+
 /** 行开关与字族总控开关的禁用态：有待完成写入时禁用。 */
 function syncSwitchPending(): void {
   for (const node of dom.rows.querySelectorAll<HTMLElement>(".row")) {
@@ -1856,6 +1863,7 @@ async function toggleHidden(entries: FontEntry[]): Promise<void> {
       if (toggleVersions.get(target.id) === version) pendingToggleIds.delete(target.id);
     }
     syncSwitchPending();
+    renderDetailPane();
     inflightToggles -= 1;
   }
   // 等开关恢复可点、后台写入彻底结束后再弹提示，避免和禁用态重叠
@@ -3986,7 +3994,7 @@ function rowMenuItems(entries: FontEntry[]): MenuItem[] {
     },
     {
       label: allHidden ? t("ctx.enable") : t("ctx.disable"),
-      disabled: togglable.length === 0,
+      disabled: togglable.length === 0 || isTogglePending(entries),
       run: () => {
         void toggleHidden(entries);
       },

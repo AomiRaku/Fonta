@@ -1074,8 +1074,17 @@ html[data-view="preview"] .list-head[data-mode="compact"] {
   color: var(--ink);
 }
 
-.btn:disabled {
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
   pointer-events: none;
+  cursor: default;
+}
+
+/* 禁用按钮灰化，保留布局与字号 */
+.btn:disabled {
+  opacity: 0.45;
 }
 
 .modal__footer .btn svg {
@@ -2269,7 +2278,7 @@ html[data-detail-ready="true"] .pane--detail {
 }
 
 /* 悬停时手柄略微放大（放大不参与位移，缩放中心就是手柄中心） */
-.switch:hover .switch__knob {
+.switch:not(:disabled):hover .switch__knob {
   transform: translateX(0) scale(1.14);
 }
 
@@ -2282,7 +2291,7 @@ html[data-detail-ready="true"] .pane--detail {
   background: var(--switch-knob-on);
 }
 
-.switch[aria-checked="true"]:hover .switch__knob {
+.switch[aria-checked="true"]:not(:disabled):hover .switch__knob {
   transform: translateX(17px) scale(1.14);
 }
 

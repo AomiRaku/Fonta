@@ -35,6 +35,7 @@ export interface DetailContext {
   pool: PreviewPool;
   registryKey: string;
   detailsOpen: boolean;
+  isTogglePending: (entries: FontEntry[]) => boolean;
 }
 
 /** 详情面板的操作按钮：图标 + 文案。 */
@@ -325,6 +326,7 @@ function emptyState(): HTMLElement {
 function multiPane(
   entries: FontEntry[],
   handlers: DetailHandlers,
+  isTogglePending: (entries: FontEntry[]) => boolean,
 ): DocumentFragment {
   const fragment = document.createDocumentFragment();
 
@@ -349,6 +351,7 @@ function multiPane(
         : t("detail.toggleHide", { count: userEntries.length }),
       "btn btn--solid detail__actions-grow",
     );
+    toggle.disabled = isTogglePending(userEntries);
     toggle.addEventListener("click", () => handlers.toggleHidden(userEntries));
     actions.appendChild(toggle);
   }
@@ -395,7 +398,7 @@ export function renderDetail(
   }
 
   if (entries.length > 1) {
-    container.appendChild(multiPane(entries, handlers));
+    container.appendChild(multiPane(entries, handlers, ctx.isTogglePending));
     return;
   }
 
@@ -442,6 +445,7 @@ export function renderDetail(
       : entry.scope === "system"
     ? t("detail.hideHintUser")
     : t("detail.hideHintSystem");
+    toggle.disabled = ctx.isTogglePending([entry]);
     toggle.addEventListener("click", () => handlers.toggleHidden([entry]));
     actions.appendChild(toggle);
     const remove = iconButton("trashcan-filled", t("detail.delete"), "btn btn--solid btn--danger btn--icon");
@@ -557,6 +561,7 @@ export function renderFamilyDetail(
       allHidden ? t("detail.showFont") : t("detail.hideFont"),
       "btn btn--solid",
     );
+    toggle.disabled = ctx.isTogglePending(userEntries);
     toggle.addEventListener("click", () => handlers.toggleHidden(userEntries));
     actions.appendChild(toggle);
   } else if (entries.some((entry) => entry.protected)) {
