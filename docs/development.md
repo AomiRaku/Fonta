@@ -192,7 +192,7 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 
 ## 软件更新
 
-- 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`，镜像源加 `https://gh-proxy.org/` 前缀。网络请求跟随 Windows 系统代理，并支持 `HTTP(S)_PROXY` / `NO_PROXY` 环境变量。
+- 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`；镜像源1 的 API 前缀为 `https://github.chenc.dev/https:/api.github.com`（单个斜杠），下载前缀为 `https://github.chenc.dev/`；镜像源2 加 `https://gh-proxy.org/` 前缀。网络请求跟随 Windows 系统代理，并支持 `HTTP(S)_PROXY` / `NO_PROXY` 环境变量。
 - 版本比较按 `tag` 去掉 `v` 后的数字段补零后比较，只有更高版本才视为更新。
 - 启动后静默检查（仅「检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
 - 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。

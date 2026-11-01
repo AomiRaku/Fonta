@@ -137,7 +137,7 @@ export interface Settings {
 
 export type DisableMode = "windows" | "dynamic";
 
-export type UpdateSource = "github" | "mirror";
+export type UpdateSource = "github" | "mirror1" | "mirror2";
 
 export interface UpdateInfo {
   latestVersion: string;

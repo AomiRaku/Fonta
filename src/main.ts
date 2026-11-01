@@ -2819,7 +2819,8 @@ function openSettings(): void {
   const updateSourceSelect = createDropdown(
     [
       { value: "github", label: t("settings.updateSourceGithub") },
-      { value: "mirror", label: t("settings.updateSourceMirror") },
+      { value: "mirror1", label: t("settings.updateSourceMirror1") },
+      { value: "mirror2", label: t("settings.updateSourceMirror2") },
     ],
     state.settings.updateSource,
     (value) => {

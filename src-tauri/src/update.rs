@@ -15,7 +15,9 @@ use tauri::{AppHandle, Emitter};
 
 const REPO: &str = "AomiRaku/font-fox";
 const GITHUB_API: &str = "https://api.github.com";
-const MIRROR_PREFIX: &str = "https://gh-proxy.org/";
+const MIRROR1_PREFIX: &str = "https://github.chenc.dev/";
+const MIRROR1_API_PREFIX: &str = "https://github.chenc.dev/https:/api.github.com";
+const MIRROR2_PREFIX: &str = "https://gh-proxy.org/";
 const DOWNLOAD_BASE: &str = "https://github.com/AomiRaku/font-fox/releases/latest/download";
 const DOWNLOAD_EVENT: &str = "update-download";
 
@@ -86,11 +88,19 @@ fn normalize_version(raw: &str) -> Result<String, String> {
     Ok(text.to_string())
 }
 
+fn mirror_prefix(source: &str) -> Option<&'static str> {
+    match source {
+        "mirror1" => Some(MIRROR1_PREFIX),
+        "mirror2" => Some(MIRROR2_PREFIX),
+        _ => None,
+    }
+}
+
 fn api_url(source: &str, tag: Option<&str>) -> String {
-    let base = if source == "mirror" {
-        format!("{MIRROR_PREFIX}{GITHUB_API}")
-    } else {
-        GITHUB_API.to_string()
+    let base = match source {
+        "mirror1" => MIRROR1_API_PREFIX.to_string(),
+        "mirror2" => format!("{MIRROR2_PREFIX}{GITHUB_API}"),
+        _ => GITHUB_API.to_string(),
     };
     match tag {
         Some(tag) => format!("{base}/repos/{REPO}/releases/tags/{tag}"),
@@ -101,11 +111,9 @@ fn api_url(source: &str, tag: Option<&str>) -> String {
 fn download_url(source: &str, version: &str) -> String {
     let file = format!("FontFox_{version}_x64.exe");
     let url = format!("{DOWNLOAD_BASE}/{file}");
-    if source == "mirror" {
-        format!("{MIRROR_PREFIX}{url}")
-    } else {
-        url
-    }
+    mirror_prefix(source)
+        .map(|prefix| format!("{prefix}{url}"))
+        .unwrap_or(url)
 }
 
 fn client() -> Result<reqwest::blocking::Client, String> {
@@ -372,5 +380,25 @@ mod tests {
     fn strips_tag_prefix() {
         assert_eq!(normalize_version("v1100.0").as_deref(), Ok("1100.0"));
         assert!(normalize_version("vnext").is_err());
+    }
+
+    #[test]
+    fn builds_mirror_urls() {
+        assert_eq!(
+            download_url("mirror1", "1000.3"),
+            "https://github.chenc.dev/https://github.com/AomiRaku/font-fox/releases/latest/download/FontFox_1000.3_x64.exe"
+        );
+        assert_eq!(
+            download_url("mirror2", "1000.3"),
+            "https://gh-proxy.org/https://github.com/AomiRaku/font-fox/releases/latest/download/FontFox_1000.3_x64.exe"
+        );
+        assert_eq!(
+            api_url("mirror1", None),
+            "https://github.chenc.dev/https:/api.github.com/repos/AomiRaku/font-fox/releases/latest"
+        );
+        assert_eq!(
+            api_url("github", Some("v1000.3")),
+            "https://api.github.com/repos/AomiRaku/font-fox/releases/tags/v1000.3"
+        );
     }
 }

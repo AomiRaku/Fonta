@@ -170,7 +170,7 @@ pub struct Settings {
     /// 启动与打开关于页时是否自动检查更新。
     #[serde(default = "default_true")]
     pub auto_check_updates: bool,
-    /// 软件更新源：`github` 或 `mirror`。
+    /// 软件更新源：`github`、`mirror1` 或 `mirror2`。
     #[serde(default = "default_update_source")]
     pub update_source: String,
     /// 已选择「不提醒此版本」的版本号；空串表示没有。
