@@ -10,6 +10,7 @@ import {
   PREVIEW_FONT_SIZE,
   type FontEntry,
   type Settings,
+  protectionLabel,
 } from "./types";
 import type { PreviewPool } from "./preview";
 import { el, formatBytes } from "./rows";
@@ -192,37 +193,127 @@ function sample(entry: FontEntry, ctx: DetailContext, stacked = false): SampleVi
 /** 可变字体的字重滑块：拖动实时预览，松手后把最终字重写入缓存。 */
 function weightControl(entry: FontEntry, apply: (weight: number, live: boolean) => void): HTMLElement {
   const row = el("div", "detail__weight");
-  row.appendChild(el("span", "detail__weight-label", t("detail.weight")));
+  const head = el("div", "detail__weight-head");
+  head.appendChild(el("span", "detail__weight-label", t("detail.weight")));
 
-  const input = document.createElement("input");
-  input.type = "range";
-  input.className = "detail__weight-input";
-  input.min = String(entry.weightMin);
-  input.max = String(entry.weightMax);
-  input.step = "1";
+  const min = entry.weightMin;
+  const max = entry.weightMax;
   const start = previewWeight(entry);
-  input.value = String(start);
-  input.setAttribute("aria-label", t("detail.weight"));
+  let current = start;
+  let frame = 0;
+  let dragging = false;
+
+  const slider = el("div", "detail__slider");
+  slider.tabIndex = 0;
+  slider.setAttribute("role", "slider");
+  slider.setAttribute("aria-label", t("detail.weight"));
+  slider.setAttribute("aria-valuemin", String(min));
+  slider.setAttribute("aria-valuemax", String(max));
+
+  const track = el("div", "detail__slider-track");
+  const fill = el("div", "detail__slider-fill");
+  const thumb = el("div", "detail__slider-thumb");
+  track.append(fill, thumb);
+  slider.appendChild(track);
 
   const value = el("span", "detail__weight-value", String(start));
-  let frame = 0;
-  input.addEventListener("input", () => {
-    const weight = Number(input.value);
-    value.textContent = String(weight);
-    if (frame) return;
-    frame = requestAnimationFrame(() => {
-      frame = 0;
-      apply(Number(input.value), true);
-    });
+  head.appendChild(value);
+  row.append(head, slider);
+
+  const syncView = (): void => {
+    const percent = max > min ? ((current - min) / (max - min)) * 100 : 0;
+    slider.style.setProperty("--fill", `${percent}%`);
+    slider.setAttribute("aria-valuenow", String(current));
+  };
+
+  const setValue = (next: number, live: boolean): void => {
+    const clamped = Math.max(min, Math.min(max, Math.round(next)));
+    if (clamped === current && live) return;
+    current = clamped;
+    value.textContent = String(current);
+    syncView();
+    if (live) {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        apply(current, true);
+      });
+    } else {
+      if (frame) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      apply(current, false);
+    }
+  };
+
+  const setFromPointer = (clientX: number, jump: boolean): void => {
+    if (jump) {
+      const rect = track.getBoundingClientRect();
+      const ratio = rect.width > 0 ? (clientX - rect.left) / rect.width : 0;
+      setValue(min + ratio * (max - min), true);
+    }
+  };
+
+  const startDrag = (event: PointerEvent, jump: boolean): void => {
+    event.preventDefault();
+    dragging = true;
+    slider.classList.add("is-dragging");
+    slider.setPointerCapture(event.pointerId);
+    setFromPointer(event.clientX, jump);
+  };
+
+  const endDrag = (): void => {
+    if (!dragging) return;
+    dragging = false;
+    slider.classList.remove("is-dragging");
+    apply(current, false);
+  };
+
+  track.addEventListener("pointerdown", (event) => startDrag(event, true));
+  thumb.addEventListener("pointerdown", (event) => {
+    event.stopPropagation();
+    startDrag(event, false);
   });
-  input.addEventListener("change", () => {
-    apply(Number(input.value), false);
+  slider.addEventListener("pointermove", (event) => {
+    if (dragging) setFromPointer(event.clientX, true);
+  });
+  slider.addEventListener("pointerup", endDrag);
+  slider.addEventListener("pointercancel", endDrag);
+  slider.addEventListener("lostpointercapture", endDrag);
+  slider.addEventListener("keydown", (event) => {
+    let next = current;
+    switch (event.key) {
+      case "ArrowLeft":
+      case "ArrowDown":
+        next -= 1;
+        break;
+      case "ArrowRight":
+      case "ArrowUp":
+        next += 1;
+        break;
+      case "Home":
+        next = min;
+        break;
+      case "End":
+        next = max;
+        break;
+      case "PageDown":
+        next -= 10;
+        break;
+      case "PageUp":
+        next += 10;
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    setValue(next, false);
   });
 
-  row.append(input, value);
+  syncView();
   return row;
 }
-
 function emptyState(): HTMLElement {
   const empty = el("div", "detail__empty");
   empty.appendChild(
@@ -319,6 +410,9 @@ export function renderDetail(
 
   const sampleView = sample(entry, ctx);
   container.appendChild(sampleView.box);
+  if (entry.variable && entry.weightMax > entry.weightMin) {
+    container.appendChild(weightControl(entry, sampleView.apply));
+  }
 
   const actions = el("div", "detail__actions");
   const trailing = el("div", "detail__actions-end");
@@ -362,9 +456,6 @@ export function renderDetail(
   }
   actions.appendChild(trailing);
   container.appendChild(actions);
-  if (entry.variable && entry.weightMax > entry.weightMin) {
-    container.appendChild(weightControl(entry, sampleView.apply));
-  }
   // 字体信息在前，文件信息在后；单字体详情不重复列出所属字族
   const fontRows: HTMLElement[] = [];
   fontRows.push(kv(t("detail.fullName"), entry.fullName || entry.displayName));
@@ -452,6 +543,9 @@ export function renderFamilyDetail(
   // 预览用首个字重，背景加「堆叠」示意——表示这是一个字族而不是单个文件
   const sampleView = sample(entries[0], ctx, true);
   container.appendChild(sampleView.box);
+  if (entries[0].variable && entries[0].weightMax > entries[0].weightMin) {
+    container.appendChild(weightControl(entries[0], sampleView.apply));
+  }
 
   const actions = el("div", "detail__actions");
   const trailing = el("div", "detail__actions-end");
@@ -466,8 +560,16 @@ export function renderFamilyDetail(
     toggle.addEventListener("click", () => handlers.toggleHidden(userEntries));
     actions.appendChild(toggle);
   } else if (entries.some((entry) => entry.protected)) {
-    // 整族都受保护：说明 + 仍然允许定位文件
-    actions.appendChild(el("span", "detail__note", t("detail.protectedNote")));
+    // 整族都受保护：锁 + 仍然允许定位文件
+    const lock = el("span", "cell__lock detail__lock");
+    const lockSvg = icon("lock", "lock");
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent = t("switch.protectedTitle", {
+      protection: protectionLabel(entries[0].protection) || t("detail.protected"),
+    });
+    lockSvg.appendChild(title);
+    lock.appendChild(lockSvg);
+    actions.appendChild(lock);
     if (entries[0].exists) {
       const reveal = actionButton(
         "folder-open-filled",
@@ -491,9 +593,6 @@ export function renderFamilyDetail(
   }
   actions.appendChild(trailing);
   container.appendChild(actions);
-  if (entries[0].variable && entries[0].weightMax > entries[0].weightMin) {
-    container.appendChild(weightControl(entries[0], sampleView.apply));
-  }
 
   const info: HTMLElement[] = [kv(t("detail.family"), family)];
   const languages = [

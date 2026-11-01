@@ -2207,10 +2207,10 @@ function updateNotesBlock(raw: string): HTMLElement {
   return wrap;
 }
 
-function openUpdateFailure(): void {
+function openUpdateFailure(message = t("update.failedBody")): void {
   const shell = buildModal({ title: t("update.failedTitle"), closable: false });
   const { overlay, body, footer } = shell;
-  body.appendChild(el("p", "modal__lead", t("update.failedBody")));
+  body.appendChild(el("p", "modal__lead", message));
   const ok = el("button", "btn btn--primary", t("update.ok")) as HTMLButtonElement;
   ok.type = "button";
   footer.appendChild(ok);
@@ -2276,6 +2276,48 @@ function openUpdateDialog2(update: UpdateInfo): void {
   close.focus();
 }
 
+let cachedAppVersion = "";
+
+async function currentAppVersion(): Promise<string> {
+  if (cachedAppVersion) return cachedAppVersion;
+  try {
+    cachedAppVersion = (await api.about()).version;
+  } catch {
+    cachedAppVersion = "";
+  }
+  return cachedAppVersion;
+}
+interface UpdateCheckOptions {
+  manual: boolean;
+  isOpen: () => boolean;
+  onChecking: () => void;
+  onIdle: () => void;
+  onAvailable: (info: UpdateInfo) => void;
+  currentVersion?: string;
+}
+
+/** 共享更新检查：后台检查，手动模式下负责打开对应的结果弹窗。 */
+async function runUpdateCheck(options: UpdateCheckOptions): Promise<void> {
+  options.onChecking();
+  try {
+    const info = await api.checkUpdate(state.settings.updateSource);
+    if (!options.isOpen()) return;
+    if (info) {
+      options.onAvailable(info);
+      if (options.manual) openUpdateDialog2(info);
+      return;
+    }
+    options.onIdle();
+    if (!options.manual) return;
+    const version = options.currentVersion ?? (await currentAppVersion());
+    if (!options.isOpen()) return;
+    openUpdateLatestDialog(version);
+  } catch {
+    if (!options.isOpen()) return;
+    options.onIdle();
+    if (options.manual) openUpdateFailure();
+  }
+}
 function openUpdateLatestDialog(currentVersion: string): void {
   const shell = buildModal({ title: t("update.latestTitle"), closable: false });
   const { overlay, body, footer } = shell;
@@ -2302,8 +2344,9 @@ async function openUpdateLog(version: string): Promise<void> {
   let notes = "";
   try {
     notes = await api.releaseNotes(state.settings.updateSource, version);
-  } catch {
-    openUpdateFailure();
+  } catch (err) {
+    const missing = String(err).includes("RELEASE_NOT_FOUND");
+    openUpdateFailure(t(missing ? "update.logMissingVersion" : "update.logFailed"));
     return;
   }
   const shell = buildModal({ title: t("update.logTitle", { version }), closable: false });
@@ -2443,6 +2486,7 @@ async function openAbout(): Promise<void> {
     return;
   }
 
+  cachedAppVersion = payload.version;
   const shell = buildModal({ title: t("app.name"), wide: true });
   const { overlay, panel, body, footer, head } = shell;
   panel.classList.add("modal__panel--about");
@@ -2544,25 +2588,18 @@ async function openAbout(): Promise<void> {
     }
     requestAnimationFrame(() => updateStatus.classList.add("is-visible"));
   };
-  const performUpdateCheck = async (manual: boolean): Promise<void> => {
-    applyUpdateState("checking");
-    try {
-      const info = await api.checkUpdate(state.settings.updateSource);
-      if (!document.body.contains(panel)) return;
-      knownUpdate = info;
-      if (info) {
+  const performUpdateCheck = (manual: boolean): Promise<void> =>
+    runUpdateCheck({
+      manual,
+      isOpen: () => document.body.contains(panel),
+      onChecking: () => applyUpdateState("checking"),
+      onIdle: () => applyUpdateState("idle"),
+      onAvailable: (info) => {
+        knownUpdate = info;
         applyUpdateState("available", info);
-        if (manual) openUpdateDialog2(info);
-      } else {
-        applyUpdateState("idle");
-        if (manual) openUpdateLatestDialog(payload.version);
-      }
-    } catch {
-      if (!document.body.contains(panel)) return;
-      applyUpdateState("idle");
-      if (manual) openUpdateFailure();
-    }
-  };
+      },
+      currentVersion: payload.version,
+    });
   check.addEventListener("click", () => {
     if (updateState === "checking") return;
     if (updateState === "available" && knownUpdate) {
@@ -2762,6 +2799,51 @@ function openSettings(): void {
       t("settings.autoCheckHint"),
     ),
   );
+
+  const checkButton = el("button", "btn btn--soft", t("settings.checkUpdate")) as HTMLButtonElement;
+  checkButton.type = "button";
+  const checkStatus = el("span", "settings-update__status");
+  const checkControl = el("div", "settings-update");
+  checkControl.append(checkStatus, checkButton);
+  let knownUpdate: UpdateInfo | null = null;
+  let checkState: "idle" | "checking" | "available" = "idle";
+  const setCheckState = (
+    next: "idle" | "checking" | "available",
+    info?: UpdateInfo,
+  ): void => {
+    checkState = next;
+    checkButton.disabled = next === "checking";
+    checkButton.className = next === "available" ? "btn btn--primary" : "btn btn--soft";
+    checkButton.textContent = next === "checking"
+      ? t("about.checking")
+      : next === "available"
+        ? t("about.updateButton")
+        : t("settings.checkUpdate");
+    checkStatus.replaceChildren();
+    if (next === "checking") {
+      checkStatus.appendChild(el("span", "spinner"));
+    } else if (next === "available" && info) {
+      checkStatus.textContent = t("about.newVersion", { version: info.latestVersion });
+    }
+  };
+  checkButton.addEventListener("click", () => {
+    if (checkState === "checking") return;
+    if (checkState === "available" && knownUpdate) {
+      openUpdateDialog2(knownUpdate);
+      return;
+    }
+    void runUpdateCheck({
+      manual: true,
+      isOpen: () => document.body.contains(panel),
+      onChecking: () => setCheckState("checking"),
+      onIdle: () => setCheckState("idle"),
+      onAvailable: (info) => {
+        knownUpdate = info;
+        setCheckState("available", info);
+      },
+    });
+  });
+  list.appendChild(row(t("settings.checkUpdate"), checkControl));
   void api
     .listLanguages()
     .then((languages) => {

@@ -20,6 +20,7 @@ const MIRROR1_API_PREFIX: &str = "https://github.chenc.dev/https:/api.github.com
 const MIRROR2_PREFIX: &str = "https://gh-proxy.org/";
 const DOWNLOAD_BASE: &str = "https://github.com/AomiRaku/font-fox/releases/latest/download";
 const DOWNLOAD_EVENT: &str = "update-download";
+const RELEASE_NOT_FOUND: &str = "RELEASE_NOT_FOUND";
 
 static DOWNLOAD_CANCEL: AtomicBool = AtomicBool::new(false);
 static DOWNLOAD_ACTIVE: AtomicBool = AtomicBool::new(false);
@@ -132,6 +133,9 @@ fn fetch_release(source: &str, tag: Option<&str>) -> Result<ReleaseResponse, Str
         .header("Accept", "application/vnd.github+json")
         .send()
         .map_err(|err| format!("Failed to request update information: {err}"))?;
+    if response.status() == reqwest::StatusCode::NOT_FOUND {
+        return Err(RELEASE_NOT_FOUND.to_string());
+    }
     if !response.status().is_success() {
         return Err(format!("Update source returned HTTP {}", response.status()));
     }
@@ -160,17 +164,17 @@ pub async fn check_update(source: String) -> Result<Option<UpdateInfo>, String> 
         .map_err(|err| format!("Update check failed: {err}"))?
 }
 
+fn release_notes_sync(source: &str, version: &str) -> Result<String, String> {
+    let prefixed = format!("v{version}");
+    fetch_release(source, Some(&prefixed)).map(|release| release.body.unwrap_or_default())
+}
+
 #[tauri::command]
 pub async fn release_notes(source: String, version: String) -> Result<String, String> {
     let version = normalize_version(&version)?;
-    tauri::async_runtime::spawn_blocking(move || {
-        let prefixed = format!("v{version}");
-        fetch_release(&source, Some(&prefixed))
-            .or_else(|_| fetch_release(&source, Some(&version)))
-            .map(|release| release.body.unwrap_or_default())
-    })
-    .await
-    .map_err(|err| format!("Failed to read release notes: {err}"))?
+    tauri::async_runtime::spawn_blocking(move || release_notes_sync(&source, &version))
+        .await
+        .map_err(|err| format!("Failed to read release notes: {err}"))?
 }
 
 /// 删除上次更新遗留的安装包。启动时调用；正在被安装器占用的文件会跳过。

@@ -41,7 +41,7 @@ ${StrLoc}
 !define MANUFACTURER "{{manufacturer}}"
 !define PRODUCTNAME "{{product_name}}"
 !define VERSION "{{version}}"
-!searchreplace DISPLAYVERSION "${VERSION}" ".0" ""
+!include "${__FILEDIR__}\..\..\..\..\..\src-tauri\nsis\version.nsh"
 !define VERSIONWITHBUILD "{{version_with_build}}"
 !define HOMEPAGE "{{homepage}}"
 !define INSTALLMODE "{{install_mode}}"
@@ -410,8 +410,7 @@ Function PageLeaveReinstall
 FunctionEnd
 
 ; 5. Choose install directory page
-!if "${STARTMENUFOLDER}" == ""
-  Function DirectoryShow
+Function DirectoryShow
     ReadRegStr $0 SHCTX "${UNINSTKEY}" ""
     ReadRegStr $1 SHCTX "${UNINSTKEY}" "InstallLocation"
     IfFileExists "$INSTDIR\${MAINBINARYNAME}.exe" DirectoryLocked
@@ -423,11 +422,17 @@ DirectoryLocked:
     GetDlgItem $0 $2 1001
     EnableWindow $0 0
 DirectoryEditable:
+!if "${STARTMENUFOLDER}" == ""
     GetDlgItem $0 $HWNDPARENT 1
-    SendMessage $0 0x000C 0 "STR:$(^InstallBtn)"
-  FunctionEnd
-  !define MUI_PAGE_CUSTOMFUNCTION_SHOW DirectoryShow
+    StrCmp $LANGUAGE 2052 0 DirectoryButtonEnglish
+    SendMessage $0 0x000C 0 "STR:安装"
+    Goto DirectoryButtonDone
+DirectoryButtonEnglish:
+    SendMessage $0 0x000C 0 "STR:Install"
+DirectoryButtonDone:
 !endif
+  FunctionEnd
+!define MUI_PAGE_CUSTOMFUNCTION_SHOW DirectoryShow
 !define MUI_PAGE_CUSTOMFUNCTION_PRE SkipIfPassive
 !insertmacro MUI_PAGE_DIRECTORY
 

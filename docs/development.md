@@ -194,7 +194,7 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 
 - 更新检查通过 GitHub Releases API 读取最新 `tag_name` 与原始 `body`；GitHub 源直连 `api.github.com`；镜像源1 的 API 前缀为 `https://github.chenc.dev/https:/api.github.com`（单个斜杠），下载前缀为 `https://github.chenc.dev/`；镜像源2 加 `https://gh-proxy.org/` 前缀。网络请求跟随 Windows 系统代理，并支持 `HTTP(S)_PROXY` / `NO_PROXY` 环境变量。
 - 版本比较按 `tag` 去掉 `v` 后的数字段补零后比较，只有更高版本才视为更新。
-- 启动后静默检查（仅「检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
+- 启动后静默检查（仅「自动检查更新」开关开启时）；关于窗口打开时也自动检查但不弹窗（同样受开关控制）。手动检查才显示「已是最新版本」「更新失败」等结果。
 - 「不提醒此版本」写入 `config.ini` 的 `IgnoredUpdateVersion`；仅忽略相同版本，更高版本会恢复提示。
 - Release 正文只取第一个 `***` 之前的内容，再按 `---` 分为中文 / 英文；当前语言代码为 `zh-*` 时取中文，否则取英文，空段回退另一段。按纯文本展示，不渲染 Markdown。
 - 下载地址为 `https://github.com/AomiRaku/font-fox/releases/latest/download/FontFox_[版本号]_x64.exe`；`npm run tauri:build` 会在打包后自动重命名为该格式；安装包写入 `%USERPROFILE%\.FontFox\update\`；进度通过 `update-download` 事件推送。取消或失败会删除临时文件；完成后启动安装包并退出应用。应用启动时会清理 update 目录中遗留的安装包。
@@ -213,8 +213,8 @@ tools/              语言包复制、第三方许可证生成、设计稿解析
 
 ## 版本号
 
-- 对外版本使用 `major.minor`，不补前导零：当前 **1000.3**，后续例如 `1021.0`、`1220.0`、`2200.13`。
-- 内部需要 semver 的工具（Cargo / Tauri / NSIS）使用 `major.minor.0`，例如 `1000.3.0`；`about` 与 `app_info` 对外显示 `major.minor`。
+- 对外版本使用 `major.minor`，不补前导零：当前 **1001.0**，后续例如 `1021.0`、`1220.0`、`2200.13`。
+- 内部需要 semver 的工具（Cargo / Tauri / NSIS）使用 `major.minor.0`，例如 `1001.0.0`；`about` 与 `app_info` 对外显示 `major.minor`。
 - 发版时同步：`package.json`、`package-lock.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock`（fontfox 条目）、`src-tauri/tauri.conf.json`。
 
 ## 许可证

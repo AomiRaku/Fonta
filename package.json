@@ -1,14 +1,14 @@
 {
   "name": "fontfox",
   "private": true,
-  "version": "1000.3.0",
+  "version": "1001.0.0",
   "description": "FontFox — 快速流畅且易用的本地字体管理器",
   "license": "Apache-2.0",
   "type": "module",
   "scripts": {
     "predev": "node tools/copy-lang.mjs debug",
     "dev": "vite",
-    "prebuild": "node tools/copy-lang.mjs both",
+    "prebuild": "node tools/copy-lang.mjs both && node tools/gen-nsis-version.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "third-party": "pwsh -NoProfile -File tools/gen-third-party.ps1",

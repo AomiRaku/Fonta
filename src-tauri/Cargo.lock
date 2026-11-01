@@ -920,7 +920,7 @@ checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
 
 [[package]]
 name = "fontfox"
-version = "1000.3.0"
+version = "1001.0.0"
 dependencies = [
  "ab_glyph",
  "base64 0.22.1",

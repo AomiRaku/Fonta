@@ -1,6 +1,6 @@
 [package]
 name = "fontfox"
-version = "1000.3.0"
+version = "1001.0.0"
 description = "FontFox — 快速流畅且易用的本地字体管理器"
 authors = ["羽梦千景 Raku Inkyetta"]
 license = "Apache-2.0"
